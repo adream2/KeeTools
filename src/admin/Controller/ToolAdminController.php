@@ -213,6 +213,47 @@ final class ToolAdminController extends AdminController
     }
 
     /**
+     * 单个工具上架 / 下架切换（P4 §四：零使用工具「下线或重做」）。
+     *
+     * 为什么不复用 batch()：那个端点要求提交全量表单，单独调用会把
+     * 其他工具的排序与推荐位清零。
+     */
+    public function setPublished(Request $request): Response
+    {
+        if (!$this->dbReady()) {
+            return $this->redirectWith('error', '数据库未初始化', '/admin/tools');
+        }
+
+        $toolId = (string) $request->attribute('id', '');
+        if (!Security::isValidToolId($toolId)) {
+            return $this->redirectWith('error', '工具 id 非法', '/admin/tools');
+        }
+
+        // 只允许跳回后台路径，防开放重定向
+        $back = (string) ($request->post('back') ?? '/admin/tools');
+        if (!str_starts_with($back, '/admin/')) {
+            $back = '/admin/tools';
+        }
+
+        $exists = App::db()->fetch('SELECT tool_id FROM tools WHERE tool_id = :id', [':id' => $toolId]);
+        if ($exists === null) {
+            return $this->redirectWith('error', '工具不存在：' . $toolId, $back);
+        }
+
+        $value = $request->post('value') === '1' ? 1 : 0;
+        App::db()->execute(
+            'UPDATE tools SET is_published = :published WHERE tool_id = :id',
+            [':published' => $value, ':id' => $toolId]
+        );
+
+        return $this->redirectWith(
+            'success',
+            ($value === 1 ? '已重新上架：' : '已下架：') . $toolId . '（目录与 manifest 未改动）',
+            $back
+        );
+    }
+
+    /**
      * 把「降级覆盖」落回 manifest 文件（tools/ 恢复可写后）。
      */
     public function flushOverrides(Request $request): Response

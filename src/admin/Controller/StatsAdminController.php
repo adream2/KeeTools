@@ -9,6 +9,7 @@ use App\Core\Database;
 use App\Core\Request;
 use App\Core\Response;
 use App\Services\StatsService;
+use App\Services\ToolRepository;
 
 /**
  * 统计看板（docs/需求文档-v2.md §10.3）
@@ -18,6 +19,9 @@ use App\Services\StatsService;
  */
 final class StatsAdminController extends AdminController
 {
+    /** 零使用判定窗口（天）：窗口内无任何事件的已上架工具视为零使用 */
+    private const ZERO_USE_WINDOW_DAYS = 30;
+
     public function index(Request $request): Response
     {
         if (!App::hasStatsDb()) {
@@ -105,6 +109,27 @@ final class StatsAdminController extends AdminController
             );
         }
 
+        // ── 零使用工具（P4 §四）────────────────────
+        // 判定：已上架，但窗口期内没有任何事件。tools 在业务库、stats 在统计库，
+        // 无法跨库 JOIN —— 统计侧取活跃 tool_id 集合，业务侧取全量再差集。
+        $zeroUse = [];
+        if (App::hasDb()) {
+            $activeIds = [];
+            foreach ($db->fetchAll(
+                "SELECT DISTINCT tool_id FROM stats
+                 WHERE tool_id != '' AND created_at >= :since",
+                [':since' => date('Y-m-d H:i:s', time() - self::ZERO_USE_WINDOW_DAYS * 86400)]
+            ) as $row) {
+                $activeIds[(string) $row['tool_id']] = true;
+            }
+
+            foreach ((new ToolRepository())->publishedTitles() as $toolId => $title) {
+                if (!isset($activeIds[$toolId])) {
+                    $zeroUse[] = ['tool_id' => $toolId, 'title' => $title];
+                }
+            }
+        }
+
         return $this->render('stats', [
             'pageTitle'      => '统计看板 — ' . site_name(),
             'ready'          => true,
@@ -114,6 +139,8 @@ final class StatsAdminController extends AdminController
             'trend'          => $trend,
             'conversion'     => $conversion,
             'reported'       => $reported,
+            'zeroUse'        => $zeroUse,
+            'zeroWindowDays' => self::ZERO_USE_WINDOW_DAYS,
         ], 'stats');
     }
 

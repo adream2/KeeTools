@@ -330,6 +330,94 @@ final class ToolRepository
     }
 
     /**
+     * 工具数增长曲线（P4 §四）：近 N 个月的新增数与累计数。
+     *
+     * 数据源是 tools.created_at（扫描入库日期），不依赖统计库 —— 即使
+     * 从未产生任何事件，也能看出"工具集在长大"。
+     *
+     * @return list<array{month: string, added: int, total: int}>
+     */
+    public function growthByMonth(int $months = 12): array
+    {
+        $months = max(1, min(36, $months));
+
+        $map = [];
+        foreach ($this->db()->fetchAll(
+            'SELECT substr(created_at, 1, 7) AS ym, COUNT(*) AS n FROM tools GROUP BY ym'
+        ) as $row) {
+            $map[(string) $row['ym']] = (int) $row['n'];
+        }
+
+        $cursor = new \DateTimeImmutable(date('Y-m-01'));
+        $cursor = $cursor->modify('-' . ($months - 1) . ' months');
+
+        // 起始月之前的存量，作为累计基数
+        $running = 0;
+        $startMonth = $cursor->format('Y-m');
+        foreach ($map as $ym => $n) {
+            if ($ym < $startMonth) {
+                $running += $n;
+            }
+        }
+
+        $out = [];
+        for ($i = 0; $i < $months; $i++) {
+            $ym = $cursor->format('Y-m');
+            $added = $map[$ym] ?? 0;
+            $running += $added;
+            $out[] = ['month' => $ym, 'added' => $added, 'total' => $running];
+            $cursor = $cursor->modify('+1 month');
+        }
+
+        return $out;
+    }
+
+    /**
+     * 学科工具数分布（P4 §四）：二级分类维度，只看已上架工具。
+     *
+     * @return list<array{name: string, slug: string, count: int}>
+     */
+    public function subjectDistribution(int $limit = 40): array
+    {
+        $rows = $this->db()->fetchAll(
+            'SELECT c.name, c.slug, COUNT(DISTINCT tc.tool_id) AS n
+             FROM categories c
+             JOIN tool_category tc ON tc.category_id = c.id
+             JOIN tools t ON t.tool_id = tc.tool_id AND t.is_published = 1
+             WHERE c.level = 2
+             GROUP BY c.id, c.name, c.slug
+             ORDER BY n DESC, c.sort_order ASC
+             LIMIT ' . (int) max(1, $limit)
+        );
+
+        return array_map(
+            static fn (array $r): array => [
+                'name'  => (string) $r['name'],
+                'slug'  => (string) $r['slug'],
+                'count' => (int) $r['n'],
+            ],
+            $rows
+        );
+    }
+
+    /**
+     * 已上架工具 id → 标题（零使用工具判定用）。
+     *
+     * @return array<string, string>
+     */
+    public function publishedTitles(): array
+    {
+        $out = [];
+        foreach ($this->db()->fetchAll(
+            'SELECT tool_id, title FROM tools WHERE is_published = 1 ORDER BY title ASC'
+        ) as $row) {
+            $out[(string) $row['tool_id']] = (string) $row['title'];
+        }
+
+        return $out;
+    }
+
+    /**
      * @param array<string, mixed> $row
      * @return array<string, mixed>
      */

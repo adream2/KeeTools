@@ -9,7 +9,10 @@
  * @var list<array{date: string, view: int, use_online: int, netdisk_click: int}> $trend
  * @var float|null $conversion
  * @var int $reported
+ * @var list<array{tool_id: string, title: string}> $zeroUse 窗口期内零使用的已上架工具（P4 §四）
+ * @var int $zeroWindowDays 零使用判定窗口（天）
  */
+use App\Core\Csrf;
 ?><div class="page-head">
   <h1 class="page-title">统计看板</h1>
   <p class="page-desc">只统计 view / use_online / netdisk_click / download_direct / sponsor_click 五类事件</p>
@@ -157,6 +160,51 @@
           </tbody>
         </table>
       </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: var(--sp-5);">
+    <div class="card-head">
+      <h2 class="card-title">零使用工具（近 <?= e((string) $zeroWindowDays) ?> 天无任何事件）</h2>
+    </div>
+    <div class="card-body">
+      <?php if ($zeroUse === []): ?>
+        <p class="tool-get-note">全部已上架工具都有使用记录 —— 保持住。</p>
+      <?php else: ?>
+        <div class="alert alert-warning">
+          <?= icon('alert-triangle') ?>
+          <div>这些工具会拖累站点质量：要么改文案/换封面重新推，要么先下架。
+            <strong>下架只改站点索引，不动 tools/ 目录与 manifest</strong>，随时可恢复。</div>
+        </div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>工具</th><th>操作</th></tr></thead>
+            <tbody>
+              <?php foreach ($zeroUse as $row): ?>
+                <tr>
+                  <td>
+                    <strong><?= e($row['title']) ?></strong>
+                    <div class="table-sub">
+                      <a href="<?= e(url('/tool/' . rawurlencode($row['tool_id']))) ?>" target="_blank" rel="noopener"><?= e($row['tool_id']) ?></a>
+                    </div>
+                  </td>
+                  <td class="dash-actions">
+                    <a class="btn btn-sm" href="<?= e(url('/admin/tools/' . rawurlencode($row['tool_id']) . '/edit')) ?>">
+                      <?= icon('edit') ?>重做元数据
+                    </a>
+                    <form method="post" action="<?= e(url('/admin/tools/' . rawurlencode($row['tool_id']) . '/published')) ?>">
+                      <?= Csrf::field() ?>
+                      <input type="hidden" name="value" value="0">
+                      <input type="hidden" name="back" value="/admin/stats">
+                      <button class="btn btn-sm" type="submit"><?= icon('trash') ?>下架</button>
+                    </form>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
     </div>
   </div>
 <?php endif; ?>

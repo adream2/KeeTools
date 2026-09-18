@@ -3,11 +3,23 @@
  * 仪表盘
  *
  * @var array{tools: int, published: int, featured: int, mismatch: int, categories: int, netdisks: int} $stats
+ * @var list<array{month: string, added: int, total: int}> $growth 近 12 个月工具增长（P4 §四）
+ * @var list<array{name: string, slug: string, count: int}> $distribution 学科分布
+ * @var array{subjects: int, subjectsWithTools: int, reached: bool} $coverage 规模达标情况
  * @var bool $toolsWritable
  * @var bool $storageWritable
  * @var bool $envFileExists
  */
 use App\Core\Csrf;
+
+$growMax = 0;
+foreach ($growth as $point) {
+    $growMax = max($growMax, (int) $point['added']);
+}
+$distMax = 0;
+foreach ($distribution as $item) {
+    $distMax = max($distMax, (int) $item['count']);
+}
 ?><div class="page-head">
   <h1 class="page-title">仪表盘</h1>
   <p class="page-desc">站点运行概况与快捷操作</p>
@@ -77,7 +89,68 @@ use App\Core\Csrf;
           <span class="tool-meta-label">storage/ 可写（数据库）</span>
           <span class="tool-meta-value"><?= $storageWritable ? '✓ 正常' : '✗ 不可写' ?></span>
         </div>
+        <div class="tool-meta-row">
+          <span class="tool-meta-label">规模目标（≥30 工具 / ≥5 学科有工具）</span>
+          <span class="tool-meta-value">
+            <?= $coverage['reached'] ? '✓ 已达标' : '进行中' ?>
+            （已覆盖 <?= e((string) $coverage['subjectsWithTools']) ?>/<?= e((string) $coverage['subjects']) ?> 学科）
+          </span>
+        </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="dash-grid" style="margin-top: var(--sp-5);">
+  <div class="card">
+    <div class="card-head">
+      <h2 class="card-title">工具数增长（近 12 个月）</h2>
+    </div>
+    <div class="card-body">
+      <?php if ($growMax === 0): ?>
+        <p class="tool-get-note">暂无入库记录 —— 先跑「扫描同步工具」。</p>
+      <?php else: ?>
+        <div class="grow-chart">
+          <?php foreach ($growth as $point): ?>
+            <?php
+              $added = (int) $point['added'];
+              $height = $added > 0 ? max(4, (int) round($added / $growMax * 100)) : 0;
+            ?>
+            <div class="grow-col" title="<?= e($point['month']) ?>：新增 <?= e((string) $added) ?>，累计 <?= e((string) $point['total']) ?>">
+              <div class="grow-bar<?= $added === 0 ? ' grow-bar--empty' : '' ?>" style="height: <?= $height ?>%;"></div>
+              <span class="grow-label"><?= e(substr((string) $point['month'], 5)) ?></span>
+            </div>
+          <?php endforeach; ?>
+        </div>
+        <p class="grow-hint">
+          峰值月新增 <strong><?= e((string) $growMax) ?></strong> 个；
+          当前累计 <strong><?= e((string) ($growth !== [] ? end($growth)['total'] : 0)) ?></strong> 个工具。
+        </p>
+      <?php endif; ?>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2 class="card-title">学科分布</h2>
+    </div>
+    <div class="card-body">
+      <?php if ($distribution === []): ?>
+        <p class="tool-get-note">还没有工具挂到学科分类下（「通用」工具只挂学段）。</p>
+      <?php else: ?>
+        <div class="dist-list">
+          <?php foreach ($distribution as $item): ?>
+            <a class="dist-row" href="<?= e(url('/category/' . rawurlencode($item['slug']))) ?>">
+              <span class="dist-name"><?= e($item['name']) ?></span>
+              <span class="dist-track">
+                <span class="dist-fill" style="width: <?= e((string) max(4, (int) round($item['count'] / $distMax * 100))) ?>%;"></span>
+              </span>
+              <span class="dist-count"><?= e((string) $item['count']) ?></span>
+            </a>
+          <?php endforeach; ?>
+        </div>
+        <p class="grow-hint">每学科 ≥ 3 个工具即可组成"可打包"的最小合集。</p>
+      <?php endif; ?>
     </div>
   </div>
 </div>
