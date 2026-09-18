@@ -197,9 +197,18 @@ final class Database
     }
 
     /**
-     * 执行 SQL 文件（建表脚本）。按分号切分逐句执行。
+     * 执行多语句 SQL 字符串（建表脚本）。
      *
-     * 简单切分对本项目足够：建表脚本不含字符串内的分号或触发器体。
+     * 建表脚本不含字符串内的分号或触发器体，整段 exec 即可，
+     * SQLite PDO 驱动支持一次执行多条语句。
+     */
+    public function runSqlString(string $sql): void
+    {
+        $this->pdo->exec($sql);
+    }
+
+    /**
+     * 执行 SQL 文件（建表脚本）。
      */
     public function runSqlFile(string $file): void
     {
@@ -208,7 +217,7 @@ final class Database
             throw new RuntimeException('SQL 文件读取失败: ' . $file);
         }
 
-        $this->pdo->exec($sql);
+        $this->runSqlString($sql);
     }
 
     /**
