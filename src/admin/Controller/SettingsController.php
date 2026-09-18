@@ -129,12 +129,12 @@ final class SettingsController extends AdminController
     public function footer(Request $request): Response
     {
         return $this->render('settings-footer', [
-            'pageTitle'      => '导航与页脚 — ' . site_name(),
-            'textItems'      => $this->collectTextItems(self::FOOTER_KEYS),
-            'switches'       => $this->collectSwitches(self::FOOTER_SWITCHES),
-            'headerNavText'  => SiteOps::navToText(Config::string('header_nav')),
-            'footerNavText'  => SiteOps::navToText(Config::string('footer_nav')),
-            'friendApplyUrl' => Config::string('friend_link_apply_url'),
+            'pageTitle'     => '导航与页脚 — ' . site_name(),
+            'textItems'     => $this->collectTextItems(self::FOOTER_KEYS),
+            'switches'      => $this->collectSwitches(self::FOOTER_SWITCHES),
+            'headerNavText' => SiteOps::navToText(Config::string('header_nav')),
+            'footerNavText' => SiteOps::navToText(Config::string('footer_nav')),
+            'applyNote'     => Config::string('friend_link_apply_note'),
         ], 'settings');
     }
 
@@ -153,8 +153,8 @@ final class SettingsController extends AdminController
             }
         }
 
-        if ($request->post('friend_link_apply_url') !== null) {
-            Config::set('friend_link_apply_url', trim((string) $request->post('friend_link_apply_url')));
+        if ($request->post('friend_link_apply_note') !== null) {
+            Config::set('friend_link_apply_note', trim((string) $request->post('friend_link_apply_note')));
             $saved++;
         }
 

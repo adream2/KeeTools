@@ -46,7 +46,7 @@ $announcements = SiteOps::announcements();
     </div>
   </main>
 
-  <?php View::include('partials/footer', ['friendPlacement' => $friendPlacement ?? 'sub']); ?>
+  <?php View::include('partials/footer'); ?>
 </div>
 
 <script src="<?= e(asset('js/site.js')) ?>" defer></script>

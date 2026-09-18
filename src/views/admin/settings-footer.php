@@ -42,11 +42,10 @@ use App\Core\View;
                   placeholder="全部工具 | /tools&#10;关于本站 | /about"><?= e($footerNavText) ?></textarea>
       </div>
       <div class="form-group">
-        <label class="form-label" for="fl-apply">申请友链入口链接（留空 = 页脚不显示「申请友链」）</label>
-        <input class="form-input" type="text" id="fl-apply" name="friend_link_apply_url"
-               value="<?= e($friendApplyUrl) ?>" maxlength="300"
-               placeholder="/friend-links 或 https://…">
-        <div class="form-hint">可指向站内说明页或外链表单；显示在页脚「友情链接」标题旁。</div>
+        <label class="form-label" for="fl-apply-note">申请友链说明（显示在友链页，每行一段；留空使用默认提示）</label>
+        <textarea class="form-input" id="fl-apply-note" name="friend_link_apply_note" rows="4"
+                  placeholder="如需与本站交换友链：&#10;1. 站点内容健康，持续更新&#10;2. 请先添加本站链接后通过公众号联系我们"><?= e($applyNote) ?></textarea>
+        <div class="form-hint">页脚「友情链接」入口指向友链页 /friend-links（友链与申请说明同页）。</div>
       </div>
     </div>
   </div>

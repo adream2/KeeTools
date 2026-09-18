@@ -118,24 +118,76 @@ final class SiteOps
     // ── 友链 ────────────────────────────────────────
 
     /**
-     * 按投放面取友链（每面最多 20 条）。
+     * 页脚友链（全站页脚常显）：placement home / all，最多 20 条。
      *
      * @return list<array{name: string, url: string, nofollow: bool}>
      */
-    public static function friendLinks(string $placement): array
+    public static function friendLinks(): array
+    {
+        return self::friendLinksBySql(
+            "SELECT name, url, nofollow FROM friend_links
+             WHERE enabled = 1 AND placement IN ('home', 'all')
+             ORDER BY sort_order ASC, id ASC
+             LIMIT 20"
+        );
+    }
+
+    /**
+     * 友链独立页：全部启用的友链（不分投放面，最多 100 条）。
+     *
+     * @return list<array{name: string, url: string, nofollow: bool}>
+     */
+    public static function allFriendLinks(): array
+    {
+        return self::friendLinksBySql(
+            'SELECT name, url, nofollow FROM friend_links
+             WHERE enabled = 1
+             ORDER BY sort_order ASC, id ASC
+             LIMIT 100'
+        );
+    }
+
+    /**
+     * 友链页是否有内容（页脚「友情链接」入口的显示依据）。
+     */
+    public static function hasFriendPageContent(): bool
+    {
+        if (!App::hasDb()) {
+            return false;
+        }
+
+        try {
+            $count = (int) App::db()->fetchColumn('SELECT COUNT(*) FROM friend_links WHERE enabled = 1');
+        } catch (Throwable) {
+            return false;
+        }
+
+        return $count > 0 || trim(Config::string('friend_link_apply_note')) !== '';
+    }
+
+    /**
+     * 申请友链说明（多行文本，友链页展示；空 = 使用默认提示）。
+     */
+    public static function friendApplyNote(): string
+    {
+        $note = trim(Config::string('friend_link_apply_note'));
+
+        return $note !== '' ? $note : '如需与本站交换友链，请通过公众号或站长联系方式洽谈。';
+    }
+
+    /**
+     * 友链查询公共出口：白名单过滤，非法条目直接丢弃。
+     *
+     * @return list<array{name: string, url: string, nofollow: bool}>
+     */
+    private static function friendLinksBySql(string $sql): array
     {
         if (!App::hasDb()) {
             return [];
         }
 
         try {
-            $rows = App::db()->fetchAll(
-                "SELECT name, url, nofollow FROM friend_links
-                 WHERE enabled = 1 AND placement IN (:one, 'all')
-                 ORDER BY sort_order ASC, id ASC
-                 LIMIT 20",
-                [':one' => $placement]
-            );
+            $rows = App::db()->fetchAll($sql);
         } catch (Throwable) {
             return [];
         }

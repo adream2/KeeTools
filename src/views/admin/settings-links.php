@@ -8,7 +8,7 @@ use App\Core\Csrf;
 use App\Core\View;
 ?><div class="page-head">
   <h1 class="page-title">友链管理</h1>
-  <p class="page-desc">首页友链只在首页页脚渲染（权重最高）；内页友链在其余页面页脚渲染。URL 非法的条目前台不输出</p>
+  <p class="page-desc">「全站页脚」= 所有页面页脚常显；「仅友链页」= 只出现在 /friend-links 独立页（与申请友链说明同页）。URL 非法的条目前台不输出</p>
 </div>
 
 <?php View::include('partials/admin-settings-tabs', ['activeTab' => 'links']); ?>
@@ -30,10 +30,11 @@ use App\Core\View;
       <div class="form-group">
         <label class="form-label" for="fl-placement">投放面</label>
         <select class="form-input" id="fl-placement" name="placement">
-          <option value="all">两处（首页 + 内页）</option>
-          <option value="home">仅首页</option>
-          <option value="sub">仅内页</option>
+          <option value="all">全站页脚（始终显示）</option>
+          <option value="home">全站页脚（始终显示）</option>
+          <option value="sub">仅友链页</option>
         </select>
+        <div class="form-hint">「仅友链页」的友链只出现在 /friend-links；页脚友链最多展示 20 条，友链页展示全部。</div>
       </div>
       <div class="form-group">
         <label class="form-label" for="fl-sort">排序</label>
@@ -92,7 +93,7 @@ use App\Core\View;
                 </td>
                 <td>
                   <select class="form-input" form="fl-form-<?= (int) $link['id'] ?>" name="placement">
-                    <?php foreach (['all' => '两处', 'home' => '仅首页', 'sub' => '仅内页'] as $k => $v): ?>
+                    <?php foreach (['all' => '全站页脚', 'home' => '全站页脚', 'sub' => '仅友链页'] as $k => $v): ?>
                       <option value="<?= e($k) ?>" <?= $link['placement'] === $k ? 'selected' : '' ?>><?= e($v) ?></option>
                     <?php endforeach; ?>
                   </select>

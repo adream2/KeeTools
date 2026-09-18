@@ -4,22 +4,23 @@ use App\Services\SiteOps;
 /**
  * 页脚（docs/站点运营模块设计.md §四/§九）
  *
- * 布局：上区三栏（品牌 / 快速导航 / 友链）→ 广告位 → 备案行 → 版权行。
- * 友链投放面由页面通过 $friendPlacement 决定（首页 home / 内页 sub）；
- * 关闭即零痕迹：无友链 / 无备案 / 赞助关闭时对应节点不输出。
- *
- * @var string $friendPlacement 投放面（home / sub），默认 sub
+ * 友链投放（用户定稿）：两种情况——
+ *   全站页脚常显（placement home/all，SiteOps::friendLinks()）
+ *   仅友链独立页（/friend-links，SiteOps::allFriendLinks()，与申请友链说明同页）
+ * 页脚通过「友情链接」入口指向独立页；关闭即零痕迹。
  */
 $footer = SiteOps::footer();
-$links = SiteOps::friendLinks($friendPlacement ?? 'sub');
+$links = SiteOps::friendLinks();
 $adSlot = SiteOps::adSlot('footer');
 $sponsor = SiteOps::sponsor();
-$applyUrl = \App\Core\Security::safeExternalUrl(trim(\App\Core\Config::string('friend_link_apply_url')));
 
 // 快捷导航：后台可配置（footer_nav），未配置回退内置导航
 $navLinks = SiteOps::footerNav();
 if ($navLinks === []) {
     $navLinks = [['label' => '全部工具', 'url' => url('/tools')]];
+    if (SiteOps::hasFriendPageContent()) {
+        $navLinks[] = ['label' => '友情链接', 'url' => url('/friend-links')];
+    }
     if ($sponsor !== null && $sponsor['show_footer']) {
         $navLinks[] = ['label' => '支持本站', 'url' => url('/sponsor')];
     }
@@ -55,16 +56,12 @@ if ($navLinks === []) {
         </ul>
       </nav>
 
-      <?php if ($links !== [] || $applyUrl !== null): ?>
+      <?php if ($links !== []): ?>
         <nav class="site-footer-col site-footer-col--wide" aria-label="友情链接">
           <h2 class="site-footer-col-title">
             友情链接
-            <?php if ($applyUrl !== null): ?>
-              <a class="site-footer-apply" href="<?= e($applyUrl) ?>"
-                 <?= str_starts_with($applyUrl, '/') ? '' : 'target="_blank" rel="noopener"' ?>>申请友链</a>
-            <?php endif; ?>
+            <a class="site-footer-apply" href="<?= e(url('/friend-links')) ?>">更多 →</a>
           </h2>
-          <?php if ($links !== []): ?>
           <ul class="site-footer-col-list site-footer-friends">
             <?php foreach ($links as $link): ?>
               <li>
@@ -75,7 +72,6 @@ if ($navLinks === []) {
               </li>
             <?php endforeach; ?>
           </ul>
-          <?php endif; ?>
         </nav>
       <?php endif; ?>
     </div>

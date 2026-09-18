@@ -184,6 +184,69 @@
   color: var(--c-primary);
 }
 
+/* 友链独立页 */
+.friend-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sp-3);
+}
+
+@media (min-width: 900px) {
+  .friend-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.friend-card {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  color: var(--c-text);
+}
+
+.friend-card:hover {
+  border-color: var(--c-primary);
+}
+
+.friend-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sp-8);
+  height: var(--sp-8);
+  border-radius: var(--r-md);
+  background-color: var(--c-primary-weak);
+  color: var(--c-primary);
+  flex: none;
+}
+
+.friend-card-body {
+  display: flex;
+  flex-direction: column;
+  min-width: var(--sp-0);
+}
+
+.friend-card-body strong {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.friend-card-body em {
+  font-style: normal;
+  font-size: var(--fs-xs);
+  color: var(--c-text-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.friend-apply-line {
+  margin: var(--sp-0) var(--sp-0) var(--sp-2);
+  color: var(--c-text-muted);
+  line-height: var(--lh-loose);
+}
+
 .site-footer-col-list {
   list-style: none;
   margin: var(--sp-0);
