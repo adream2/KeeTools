@@ -55,8 +55,8 @@ EXEMPT_MARKER = "et-allow-external"
 
 # 本站域名（部署后替换；相对路径优先，此处只是兜底白名单）
 SITE_HOSTS = {
-    "edutools.cn",
-    "www.edutools.cn",
+    "keetools.cn",
+    "www.keetools.cn",
 }
 
 

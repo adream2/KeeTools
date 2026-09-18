@@ -46,7 +46,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{title} — EduTools</title>
+<title>{title} — KeeTools 课工具</title>
 <!-- ET-META
 {{"id":"{tool_id}","version":"{version}"}}
 -->
@@ -204,7 +204,7 @@ def gather_args(args) -> dict:
 
     description = args.description or prompt(
         "一句话简介", f"{title}，适合课堂大屏使用。")
-    author = args.author or prompt("作者", "EduTools Team")
+    author = args.author or prompt("作者", "KeeTools Team")
 
     return {
         "tool_id": tool_id,
