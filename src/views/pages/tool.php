@@ -1,17 +1,38 @@
-<?php
+<?php use App\Core\Config;
 use App\Core\View;
+use App\Services\SiteOps;
 
 /**
- * 工具详情页
+ * 工具详情页（转化页）
  *
  * @var array<string, mixed> $tool
  * @var array{name: string, slug: string}|null $stage 工具所属学段（面包屑）
  * @var list<array<string, mixed>> $related 同 family 相关工具
+ * @var list<array<string, mixed>> $netdisks 活跃网盘链接
  */
 $subjects = is_array($tool['subjects'] ?? null) ? $tool['subjects'] : [];
 $grades = is_array($tool['grade_range'] ?? null) ? $tool['grade_range'] : [];
 $tags = is_array($tool['tags'] ?? null) ? $tool['tags'] : [];
 $type = (string) ($tool['type'] ?? 'shell');
+$toolId = (string) $tool['tool_id'];
+$downloadEnabled = Config::bool('DOWNLOAD_DIRECT_ENABLED', true);
+$previewEnabled = (bool) $tool['single_file'];
+
+// 主按钮：合集包（网盘入口，最高视觉权重）
+$primaryNetdisk = $netdisks[0] ?? null;
+
+// 结构化数据（SEO）
+$jsonLd = [
+    '@context'    => 'https://schema.org', // et-allow-external（JSON-LD 结构化数据词汇表标识，非资源加载）
+    '@type'       => 'SoftwareApplication',
+    'name'        => $tool['title'],
+    'description' => $tool['description'],
+    'softwareVersion' => $tool['version'],
+    'applicationCategory' => 'EducationalApplication',
+    'operatingSystem' => 'Web, Windows, macOS',
+    'offers'      => ['@type' => 'Offer', 'price' => '0', 'priceCurrency' => 'CNY'],
+    'author'      => ['@type' => 'Person', 'name' => $tool['author'] !== '' ? $tool['author'] : site_name()],
+];
 ?><nav class="breadcrumb" aria-label="面包屑">
   <a href="<?= e(url('/')) ?>">首页</a>
   <span class="breadcrumb-sep">/</span>
@@ -43,26 +64,71 @@ $type = (string) ($tool['type'] ?? 'shell');
 </div>
 
 <div class="tool-detail">
-  <div class="card">
-    <div class="card-head">
-      <h2 class="card-title">工具介绍</h2>
-    </div>
-    <div class="card-body">
-      <p class="tool-about"><?= e((string) $tool['description']) ?></p>
+  <div class="tool-main">
+    <div class="card tool-get-card">
+      <div class="card-body">
+        <?php if ($primaryNetdisk !== null): ?>
+          <a class="btn btn-primary btn-lg btn-block" href="<?= e(url('/netdisk/' . rawurlencode($toolId) . '?type=' . rawurlencode((string) $primaryNetdisk['netdisk_type']))) ?>">
+            <?= icon('cloud-download') ?>下载合集包（<?= e((string) $primaryNetdisk['type_label']) ?>）
+          </a>
+          <?php if (count($netdisks) > 1): ?>
+            <div class="tool-get-alt">
+              其他网盘：
+              <?php foreach (array_slice($netdisks, 1) as $item): ?>
+                <a class="tag" href="<?= e(url('/netdisk/' . rawurlencode($toolId) . '?type=' . rawurlencode((string) $item['netdisk_type']))) ?>">
+                  <?= e((string) $item['type_label']) ?>
+                </a>
+              <?php endforeach; ?>
+            </div>
+          <?php endif; ?>
+        <?php else: ?>
+          <span class="btn btn-primary btn-lg btn-block is-disabled" aria-disabled="true">
+            <?= icon('clock') ?>合集包整理中，敬请期待
+          </span>
+        <?php endif; ?>
 
-      <?php if ($tags !== []): ?>
-        <div class="tag-group tool-tags">
-          <?php foreach ($tags as $tag): ?>
-            <a class="tag" href="<?= e(url('/search?q=' . rawurlencode((string) $tag))) ?>"><?= e((string) $tag) ?></a>
-          <?php endforeach; ?>
-        </div>
-      <?php endif; ?>
+        <p class="tool-get-note">
+          合集包含本地导航门户，一次下载，全站工具离线使用。
+        </p>
 
-      <div class="alert alert-info tool-soon">
-        <?= icon('clock') ?>
-        <div>在线使用与合集包下载即将开放，敬请期待。</div>
+        <?php if ($previewEnabled): ?>
+          <div class="tool-preview" data-lazy-iframe="<?= e(url('/tool/' . rawurlencode($toolId) . '/use')) ?>">
+            <div class="tool-preview-skeleton">
+              <span class="tool-preview-hint"><?= icon('play') ?>点击加载在线预览</span>
+            </div>
+          </div>
+          <noscript>
+            <iframe class="tool-preview-frame" src="<?= e(url('/tool/' . rawurlencode($toolId) . '/use')) ?>"
+                    title="在线预览" loading="lazy"></iframe>
+          </noscript>
+        <?php endif; ?>
+
+        <?php if ($downloadEnabled && $previewEnabled): ?>
+          <p class="tool-download-minor">
+            先下载一个试试：<a href="<?= e(url('/download/' . rawurlencode($toolId))) ?>" data-track-download="<?= e($toolId) ?>">仅下载本工具（单文件）</a>
+          </p>
+        <?php endif; ?>
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2 class="card-title">工具介绍</h2>
+      </div>
+      <div class="card-body">
+        <p class="tool-about"><?= e((string) $tool['description']) ?></p>
+
+        <?php if ($tags !== []): ?>
+          <div class="tag-group tool-tags">
+            <?php foreach ($tags as $tag): ?>
+              <a class="tag" href="<?= e(url('/search?q=' . rawurlencode((string) $tag))) ?>"><?= e((string) $tag) ?></a>
+            <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
+      </div>
+    </div>
+
+    <?php View::include('partials/ad-slot', ['slot' => SiteOps::adSlot('detail_bottom'), 'position' => 'bottom']); ?>
   </div>
 
   <div class="tool-side">
@@ -105,8 +171,12 @@ $type = (string) ($tool['type'] ?? 'shell');
         </div>
       </div>
     </div>
+
+    <?php View::include('partials/ad-slot', ['slot' => SiteOps::adSlot('detail_side'), 'position' => 'side']); ?>
   </div>
 </div>
+
+<script type="application/ld+json"><?= json_encode($jsonLd, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
 
 <?php if ($related !== []): ?>
 <section class="section">

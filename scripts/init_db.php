@@ -47,7 +47,17 @@ $check = in_array('--check', $argv, true);
 const TABLES = [
     'categories', 'tools', 'tool_category', 'tool_netdisks',
     'admins', 'site_config', 'login_attempts', 'tool_overrides',
+    'ad_slots', 'announcements', 'friend_links', 'sponsor_thanks',
 ];
+
+/** P1 新增的业务表（建表 + 缺行种子共用清单） */
+const P1_TABLES = ['ad_slots', 'announcements', 'friend_links', 'sponsor_thanks'];
+
+/** 广告插槽固定键名（docs/站点运营模块设计.md §2.1） */
+const AD_SLOTS = ['home_top', 'list_top', 'list_bottom', 'detail_side', 'detail_bottom', 'footer'];
+
+/** 统计事件 CHECK 白名单（需求 §10.1 三事件 + download_direct + sponsor_click） */
+const STAT_EVENTS = ['view', 'use_online', 'netdisk_click', 'download_direct', 'sponsor_click'];
 
 $dbPath = App::path(Env::get('DB_PATH', 'storage/app.db') ?: 'storage/app.db');
 $statsDbPath = App::path(Env::get('STATS_DB_PATH', 'storage/stats.db') ?: 'storage/stats.db');
@@ -204,15 +214,68 @@ CREATE TABLE IF NOT EXISTS tool_overrides (
     overrides  TEXT NOT NULL DEFAULT '{}',            -- JSON 对象，键为 manifest 字段
     updated_at TEXT NOT NULL
 );
+
+-- 广告位（docs/站点运营模块设计.md §2）：6 个固定插槽
+-- device 只加 CSS 类不在服务端分流（缓存友好）；生效期按日期字符串比较
+CREATE TABLE IF NOT EXISTS ad_slots (
+    slot       TEXT PRIMARY KEY,
+    enabled    INTEGER NOT NULL DEFAULT 0,
+    code       TEXT    NOT NULL DEFAULT '',   -- 原始 HTML/JS，仅 admin 可写，原样输出
+    device     TEXT    NOT NULL DEFAULT 'all' CHECK (device IN ('all', 'desktop', 'mobile')),
+    start_date TEXT    NULL,
+    end_date   TEXT    NULL,
+    updated_at TEXT    NOT NULL
+);
+
+-- 公告（§3）：通栏 + 公告中心弹层共用
+CREATE TABLE IF NOT EXISTS announcements (
+    id         INTEGER PRIMARY KEY,
+    type       TEXT    NOT NULL DEFAULT 'info' CHECK (type IN ('info', 'update', 'warning')),
+    text       TEXT    NOT NULL,
+    link       TEXT    NULL,             -- 过 Security::safeExternalUrl 白名单
+    link_text  TEXT    NULL,
+    pinned     INTEGER NOT NULL DEFAULT 0,
+    enabled    INTEGER NOT NULL DEFAULT 0,
+    start_date TEXT    NULL,
+    end_date   TEXT    NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT    NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_announcements_enabled ON announcements(enabled, pinned, sort_order);
+
+-- 友链（§5）：placement 区分首页 / 内页两个投放面
+CREATE TABLE IF NOT EXISTS friend_links (
+    id         INTEGER PRIMARY KEY,
+    name       TEXT    NOT NULL,
+    url        TEXT    NOT NULL,
+    placement  TEXT    NOT NULL DEFAULT 'all' CHECK (placement IN ('home', 'sub', 'all')),
+    nofollow   INTEGER NOT NULL DEFAULT 0,
+    enabled    INTEGER NOT NULL DEFAULT 1,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT    NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_friend_links_enabled ON friend_links(enabled, placement, sort_order);
+
+-- 赞助鸣谢（§6）
+CREATE TABLE IF NOT EXISTS sponsor_thanks (
+    id         INTEGER PRIMARY KEY,
+    name       TEXT NOT NULL,
+    note       TEXT NOT NULL DEFAULT '',
+    amount     TEXT NULL,
+    created_at TEXT NOT NULL
+);
 SQL;
 
 // ── 表结构（统计库 stats.db，物理隔离写锁）───────────────
 const STATS_SCHEMA = <<<'SQL'
--- 只保三个事件：view / use_online / netdisk_click（需求文档 §10.1）
+-- 事件白名单：需求 §10.1 三核心事件 + download_direct（允许丢失）
+-- + sponsor_click（站点运营模块设计.md §6.2）
 CREATE TABLE IF NOT EXISTS stats (
     id           INTEGER PRIMARY KEY,
-    tool_id      TEXT NOT NULL,
-    event_type   TEXT NOT NULL CHECK (event_type IN ('view', 'use_online', 'netdisk_click')),
+    tool_id      TEXT NOT NULL DEFAULT '',
+    event_type   TEXT NOT NULL CHECK (event_type IN ('view', 'use_online', 'netdisk_click', 'download_direct', 'sponsor_click')),
     netdisk_type TEXT NULL,                           -- 仅 netdisk_click 用
     ip_hash      TEXT NULL,
     ua_hash      TEXT NULL,
@@ -231,11 +294,44 @@ try {
     $tableCount = count(array_filter(TABLES, [$db, 'tableExists']));
     echo "[OK]  app.db 建表完成（{$tableCount}/" . count(TABLES) . " 张表）\n";
 
+    // 迁移：P0 的 stats 表 CHECK 白名单缺 download_direct / sponsor_click。
+    // SQLite 无法修改 CHECK 约束，检测到旧结构时整表重建（统计允许丢失，无补偿）。
     $stats = new Database($statsDbPath, true);
     $stats->runSqlString(STATS_SCHEMA);
+    $statsDdl = (string) ($stats->fetch(
+        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'stats'"
+    )['sql'] ?? '');
+    if ($statsDdl !== '' && !str_contains($statsDdl, 'download_direct')) {
+        $rows = (int) $stats->fetchColumn('SELECT COUNT(*) FROM stats');
+        $stats->execute('DROP TABLE stats');
+        $stats->runSqlString(STATS_SCHEMA);
+        echo "[WARN] stats 表为 P0 旧结构，已重建（原 {$rows} 条记录随白名单扩展放弃）\n";
+    }
     echo "[OK]  stats.db 建表完成\n";
 } catch (Throwable $e) {
     fwrite(STDERR, '[ERR] 建表失败: ' . $e->getMessage() . "\n");
+    exit(1);
+}
+
+// ── 广告插槽种子（幂等：逐槽缺则补）──────────────────────
+try {
+    $existingSlots = array_column(
+        $db->fetchAll('SELECT slot FROM ad_slots'),
+        'slot'
+    );
+    $now = date('Y-m-d H:i:s');
+    foreach (AD_SLOTS as $slot) {
+        if (in_array($slot, $existingSlots, true)) {
+            continue;
+        }
+        $db->execute(
+            'INSERT INTO ad_slots (slot, enabled, code, device, updated_at) VALUES (:slot, 0, \'\', \'all\', :now)',
+            [':slot' => $slot, ':now' => $now]
+        );
+    }
+    echo "[OK]  广告插槽就绪（" . count(AD_SLOTS) . " 个固定槽位）\n";
+} catch (Throwable $e) {
+    fwrite(STDERR, '[ERR] 广告插槽种子写入失败: ' . $e->getMessage() . "\n");
     exit(1);
 }
 

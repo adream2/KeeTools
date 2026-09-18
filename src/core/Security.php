@@ -68,6 +68,18 @@ final class Security
     }
 
     /**
+     * 判断路径是否位于基准目录内（realpath 后的字符串前缀比较）。
+     */
+    private static function isInside(string $path, string $base): bool
+    {
+        if ($path === $base) {
+            return true;
+        }
+
+        return str_starts_with($path, rtrim($base, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR);
+    }
+
+    /**
      * 校验工具 id 格式。路径校验之外的第二道防线：
      * 格式合法即天然排除 ../、绝对路径等注入形态。
      */
@@ -170,6 +182,46 @@ final class Security
     public static function randomToken(int $bytes = 32): string
     {
         return bin2hex(random_bytes($bytes));
+    }
+
+    /**
+     * 外部 URL 白名单（docs/站点运营模块设计.md §一.4）。
+     *
+     * 只放行 http(s)://、mailto:、站内 / 开头路径；
+     * 拒绝 javascript: / data: / vbscript: / file: 与协议相对 //。
+     * 友链、公告链接、备案链接、二维码等所有运营输入必须过此函数。
+     *
+     * @return string|null 合法返回原值（trim 后），非法返回 null
+     */
+    public static function safeExternalUrl(?string $url): ?string
+    {
+        $url = trim((string) $url);
+        if ($url === '') {
+            return null;
+        }
+
+        // 控制字符与首部空白 tricks（java\tscript: 等）直接拒绝
+        if (preg_match('/[\x00-\x20\x7f]/', $url) === 1) {
+            return null;
+        }
+
+        if (str_starts_with($url, '//')) {
+            return null; // 协议相对
+        }
+
+        if (str_starts_with($url, '/')) {
+            return $url; // 站内路径
+        }
+
+        if (preg_match('#^https?://#i', $url) === 1) {
+            return $url;
+        }
+
+        if (preg_match('#^mailto:[^\s@]+@[^\s@]+$#i', $url) === 1) {
+            return $url;
+        }
+
+        return null;
     }
 
     /**

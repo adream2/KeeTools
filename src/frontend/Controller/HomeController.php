@@ -40,6 +40,7 @@ final class HomeController
             'dbReady'   => $dbReady,
             'featured'  => $featured,
             'stages'    => $stages,
+            'friendPlacement' => 'home',
         ]);
 
         return Response::html($html);

@@ -1,14 +1,17 @@
 <?php
 /**
- * 站点设置
+ * 站点设置（基本）
  *
  * @var array<string, array{label: string, value: string, inEnv: bool, inDb: bool, isSwitch: bool}> $items
  */
 use App\Core\Csrf;
+use App\Core\View;
 ?><div class="page-head">
   <h1 class="page-title">站点设置</h1>
   <p class="page-desc">保存在数据库 site_config 表；同名项若定义在 .env 中，.env 优先</p>
 </div>
+
+<?php View::include('partials/admin-settings-tabs', ['activeTab' => '']); ?>
 
 <form method="post" action="<?= e(url('/admin/settings')) ?>">
   <?= Csrf::field() ?>

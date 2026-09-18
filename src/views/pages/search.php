@@ -1,5 +1,6 @@
 <?php
 use App\Core\View;
+use App\Services\SiteOps;
 
 /**
  * 搜索页 / 全部工具页
@@ -25,6 +26,8 @@ use App\Core\View;
   <button class="btn btn-primary" type="submit"><?= icon('search') ?>搜索</button>
 </form>
 
+<?php View::include('partials/ad-slot', ['slot' => SiteOps::adSlot('list_top'), 'position' => 'top']); ?>
+
 <?php if ($tools !== []): ?>
   <div class="tool-grid section">
     <?php foreach ($tools as $tool): ?>
@@ -37,3 +40,5 @@ use App\Core\View;
     <div>试试「点名」「倒计时」等关键词，或浏览<a href="<?= e(url('/tools')) ?>">全部工具</a>。</div>
   </div>
 <?php endif; ?>
+
+<?php View::include('partials/ad-slot', ['slot' => SiteOps::adSlot('list_bottom'), 'position' => 'bottom']); ?>

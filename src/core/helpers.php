@@ -112,6 +112,34 @@ if (!function_exists('site_description')) {
     }
 }
 
+if (!function_exists('site_url')) {
+    /**
+     * 站点绝对地址。
+     *
+     * 用于下载文件内的品牌回流链接（file:// 环境必须绝对地址）。
+     * 以当前请求 Host 优先（生产域名切换零配置），请求上下文缺失时
+     * 回退 .env 的 APP_URL，最后兜底相对根。
+     */
+    function site_url(): string
+    {
+        $host = $_SERVER['HTTP_HOST'] ?? '';
+        if ($host !== '') {
+            $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                || (($_SERVER['SERVER_PORT'] ?? '') === '443')
+                || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+
+            return ($https ? 'https://' : 'http://') . $host;
+        }
+
+        $appUrl = trim((string) \App\Core\Env::get('APP_URL', ''));
+        if ($appUrl !== '') {
+            return rtrim($appUrl, '/');
+        }
+
+        return '';
+    }
+}
+
 if (!function_exists('is_debug')) {
     function is_debug(): bool
     {

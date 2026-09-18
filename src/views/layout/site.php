@@ -13,9 +13,11 @@
  */
 
 use App\Core\View;
+use App\Services\SiteOps;
 
 $title = isset($pageTitle) && $pageTitle !== '' ? $pageTitle : site_name();
 $desc = $pageDesc ?? site_description();
+$announcements = SiteOps::announcements();
 ?><!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -31,13 +33,20 @@ $desc = $pageDesc ?? site_description();
 
   <?php View::include('partials/header'); ?>
 
+  <?php View::include('partials/announcements', [
+      'announcements' => $announcements,
+      'barCount'      => SiteOps::announceBarCount(),
+      'closable'      => \App\Core\Config::bool('announce_closable', true),
+      'centered'      => \App\Core\Config::bool('announce_center', false),
+  ]); ?>
+
   <main class="site-main" id="main">
     <div class="container">
       <?= $content ?>
     </div>
   </main>
 
-  <?php View::include('partials/footer'); ?>
+  <?php View::include('partials/footer', ['friendPlacement' => $friendPlacement ?? 'sub']); ?>
 </div>
 
 <script src="<?= e(asset('js/site.js')) ?>" defer></script>

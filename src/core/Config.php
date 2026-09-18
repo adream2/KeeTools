@@ -37,13 +37,17 @@ final class Config
     /**
      * 读取配置。
      *
+     * .env 值为空字符串时视为「未定义」继续向下回落：
+     * 让 `KEY=`（留空）成为「交由后台 site_config 管理」的约定写法，
+     * 否则空值会以最高优先级盖掉后台保存的运营配置。
+     *
      * @param string $key     配置键（对应 .env 变量名或 site_config.key）
      * @param mixed  $default 默认值
      */
     public static function get(string $key, mixed $default = null): mixed
     {
         $fromEnv = Env::get($key);
-        if ($fromEnv !== null) {
+        if ($fromEnv !== null && $fromEnv !== '') {
             return $fromEnv;
         }
 

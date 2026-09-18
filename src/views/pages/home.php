@@ -7,8 +7,12 @@
  * @var list<array{name: string, slug: string, icon: ?string, count: int, subjects: list<array<string, mixed>>}> $stages
  */
 
+use App\Core\Config;
 use App\Core\View;
-?><section class="hero">
+use App\Services\SiteOps;
+?><?php View::include('partials/ad-slot', ['slot' => SiteOps::adSlot('home_top')]); ?>
+
+<section class="hero">
   <h1 class="hero-title"><?= e(site_name()) ?><span class="hero-title-cn">课工具</span></h1>
   <p class="hero-subtitle">
     面向中小学老师的免费课堂工具集。<br>
@@ -100,3 +104,15 @@ use App\Core\View;
     </div>
   <?php endif; ?>
 </section>
+
+<?php if (SiteOps::sponsorEnabled() && Config::bool('sponsor_show_home_cta', true)): ?>
+<section class="section">
+  <div class="card sponsor-home-cta">
+    <div class="card-body">
+      <h2 class="section-title"><?= icon('heart') ?>支持课工具</h2>
+      <p class="tool-get-note">所有工具免费，站点靠各位老师的自愿支持维持。哪怕一杯奶茶，都是持续更新的动力。</p>
+      <a class="btn btn-primary" href="<?= e(url('/sponsor')) ?>">支持本站</a>
+    </div>
+  </div>
+</section>
+<?php endif; ?>

@@ -19,7 +19,7 @@ final class ToolRepository
     /** 列表 / 卡片场景的公共字段 */
     private const CARD_FIELDS =
         'tool_id, title, description, version, type, family, grade_range, subjects, tags, author,
-         single_file, offline, screen, stats_enabled, license, is_featured, dir_path, updated_at';
+         entry, single_file, offline, screen, stats_enabled, license, is_featured, dir_path, updated_at';
 
     private ?Database $db;
 

@@ -68,3 +68,17 @@ lucide:loader
 lucide:inbox
 lucide:package
 lucide:wifi-off
+
+# ── P1 转化（网盘 / 详情 / 运营）────────────
+lucide:cloud
+lucide:cloud-download
+lucide:flag
+lucide:heart
+lucide:heart-handshake
+lucide:megaphone
+lucide:qr-code
+lucide:link
+lucide:image
+lucide:bar-chart-3
+lucide:trending-up
+lucide:monitor-smartphone

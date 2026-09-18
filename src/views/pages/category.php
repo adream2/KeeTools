@@ -1,5 +1,6 @@
 <?php
 use App\Core\View;
+use App\Services\SiteOps;
 
 /**
  * 分类页（一级学段 / 二级学科）
@@ -32,6 +33,8 @@ $isActive = static fn (string $slug): bool => $slug === $category['slug'];
   <p class="page-desc">共 <strong><?= e((string) $total) ?></strong> 个免费课堂工具</p>
 </div>
 
+<?php View::include('partials/ad-slot', ['slot' => SiteOps::adSlot('list_top'), 'position' => 'top']); ?>
+
 <?php if ($chips !== []): ?>
 <div class="chip-row">
   <?php foreach ($chips as $chip): ?>
@@ -55,3 +58,5 @@ $isActive = static fn (string $slug): bool => $slug === $category['slug'];
     <div>可以先看看<a href="<?= e(url('/tools')) ?>">全部工具</a>，或回到<a href="<?= e(url('/')) ?>">首页</a>按学段浏览。</div>
   </div>
 <?php endif; ?>
+
+<?php View::include('partials/ad-slot', ['slot' => SiteOps::adSlot('list_bottom'), 'position' => 'bottom']); ?>
