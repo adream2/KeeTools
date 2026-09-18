@@ -1990,6 +1990,64 @@ hr {
   color: var(--c-text-light);
 }
 
+/* 工具头描述（edupick 式直接放在标题下） */
+
+.tool-hero-desc {
+  margin: var(--sp-2) var(--sp-0) var(--sp-3);
+  color: var(--c-text-muted);
+  line-height: var(--lh-base);
+  max-width: calc(var(--sp-16) * 5);
+}
+
+/* 侧栏下载卡（转化主入口，视觉强调） */
+
+.tool-side-download {
+  border-color: var(--c-primary);
+}
+
+.pan-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.pan-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--c-text-invert);
+  background-color: var(--c-primary);
+  border: var(--bw-1) solid transparent;
+}
+
+.pan-btn:hover {
+  color: var(--c-text-invert);
+  background-color: var(--c-primary-hover);
+}
+
+.pan-btn-name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.pan-btn-go {
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+.pan-btn--disabled {
+  background-color: var(--c-bg-mute);
+  color: var(--c-text-light);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .tool-download-minor {
   margin-top: var(--sp-3);
   font-size: var(--fs-sm);
@@ -2001,44 +2059,136 @@ hr {
   text-decoration: underline;
 }
 
-/* 在线预览（懒加载） */
+/* 侧栏同类推荐（edupick 式紧凑列表） */
 
-.tool-preview {
-  margin-top: var(--sp-4);
-  border: var(--bw-1) solid var(--c-border);
+.side-related {
+  list-style: none;
+  margin: var(--sp-0);
+  padding: var(--sp-0);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.side-related a {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2);
   border-radius: var(--r-md);
-  overflow: hidden;
-  aspect-ratio: 16 / 9;
+}
+
+.side-related a:hover {
   background-color: var(--c-bg-mute);
 }
 
-.tool-preview-skeleton {
-  width: 100%;
-  height: 100%;
-  display: flex;
+.side-related-icon {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-}
-
-.tool-preview-skeleton:hover .tool-preview-hint {
+  width: var(--sp-8);
+  height: var(--sp-8);
+  border-radius: var(--r-md);
+  background-color: var(--c-primary-weak);
   color: var(--c-primary);
+  flex: none;
 }
 
-.tool-preview-hint {
+.side-related-text {
+  display: flex;
+  flex-direction: column;
+  min-width: var(--sp-0);
+}
+
+.side-related-text strong {
+  font-size: var(--fs-sm);
+  color: var(--c-text);
+  font-weight: var(--fw-medium);
+}
+
+.side-related-text em {
+  font-style: normal;
+  font-size: var(--fs-xs);
+  color: var(--c-text-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 在线预览（edupick 式：直接 iframe + 工具条） */
+
+.tool-preview {
+  border: var(--bw-1) solid var(--c-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background-color: var(--c-bg);
+  box-shadow: var(--shadow-sm, none);
+}
+
+.tool-preview:fullscreen {
+  border-radius: var(--sp-0);
+  background-color: var(--c-bg);
+}
+
+.preview-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  border-bottom: var(--bw-1) solid var(--c-border);
+  background-color: var(--c-bg-soft);
+  flex-wrap: wrap;
+}
+
+.preview-title {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
-  color: var(--c-text-muted);
+  font-weight: var(--fw-medium);
   font-size: var(--fs-sm);
+  color: var(--c-text);
 }
 
-.tool-preview-frame {
+.preview-dot {
+  width: var(--sp-2);
+  height: var(--sp-2);
+  border-radius: var(--r-full);
+  background-color: var(--c-success);
+  flex: none;
+}
+
+.preview-actions {
+  display: inline-flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.preview-frame {
   display: block;
   width: 100%;
-  height: 100%;
-  border: none;
+  height: min(70vh, calc(var(--sp-16) * 22));
+  border: var(--sp-0);
+  border-top: var(--sp-0);
   background-color: var(--c-bg);
+}
+
+/* 全屏：整个预览区或 iframe 自身铺满（老内核双写法） */
+.tool-preview:fullscreen .preview-frame,
+.preview-frame:fullscreen {
+  height: calc(100vh - var(--sp-16));
+}
+
+.preview-frame:fullscreen {
+  width: 100vw;
+}
+
+.preview-tip {
+  margin: var(--sp-0);
+  padding: var(--sp-2) var(--sp-4);
+  border-top: var(--bw-1) solid var(--c-border);
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
 }
 
 /* ═══════════════════ P1：网盘中间页 ═══════════════════ */

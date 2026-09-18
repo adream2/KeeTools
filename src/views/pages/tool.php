@@ -3,7 +3,10 @@ use App\Core\View;
 use App\Services\SiteOps;
 
 /**
- * 工具详情页（转化页）
+ * 工具详情页（转化页，参考 edupick 布局）
+ *
+ * 主栏：工具头 → 在线预览（直接 iframe，工具条含全屏/新窗口）→ 介绍
+ * 侧栏：下载卡（网盘按钮列表）→ 公众号 → 工具信息 → 同类推荐
  *
  * @var array<string, mixed> $tool
  * @var array{name: string, slug: string}|null $stage 工具所属学段（面包屑）
@@ -17,9 +20,9 @@ $type = (string) ($tool['type'] ?? 'shell');
 $toolId = (string) $tool['tool_id'];
 $downloadEnabled = Config::bool('DOWNLOAD_DIRECT_ENABLED', true);
 $previewEnabled = (bool) $tool['single_file'];
-
-// 主按钮：合集包（网盘入口，最高视觉权重）
-$primaryNetdisk = $netdisks[0] ?? null;
+$useUrl = url('/tool/' . rawurlencode($toolId) . '/use');
+$communityQr = trim(Config::string('community_qr_image'));
+$communityText = trim(Config::string('community_qr_text'));
 
 // 结构化数据（SEO）
 $jsonLd = [
@@ -50,9 +53,11 @@ $jsonLd = [
   <span class="tool-hero-icon"><?= icon(tool_type_icon($type)) ?></span>
   <div class="tool-hero-main">
     <h1 class="tool-hero-title"><?= e((string) $tool['title']) ?></h1>
+    <p class="tool-hero-desc"><?= e((string) $tool['description']) ?></p>
     <div class="tag-group">
       <span class="tag <?= e(tool_type_tag_class($type)) ?>"><?= e(tool_type_label($type)) ?></span>
       <span class="tag">v<?= e((string) $tool['version']) ?></span>
+      <span class="tag">更新于 <?= e((string) $tool['updated_at']) ?></span>
       <?php if ($tool['offline']): ?>
         <span class="tag tag-success"><?= icon('wifi-off') ?>离线可用</span>
       <?php endif; ?>
@@ -65,51 +70,27 @@ $jsonLd = [
 
 <div class="tool-detail">
   <div class="tool-main">
-    <div class="card tool-get-card">
-      <div class="card-body">
-        <?php if ($primaryNetdisk !== null): ?>
-          <a class="btn btn-primary btn-lg btn-block" href="<?= e(url('/netdisk/' . rawurlencode($toolId) . '?type=' . rawurlencode((string) $primaryNetdisk['netdisk_type']))) ?>">
-            <?= icon('cloud-download') ?>下载合集包（<?= e((string) $primaryNetdisk['type_label']) ?>）
-          </a>
-          <?php if (count($netdisks) > 1): ?>
-            <div class="tool-get-alt">
-              其他网盘：
-              <?php foreach (array_slice($netdisks, 1) as $item): ?>
-                <a class="tag" href="<?= e(url('/netdisk/' . rawurlencode($toolId) . '?type=' . rawurlencode((string) $item['netdisk_type']))) ?>">
-                  <?= e((string) $item['type_label']) ?>
-                </a>
-              <?php endforeach; ?>
-            </div>
-          <?php endif; ?>
-        <?php else: ?>
-          <span class="btn btn-primary btn-lg btn-block is-disabled" aria-disabled="true">
-            <?= icon('clock') ?>合集包整理中，敬请期待
+    <?php if ($previewEnabled): ?>
+      <section class="tool-preview">
+        <div class="preview-bar">
+          <span class="preview-title"><span class="preview-dot" aria-hidden="true"></span>在线体验 · 免安装</span>
+          <span class="preview-actions">
+            <button class="btn btn-sm" type="button" data-fullscreen-target=".tool-preview"><?= icon('maximize-2') ?>全屏体验</button>
+            <a class="btn btn-sm" href="<?= e($useUrl) ?>" target="_blank" rel="noopener"><?= icon('external-link') ?>新窗口打开</a>
           </span>
-        <?php endif; ?>
-
-        <p class="tool-get-note">
-          合集包含本地导航门户，一次下载，全站工具离线使用。
+        </div>
+        <iframe class="preview-frame" src="<?= e($useUrl) ?>" title="<?= e((string) $tool['title']) ?> 在线体验"
+                loading="lazy" allowfullscreen allow="fullscreen"></iframe>
+        <p class="preview-tip">
+          上方画面即是工具本身，点击后即可直接操作；教室没网时请使用右侧离线合集包。
         </p>
-
-        <?php if ($previewEnabled): ?>
-          <div class="tool-preview" data-lazy-iframe="<?= e(url('/tool/' . rawurlencode($toolId) . '/use')) ?>">
-            <div class="tool-preview-skeleton">
-              <span class="tool-preview-hint"><?= icon('play') ?>点击加载在线预览</span>
-            </div>
-          </div>
-          <noscript>
-            <iframe class="tool-preview-frame" src="<?= e(url('/tool/' . rawurlencode($toolId) . '/use')) ?>"
-                    title="在线预览" loading="lazy"></iframe>
-          </noscript>
-        <?php endif; ?>
-
-        <?php if ($downloadEnabled && $previewEnabled): ?>
-          <p class="tool-download-minor">
-            先下载一个试试：<a href="<?= e(url('/download/' . rawurlencode($toolId))) ?>" data-track-download="<?= e($toolId) ?>">仅下载本工具（单文件）</a>
-          </p>
-        <?php endif; ?>
+      </section>
+    <?php else: ?>
+      <div class="alert alert-info">
+        <?= icon('package') ?>
+        <div>该工具由多个文件组成，暂不支持浏览器内直接体验，请通过右侧离线合集包获取完整文件。</div>
       </div>
-    </div>
+    <?php endif; ?>
 
     <div class="card">
       <div class="card-head">
@@ -132,6 +113,54 @@ $jsonLd = [
   </div>
 
   <div class="tool-side">
+    <div class="card tool-side-download">
+      <div class="card-head">
+        <h2 class="card-title"><?= icon('cloud-download') ?>下载离线合集包</h2>
+      </div>
+      <div class="card-body">
+        <?php if ($netdisks !== []): ?>
+          <div class="pan-list">
+            <?php foreach ($netdisks as $i => $item): ?>
+              <a class="pan-btn<?= $i === 0 ? ' pan-btn--primary' : '' ?>"
+                 href="<?= e(url('/netdisk/' . rawurlencode($toolId) . '?type=' . rawurlencode((string) $item['netdisk_type']))) ?>">
+                <span class="pan-btn-name">
+                  <?= e((string) $item['type_label']) ?>
+                  <?php if ($i === 0): ?><span class="tag tag-success">推荐</span><?php endif; ?>
+                </span>
+                <span class="pan-btn-go">获取 →</span>
+              </a>
+            <?php endforeach; ?>
+          </div>
+          <p class="tool-get-note">建议优先使用主推网盘，速度更稳定；提取码在下一步页面展示。</p>
+        <?php else: ?>
+          <span class="pan-btn pan-btn--disabled" aria-disabled="true">
+            <span class="pan-btn-name">离线包整理中…</span>
+          </span>
+          <p class="tool-get-note">可先在上方「在线体验」中直接使用，离线包上线后即可下载。</p>
+        <?php endif; ?>
+
+        <?php if ($downloadEnabled && $previewEnabled): ?>
+          <p class="tool-download-minor">
+            先下载一个试试：<a href="<?= e(url('/download/' . rawurlencode($toolId))) ?>">仅下载本工具（单文件）</a>
+          </p>
+        <?php endif; ?>
+      </div>
+    </div>
+
+    <?php if ($communityQr !== ''): ?>
+      <div class="card">
+        <div class="card-body" style="text-align:center;">
+          <img src="<?= e($communityQr) ?>" alt="公众号二维码" loading="lazy" referrerpolicy="no-referrer"
+               style="width: calc(var(--sp-16) * 2); height: calc(var(--sp-16) * 2); border-radius: var(--r-md); border: var(--bw-1) solid var(--c-border); object-fit: cover;">
+          <p class="tool-get-note" style="margin-top: var(--sp-2);">
+            <?= e($communityText !== '' ? $communityText : '扫码关注，新工具上线第一时间通知') ?>
+          </p>
+        </div>
+      </div>
+    <?php endif; ?>
+
+    <?php View::include('partials/ad-slot', ['slot' => SiteOps::adSlot('detail_side'), 'position' => 'side']); ?>
+
     <div class="card">
       <div class="card-head">
         <h2 class="card-title">工具信息</h2>
@@ -164,29 +193,33 @@ $jsonLd = [
             <span class="tool-meta-label">许可证</span>
             <span class="tool-meta-value"><?= $tool['license'] === 'free' ? '免费使用' : e((string) $tool['license']) ?></span>
           </div>
-          <div class="tool-meta-row">
-            <span class="tool-meta-label">更新于</span>
-            <span class="tool-meta-value tool-meta-mono"><?= e((string) $tool['updated_at']) ?></span>
-          </div>
         </div>
       </div>
     </div>
 
-    <?php View::include('partials/ad-slot', ['slot' => SiteOps::adSlot('detail_side'), 'position' => 'side']); ?>
+    <?php if ($related !== []): ?>
+      <div class="card">
+        <div class="card-head">
+          <h2 class="card-title">同类推荐</h2>
+        </div>
+        <div class="card-body">
+          <ul class="side-related">
+            <?php foreach ($related as $relatedTool): ?>
+              <li>
+                <a href="<?= e(url('/tool/' . rawurlencode((string) $relatedTool['tool_id']))) ?>">
+                  <span class="side-related-icon"><?= icon(tool_type_icon((string) $relatedTool['type'])) ?></span>
+                  <span class="side-related-text">
+                    <strong><?= e((string) $relatedTool['title']) ?></strong>
+                    <em><?= e(mb_substr((string) $relatedTool['description'], 0, 30)) ?></em>
+                  </span>
+                </a>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </div>
+      </div>
+    <?php endif; ?>
   </div>
 </div>
 
 <script type="application/ld+json"><?= json_encode($jsonLd, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
-
-<?php if ($related !== []): ?>
-<section class="section">
-  <div class="section-head">
-    <h2 class="section-title">相关工具</h2>
-  </div>
-  <div class="tool-grid">
-    <?php foreach ($related as $relatedTool): ?>
-      <?php View::include('partials/tool-card', ['tool' => $relatedTool]); ?>
-    <?php endforeach; ?>
-  </div>
-</section>
-<?php endif; ?>

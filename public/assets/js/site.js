@@ -129,26 +129,22 @@
   }
 
   /**
-   * 详情页在线预览：点击骨架区后按需加载 iframe（懒加载，不拖慢首屏）。
+   * 详情页预览：全屏体验按钮（容器 requestFullscreen，老内核 webkit 兜底）。
    */
-  function initLazyPreview() {
-    var boxes = document.querySelectorAll('[data-lazy-iframe]');
-    Array.prototype.forEach.call(boxes, function (box) {
-      var src = box.getAttribute('data-lazy-iframe');
-      if (!src) {
-        return;
-      }
-      box.addEventListener('click', function () {
-        if (box.querySelector('iframe')) {
+  function initFullscreenPreview() {
+    var buttons = document.querySelectorAll('[data-fullscreen-target]');
+    Array.prototype.forEach.call(buttons, function (btn) {
+      btn.addEventListener('click', function () {
+        var target = document.querySelector(btn.getAttribute('data-fullscreen-target'));
+        if (!target) {
           return;
         }
-        var frame = document.createElement('iframe');
-        frame.className = 'tool-preview-frame';
-        frame.setAttribute('title', '在线预览');
-        frame.setAttribute('src', src);
-        frame.setAttribute('allow', 'fullscreen');
-        box.innerHTML = '';
-        box.appendChild(frame);
+        var request = target.requestFullscreen
+          || target.webkitRequestFullscreen
+          || target.msRequestFullscreen;
+        if (request) {
+          request.call(target);
+        }
       });
     });
   }
@@ -171,7 +167,7 @@
     initSearchGuard();
     initCopyButton();
     initCountdown();
-    initLazyPreview();
+    initFullscreenPreview();
     initConfirmForms();
     initAnnouncements();
   }

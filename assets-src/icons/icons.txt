@@ -82,3 +82,4 @@ lucide:image
 lucide:bar-chart-3
 lucide:trending-up
 lucide:monitor-smartphone
+lucide:maximize-2
