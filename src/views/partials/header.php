@@ -8,13 +8,13 @@
 ?><header class="site-header">
   <div class="container site-header-inner">
     <a class="site-logo" href="<?= e(url('/')) ?>">
-      <span class="site-logo-mark" aria-hidden="true">◆</span>
+      <span class="site-logo-mark"><?= icon('grid-2x2') ?></span>
       <span><?= e(site_name()) ?></span>
     </a>
 
     <nav class="site-nav" aria-label="主导航">
-      <a class="site-nav-link is-active" href="<?= e(url('/')) ?>">首页</a>
-      <a class="site-nav-link" href="<?= e(url('/tools')) ?>">全部工具</a>
+      <a class="site-nav-link is-active" href="<?= e(url('/')) ?>"><?= icon('home') ?>首页</a>
+      <a class="site-nav-link" href="<?= e(url('/tools')) ?>"><?= icon('package') ?>全部工具</a>
     </nav>
 
     <div class="site-header-actions">
@@ -22,9 +22,9 @@
         <label class="visually-hidden" for="header-q">搜索工具</label>
         <input class="form-input" type="search" id="header-q" name="q" placeholder="搜索工具…"
                autocomplete="off" maxlength="50">
-        <button class="btn btn-primary" type="submit">搜索</button>
+        <button class="btn btn-primary" type="submit"><?= icon('search') ?>搜索</button>
       </form>
-      <a class="btn btn-ghost btn-sm" href="<?= e(url('/admin')) ?>">后台</a>
+      <a class="btn btn-ghost btn-sm" href="<?= e(url('/admin')) ?>"><?= icon('settings') ?>后台</a>
     </div>
   </div>
 </header>

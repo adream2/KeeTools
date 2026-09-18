@@ -2,10 +2,14 @@
 /**
  * 首页
  *
- * @var bool $dbReady 数据库是否已初始化
+ * @var bool   $dbReady 数据库是否已初始化
+ * @var list<array<string, mixed>> $featured 推荐工具（不足时为最新工具）
+ * @var list<array{name: string, slug: string, icon: ?string, count: int, subjects: list<array<string, mixed>>}> $stages
  */
+
+use App\Core\View;
 ?><section class="hero">
-  <h1 class="hero-title"><?= e(site_name()) ?></h1>
+  <h1 class="hero-title"><?= e(site_name()) ?><span class="hero-title-cn">课工具</span></h1>
   <p class="hero-subtitle">
     面向中小学老师的免费课堂工具集。<br>
     单文件即开即用，无需安装，断网也能用。
@@ -19,9 +23,9 @@
   </form>
 
   <div class="hero-features">
-    <span class="hero-feature">✓ 零依赖单文件</span>
-    <span class="hero-feature">✓ 数据存本地</span>
-    <span class="hero-feature">✓ 完全免费</span>
+    <span class="hero-feature"><?= icon('check') ?>零依赖单文件</span>
+    <span class="hero-feature"><?= icon('check') ?>数据存本地</span>
+    <span class="hero-feature"><?= icon('check') ?>完全免费</span>
   </div>
 </section>
 
@@ -36,34 +40,63 @@
   </div>
 <?php endif; ?>
 
+<?php if ($stages !== []): ?>
 <section class="section">
   <div class="section-head">
-    <h2 class="section-title">按学科浏览</h2>
+    <h2 class="section-title">按学段浏览</h2>
   </div>
-  <div class="cat-grid">
-    <?php
-    // P0 阶段为静态占位，用于验证布局；P1 阶段改为读取 categories 表
-    $placeholderCategories = [
-        '语文' => 0, '数学' => 0, '英语' => 0, '物理' => 0,
-        '化学' => 0, '生物' => 0, '历史' => 0, '地理' => 0,
-    ];
-    ?>
-    <?php foreach ($placeholderCategories as $name => $count): ?>
-      <a class="cat-item" href="<?= e(url('/category/' . rawurlencode((string) $name))) ?>">
-        <span class="cat-item-name"><?= e($name) ?></span>
-        <span class="cat-item-count"><?= e((string) $count) ?> 个工具</span>
-      </a>
+  <div class="stage-grid">
+    <?php foreach ($stages as $stage): ?>
+      <div class="stage-card">
+        <a class="stage-card-head" href="<?= e(url('/category/' . rawurlencode($stage['slug']))) ?>">
+          <span class="stage-icon"><?= icon($stage['icon'] ?? 'book-open') ?></span>
+          <span class="stage-card-head-text">
+            <span class="stage-name"><?= e($stage['name']) ?></span>
+            <span class="stage-count"><?= e((string) $stage['count']) ?> 个工具</span>
+          </span>
+          <?= icon('chevron-right', 'stage-arrow') ?>
+        </a>
+        <div class="stage-chips">
+          <?php
+          // 优先展示已有工具的学科，最多 8 个；全空时展示前 4 个学科做预览
+          $withTools = array_values(array_filter(
+              $stage['subjects'],
+              static fn (array $s): bool => $s['count'] > 0
+          ));
+          $preview = $withTools !== [] ? array_slice($withTools, 0, 8) : array_slice($stage['subjects'], 0, 4);
+          ?>
+          <?php foreach ($preview as $subject): ?>
+            <a class="stage-chip" href="<?= e(url('/category/' . rawurlencode($subject['slug']))) ?>">
+              <?= e($subject['name']) ?><?php if ($subject['count'] > 0): ?><span class="stage-chip-count"><?= e((string) $subject['count']) ?></span><?php endif; ?>
+            </a>
+          <?php endforeach; ?>
+          <?php if (count($stage['subjects']) > count($preview)): ?>
+            <a class="stage-chip stage-chip-more" href="<?= e(url('/category/' . rawurlencode($stage['slug']))) ?>">
+              全部 <?= e((string) count($stage['subjects'])) ?> 科
+            </a>
+          <?php endif; ?>
+        </div>
+      </div>
     <?php endforeach; ?>
   </div>
 </section>
+<?php endif; ?>
 
 <section class="section">
   <div class="section-head">
-    <h2 class="section-title">最新工具</h2>
+    <h2 class="section-title">精选工具</h2>
     <a class="section-more" href="<?= e(url('/tools')) ?>">查看全部 →</a>
   </div>
-  <div class="empty">
-    <div class="empty-title">暂无工具</div>
-    <div>工具接入数据库后在此展示。P0 阶段仅验证框架链路。</div>
-  </div>
+  <?php if ($featured !== []): ?>
+    <div class="tool-grid">
+      <?php foreach ($featured as $tool): ?>
+        <?php View::include('partials/tool-card', ['tool' => $tool]); ?>
+      <?php endforeach; ?>
+    </div>
+  <?php elseif ($dbReady): ?>
+    <div class="empty">
+      <div class="empty-title">暂无工具</div>
+      <div>在后台执行「扫描同步」后，工具会出现在这里。</div>
+    </div>
+  <?php endif; ?>
 </section>

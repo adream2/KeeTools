@@ -7,13 +7,13 @@ use App\Core\App;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\View;
+use App\Services\ToolRepository;
 
 /**
- * 前台首页控制器
+ * 前台首页
  *
- * P0 阶段只做「框架连通性验证」：渲染首页骨架，确认
- * 路由 → 控制器 → 视图 → 响应 全链路可用。
- * 真实数据（工具列表 / 分类）在 P1 阶段接入。
+ * 推荐工具（is_featured）不足时用最新工具补齐，
+ * 保证冷启动（刚扫描完、还没人工推荐）首页不空。
  */
 final class HomeController
 {
@@ -23,9 +23,23 @@ final class HomeController
         // 首次 clone 后还没跑 init_db.php 是正常路径。
         $dbReady = App::hasDb();
 
+        $featured = [];
+        $stages = [];
+
+        if ($dbReady) {
+            $repository = new ToolRepository();
+            $featured = $repository->featured(6);
+            if ($featured === []) {
+                $featured = $repository->latest(6);
+            }
+            $stages = $repository->stageCards();
+        }
+
         $html = View::render('pages/home', [
-            'pageTitle' => 'EduTools — 免费课堂工具集',
+            'pageTitle' => site_name() . ' — 免费课堂工具集',
             'dbReady'   => $dbReady,
+            'featured'  => $featured,
+            'stages'    => $stages,
         ]);
 
         return Response::html($html);

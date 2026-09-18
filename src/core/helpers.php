@@ -38,11 +38,19 @@ if (!function_exists('asset')) {
      *
      * 附加基于文件修改时间的版本串：CSS/JS 更新后浏览器立即可见，
      * 无需手动改版本号，也避免用户看到旧样式。
+     *
+     * $versioned = false 用于 SVG sprite：`<use>` 的外部引用在教室常见的
+     * Win7 + 老版 Chrome / 360 内核上对「查询串 + 片段标识」支持不稳，
+     * 故 sprite 走不带查询串的稳定地址（见 icon()）。
      */
-    function asset(string $path): string
+    function asset(string $path, bool $versioned = true): string
     {
         $relative = ltrim($path, '/');
         $url = '/assets/' . $relative;
+
+        if (!$versioned) {
+            return $url;
+        }
 
         $file = dirname(__DIR__, 2) . '/public/assets/' . $relative;
         if (is_file($file)) {
@@ -73,14 +81,17 @@ if (!function_exists('icon')) {
      *
      * 用 sprite 而非每处内联完整 SVG：图标重复出现时体积可控。
      * aria-hidden 默认开启，因为图标是装饰性的，语义由邻近文字承担。
+     *
+     * 同时输出 href 与 xlink:href：教室常见 Win7 + 老版 Chrome / 360，
+     * 仅写 href 在这些内核上不会渲染。图标缺失时不报错（只是不显示）。
      */
     function icon(string $name, string $class = ''): string
     {
         $classes = trim('icon ' . $class);
-        $href = asset('icons/sprite.svg') . '#i-' . $name;
+        $href = e(asset('icons/sprite.svg', false) . '#i-' . $name);
 
         return '<svg class="' . e($classes) . '" aria-hidden="true" focusable="false">'
-            . '<use href="' . e($href) . '"></use></svg>';
+            . '<use href="' . $href . '" xlink:href="' . $href . '"></use></svg>';
     }
 }
 
@@ -90,7 +101,7 @@ if (!function_exists('site_name')) {
      */
     function site_name(): string
     {
-        return (string) (App\Core\Config::get('SITE_NAME') ?? 'EduTools');
+        return (string) (App\Core\Config::get('SITE_NAME') ?? 'KeeTools');
     }
 }
 
@@ -107,3 +118,100 @@ if (!function_exists('is_debug')) {
         return Env::isDebug();
     }
 }
+
+if (!function_exists('page_not_found')) {
+    /**
+     * 渲染 404 错误页（内容缺失时控制器用，与路由级 404 视觉一致）。
+     */
+    function page_not_found(string $message = ''): \App\Core\Response
+    {
+        $exception = new RuntimeException($message !== '' ? $message : 'NOT_FOUND');
+
+        $html = \App\Core\View::render('pages/error', [
+            'status'     => 404,
+            'message'    => $message,
+            'exception'  => $exception,
+            'showDetail' => is_debug(),
+        ]);
+
+        return \App\Core\Response::html($html, 404);
+    }
+}
+
+if (!function_exists('tool_type_label')) {
+    /**
+     * 工具类型展示名。
+     */
+    function tool_type_label(?string $type): string
+    {
+        return match ($type) {
+            'fixed'      => '知识速查',
+            'experiment' => '实验模拟',
+            default      => '课堂互动',
+        };
+    }
+}
+
+if (!function_exists('tool_type_icon')) {
+    /**
+     * 工具类型对应的 sprite 图标名（须已在 icons.txt 登记）。
+     */
+    function tool_type_icon(?string $type): string
+    {
+        return match ($type) {
+            'fixed'      => 'book-open',
+            'experiment' => 'flask-conical',
+            default      => 'play',
+        };
+    }
+}
+
+if (!function_exists('tool_type_tag_class')) {
+    /**
+     * 工具类型对应的 tag 配色类。
+     */
+    function tool_type_tag_class(?string $type): string
+    {
+        return match ($type) {
+            'fixed'      => 'tag-success',
+            'experiment' => 'tag-warning',
+            default      => 'tag-info',
+        };
+    }
+}
+
+if (!function_exists('grade_range_label')) {
+    /**
+     * 学段数组 → 人类可读文案（如「全学段」「小学 · 初中」）。
+     *
+     * @param list<string> $grades
+     */
+    function grade_range_label(array $grades): string
+    {
+        if ($grades === []) {
+            return '通用';
+        }
+
+        $names = [
+            '1-2'   => '小学低年级',
+            '3-4'   => '小学中年级',
+            '5-6'   => '小学高年级',
+            '1-6'   => '小学',
+            '7-9'   => '初中',
+            '10-12' => '高中',
+            '1-12'  => '全学段',
+        ];
+
+        if (in_array('1-12', $grades, true)) {
+            return '全学段';
+        }
+
+        $labels = [];
+        foreach ($grades as $grade) {
+            $labels[] = $names[$grade] ?? $grade;
+        }
+
+        return implode(' · ', array_unique($labels));
+    }
+}
+

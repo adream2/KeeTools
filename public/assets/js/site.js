@@ -69,5 +69,5 @@
   }
 
   // 暴露给后续模块（P1 的工具卡片点击上报）
-  window.EduTools = { track: track };
+  window.KeeTools = { track: track };
 })();
