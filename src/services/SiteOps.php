@@ -154,6 +154,109 @@ final class SiteOps
         return $out;
     }
 
+    // ── 导航（顶部 / 页脚快捷导航，均可后台配置）────
+
+    /**
+     * 顶部导航菜单。site_config.header_nav = [{label, url}]（JSON）。
+     * 未配置 / 全部非法时回退默认两项，保证导航永不为空。
+     *
+     * @return list<array{label: string, url: string}>
+     */
+    public static function headerNav(): array
+    {
+        $items = self::parseNavJson(Config::string('header_nav'));
+
+        return $items !== [] ? $items : [
+            ['label' => '首页', 'url' => '/'],
+            ['label' => '全部工具', 'url' => '/tools'],
+        ];
+    }
+
+    /**
+     * 页脚快捷导航。未配置返回 []，视图据此回退内置导航。
+     *
+     * @return list<array{label: string, url: string}>
+     */
+    public static function footerNav(): array
+    {
+        return self::parseNavJson(Config::string('footer_nav'));
+    }
+
+    /**
+     * 解析导航 JSON 并过 URL 白名单，坏条目直接丢弃。
+     *
+     * @return list<array{label: string, url: string}>
+     */
+    private static function parseNavJson(string $json): array
+    {
+        if (trim($json) === '') {
+            return [];
+        }
+
+        $decoded = json_decode($json, true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($decoded as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $label = trim((string) ($item['label'] ?? ''));
+            $url = Security::safeExternalUrl((string) ($item['url'] ?? ''));
+            if ($label === '' || $url === null) {
+                continue;
+            }
+            $out[] = ['label' => $label, 'url' => $url];
+        }
+
+        return $out;
+    }
+
+    /**
+     * 把「每行 名称 | URL」文本解析为导航 JSON（后台保存用）。
+     * 非法行跳过；全部为空返回 ''（= 未配置，走默认）。
+     */
+    public static function parseNavText(string $text): string
+    {
+        $lines = preg_split('/\r\n|\r|\n/', $text) ?: [];
+        $items = [];
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+            $parts = array_map('trim', explode('|', $line));
+            $label = $parts[0] ?? '';
+            $url = Security::safeExternalUrl($parts[1] ?? '');
+            if ($label === '' || $url === null) {
+                continue;
+            }
+            $items[] = ['label' => mb_substr($label, 0, 20), 'url' => $url];
+        }
+
+        return $items !== [] ? json_encode($items, JSON_UNESCAPED_UNICODE) : '';
+    }
+
+    /**
+     * 把导航 JSON 反解析回「每行 名称 | URL」文本（后台编辑表单回显用）。
+     */
+    public static function navToText(string $json): string
+    {
+        $items = self::parseNavJson($json);
+        if ($items === []) {
+            return '';
+        }
+
+        $lines = [];
+        foreach ($items as $item) {
+            $lines[] = $item['label'] . ' | ' . $item['url'];
+        }
+
+        return implode("\n", $lines);
+    }
+
     // ── 页脚 ────────────────────────────────────────
 
     /**

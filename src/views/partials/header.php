@@ -2,9 +2,11 @@
 /**
  * 页头
  *
- * 站点导航。分类动态渲染在 P1 接入数据库后补上，
- * 此处先放固定入口，保证布局结构定型。
+ * 主导航可后台配置（site_config.header_nav，未配置回退默认两项）。
  */
+use App\Services\SiteOps;
+
+$currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 ?><header class="site-header">
   <div class="container site-header-inner">
     <a class="site-logo" href="<?= e(url('/')) ?>">
@@ -13,8 +15,12 @@
     </a>
 
     <nav class="site-nav" aria-label="主导航">
-      <a class="site-nav-link is-active" href="<?= e(url('/')) ?>"><?= icon('home') ?>首页</a>
-      <a class="site-nav-link" href="<?= e(url('/tools')) ?>"><?= icon('package') ?>全部工具</a>
+      <?php foreach (SiteOps::headerNav() as $i => $item): ?>
+        <?php $isActive = $currentPath === $item['url'] || ($item['url'] !== '/' && str_starts_with($currentPath, $item['url'])); ?>
+        <a class="site-nav-link<?= $i === 0 && $currentPath === '/' ? ' is-active' : ($isActive ? ' is-active' : '') ?>"
+           href="<?= e($item['url']) ?>"
+           <?= str_starts_with($item['url'], '/') ? '' : 'target="_blank" rel="noopener"' ?>><?= e($item['label']) ?></a>
+      <?php endforeach; ?>
     </nav>
 
     <div class="site-header-actions">

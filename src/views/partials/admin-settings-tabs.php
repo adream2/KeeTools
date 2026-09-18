@@ -7,7 +7,7 @@
  */
 $tabs = [
     ''         => ['基本', 'settings'],
-    'footer'   => ['页脚与备案', 'layout-list'],
+    'footer'   => ['导航与页脚', 'layout-list'],
     'links'    => ['友链', 'link'],
     'ads'      => ['广告位', 'image'],
     'announce' => ['公告', 'megaphone'],

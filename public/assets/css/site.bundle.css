@@ -1045,6 +1045,19 @@ hr {
   color: var(--c-text);
 }
 
+.site-footer-apply {
+  margin-left: var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-normal);
+  color: var(--c-text-muted);
+  text-decoration: underline;
+  text-underline-offset: var(--sp-1);
+}
+
+.site-footer-apply:hover {
+  color: var(--c-primary);
+}
+
 .site-footer-col-list {
   list-style: none;
   margin: var(--sp-0);

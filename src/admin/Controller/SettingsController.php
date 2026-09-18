@@ -129,9 +129,12 @@ final class SettingsController extends AdminController
     public function footer(Request $request): Response
     {
         return $this->render('settings-footer', [
-            'pageTitle' => '页脚与备案 — ' . site_name(),
-            'textItems' => $this->collectTextItems(self::FOOTER_KEYS),
-            'switches'  => $this->collectSwitches(self::FOOTER_SWITCHES),
+            'pageTitle'      => '导航与页脚 — ' . site_name(),
+            'textItems'      => $this->collectTextItems(self::FOOTER_KEYS),
+            'switches'       => $this->collectSwitches(self::FOOTER_SWITCHES),
+            'headerNavText'  => SiteOps::navToText(Config::string('header_nav')),
+            'footerNavText'  => SiteOps::navToText(Config::string('footer_nav')),
+            'friendApplyUrl' => Config::string('friend_link_apply_url'),
         ], 'settings');
     }
 
@@ -142,7 +145,20 @@ final class SettingsController extends AdminController
             array_keys(self::FOOTER_SWITCHES)
         ), $request);
 
-        return $this->redirectWith('success', '页脚设置已保存（' . $saved . ' 项）。', '/admin/settings/footer');
+        // 导航：每行「名称 | URL」→ JSON 存储（空 = 回退默认导航）
+        foreach (['header_nav', 'footer_nav'] as $navKey) {
+            if ($request->post($navKey) !== null) {
+                Config::set($navKey, SiteOps::parseNavText((string) $request->post($navKey)));
+                $saved++;
+            }
+        }
+
+        if ($request->post('friend_link_apply_url') !== null) {
+            Config::set('friend_link_apply_url', trim((string) $request->post('friend_link_apply_url')));
+            $saved++;
+        }
+
+        return $this->redirectWith('success', '导航与页脚设置已保存（' . $saved . ' 项）。', '/admin/settings/footer');
     }
 
     // ── 友链 Tab ───────────────────────────────────

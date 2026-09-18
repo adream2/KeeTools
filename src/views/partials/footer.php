@@ -14,14 +14,17 @@ $footer = SiteOps::footer();
 $links = SiteOps::friendLinks($friendPlacement ?? 'sub');
 $adSlot = SiteOps::adSlot('footer');
 $sponsor = SiteOps::sponsor();
+$applyUrl = \App\Core\Security::safeExternalUrl(trim(\App\Core\Config::string('friend_link_apply_url')));
 
-$navLinks = [
-    ['全部工具', url('/tools')],
-];
-if ($sponsor !== null && $sponsor['show_footer']) {
-    $navLinks[] = ['支持本站', url('/sponsor')];
+// 快捷导航：后台可配置（footer_nav），未配置回退内置导航
+$navLinks = SiteOps::footerNav();
+if ($navLinks === []) {
+    $navLinks = [['label' => '全部工具', 'url' => url('/tools')]];
+    if ($sponsor !== null && $sponsor['show_footer']) {
+        $navLinks[] = ['label' => '支持本站', 'url' => url('/sponsor')];
+    }
+    $navLinks[] = ['label' => '后台', 'url' => url('/admin')];
 }
-$navLinks[] = ['后台', url('/admin')];
 ?><footer class="site-footer">
   <div class="container">
     <div class="site-footer-top">
@@ -43,15 +46,25 @@ $navLinks[] = ['后台', url('/admin')];
       <nav class="site-footer-col" aria-label="页脚导航">
         <h2 class="site-footer-col-title">快速导航</h2>
         <ul class="site-footer-col-list">
-          <?php foreach ($navLinks as [$label, $href]): ?>
-            <li><a href="<?= e($href) ?>"><?= e($label) ?></a></li>
+          <?php foreach ($navLinks as $item): ?>
+            <li>
+              <a href="<?= e($item['url']) ?>"
+                 <?= str_starts_with($item['url'], '/') ? '' : 'target="_blank" rel="noopener"' ?>><?= e($item['label']) ?></a>
+            </li>
           <?php endforeach; ?>
         </ul>
       </nav>
 
-      <?php if ($links !== []): ?>
+      <?php if ($links !== [] || $applyUrl !== null): ?>
         <nav class="site-footer-col site-footer-col--wide" aria-label="友情链接">
-          <h2 class="site-footer-col-title">友情链接</h2>
+          <h2 class="site-footer-col-title">
+            友情链接
+            <?php if ($applyUrl !== null): ?>
+              <a class="site-footer-apply" href="<?= e($applyUrl) ?>"
+                 <?= str_starts_with($applyUrl, '/') ? '' : 'target="_blank" rel="noopener"' ?>>申请友链</a>
+            <?php endif; ?>
+          </h2>
+          <?php if ($links !== []): ?>
           <ul class="site-footer-col-list site-footer-friends">
             <?php foreach ($links as $link): ?>
               <li>
@@ -62,6 +75,7 @@ $navLinks[] = ['后台', url('/admin')];
               </li>
             <?php endforeach; ?>
           </ul>
+          <?php endif; ?>
         </nav>
       <?php endif; ?>
     </div>
