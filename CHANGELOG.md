@@ -27,7 +27,16 @@
     历史产物（下载 / 删除 / 按原配置重新生成）；打包完成提示到「网盘管理」回填链接（联动 P1）
   - **分发辅助**：产物旁自动生成网盘上传清单（包名/体积/SHA256/建议网盘/提取码占位，
     不随包分发）；打包前校验工具 HTML 内 ET-META 版本与站点记录一致，避免发旧包
-  - 包结构：`{slug}-{version}/`（index.html + tools-index.json + tools/*.html + 使用说明.txt + 关于KeeTools.txt）
+  - 包结构：`{slug}-{version}/`（index.html + tools-index.json + tools/*.html + 使用说明.txt + 使用说明.html + 关于KeeTools.txt）
+  - **P3 补全（三项待决策落地 + PWA 定稿）**：
+    - 门户二维码快照：复用站点设置 `community_qr_image`，打包时转 data URI 内嵌门户页脚
+      （file:// 零外部请求）；支持 http 拉取（5 秒超时）/ 站内路径 / data URI 直传，
+      图片格式嗅探（PNG/JPEG/WebP）+ 512KB 上限，任何失败优雅降级为无码
+    - 增量包辅助：打包页历史产物行「勾选变更（N）」——相对该包有更新（updated_at 变化）
+      或新增的工具一键勾选 + 预填 `{slug}-update` 包名
+    - 使用说明 HTML（打印友好）：工具清单表格 + Ctrl+P 一步存 PDF（零依赖替代真 PDF），
+      与二维码联动
+    - PWA 定稿：只做工具级（P2 `et-chrome` blob manifest 已实现），不做站点级
 
 - **P2 标杆工具（2026-09-18，5 个工具 + 共享基建）**
   - **`_shared/` 基建沉淀**：

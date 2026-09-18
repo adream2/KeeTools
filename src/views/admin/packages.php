@@ -66,7 +66,7 @@ use App\Core\Csrf;
                      value="<?= e($tool['tool_id']) ?>"
                      data-size="<?= e((string) $tool['bytes']) ?>">
               <span class="pkg-tool-name"><?= e($tool['title']) ?></span>
-              <span class="table-sub"><?= e($tool['tool_id']) ?> · v<?= e($tool['version']) ?> · <?= e(number_format($tool['bytes'] / 1024, 0)) ?> KB</span>
+              <span class="table-sub"><?= e($tool['tool_id']) ?> · v<?= e($tool['version']) ?> · <?= e(number_format($tool['bytes'] / 1024, 0)) ?> KB · 更新 <?= e(substr((string) $tool['updated_at'], 0, 10)) ?></span>
             </label>
           <?php endforeach; ?>
           <?php if ($tools === []): ?>
@@ -79,6 +79,10 @@ use App\Core\Csrf;
         已选 <strong id="pkg-count">0</strong> 个工具，原始体积约
         <strong id="pkg-size">0 KB</strong>
         （单包上限 <?= e((string) $maxSizeMb) ?>MB，超限须拆包）
+        <div class="table-sub" style="margin-top: var(--sp-2);">
+          增量更新：在「历史产物」点「勾选变更」，只打包相对该包有更新 / 新增的工具，
+          产物建议用 包标识-update 命名，网盘补发时下载量最小。
+        </div>
       </div>
 
       <button class="btn btn-primary" type="submit" <?= $zipReady ? '' : 'disabled' ?>>
@@ -146,6 +150,15 @@ use App\Core\Csrf;
                         <?= icon('download') ?>下载
                       </a>
                     <?php endif; ?>
+                    <?php if (($pkg['changed'] ?? []) !== []): ?>
+                      <button class="btn btn-sm pkg-diff-btn" type="button"
+                              data-changed="<?= e(json_encode($pkg['changed'], JSON_UNESCAPED_UNICODE)) ?>"
+                              data-slug="<?= e((string) $pkg['slug']) ?>-update"
+                              data-version="<?= e((string) $pkg['version']) ?>"
+                              title="相对此包的变更：<?= e(implode('、', $pkg['changed'])) ?>">
+                        <?= icon('refresh-cw') ?>勾选变更（<?= e((string) count($pkg['changed'])) ?>）
+                      </button>
+                    <?php endif; ?>
                     <form method="post" action="<?= e(url('/admin/package/' . (int) $pkg['id'] . '/regen')) ?>">
                       <?= Csrf::field() ?>
                       <button class="btn btn-sm" type="submit"><?= icon('refresh-cw') ?>重新生成</button>
@@ -200,6 +213,21 @@ use App\Core\Csrf;
         checks[i].addEventListener('change', refreshEstimate);
     }
     refreshEstimate();
+
+    // ── 增量包辅助：按历史产物的变更清单一键勾选 ──
+    Array.prototype.forEach.call(document.querySelectorAll('.pkg-diff-btn'), function (btn) {
+        btn.addEventListener('click', function () {
+            var changed;
+            try { changed = JSON.parse(btn.getAttribute('data-changed')) || []; } catch (e) { changed = []; }
+            for (var i = 0; i < checks.length; i++) {
+                checks[i].checked = changed.indexOf(checks[i].value) !== -1;
+            }
+            document.getElementById('pkg-slug').value = btn.getAttribute('data-slug') || '';
+            document.getElementById('pkg-version').value = btn.getAttribute('data-version') || '';
+            refreshEstimate();
+            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
 
     // ── 任务进度轮询（status 端点同时惰性消费 pending 任务）──
     var bar = document.getElementById('pkg-bar');

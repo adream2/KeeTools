@@ -26,12 +26,38 @@
 }
 
 /* 页脚说明（离线包品牌回流触点） */
+.portal-footer-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-4);
+}
+
 .portal-footer-note {
     color: var(--c-text-muted);
 }
 
 .portal-footer-note a {
     color: var(--c-primary);
+}
+
+/* 站点二维码（打包时内嵌快照，file:// 可见） */
+.portal-qr {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    font-size: var(--fs-sm);
+    color: var(--c-text-muted);
+}
+
+.portal-qr img {
+    display: block;
+    width: 96px;
+    height: 96px;
+    border-radius: var(--r-sm);
+    background: #fff;
+    padding: var(--sp-1);
+    border: 1px solid var(--c-border);
 }
 
 /* 窄屏适配（教师在自家电脑偶用小窗口） */

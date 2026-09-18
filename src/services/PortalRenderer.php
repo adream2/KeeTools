@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Core\App;
+use App\Core\Config;
 use App\Core\Security;
 use RuntimeException;
 
@@ -55,6 +56,21 @@ final class PortalRenderer
         } else {
             $checkBtn = '';
             $footerUpdate = '<span>部署站点后重新打包即可获得「检查更新」链接</span>';
+        }
+
+        // 站点二维码（站长在站点设置配置的 community_qr_image）。
+        // 打包时取图转 data URI 内嵌——file:// 下外链图片即外部请求，禁止。
+        $qrBlock = '';
+        $qrDataUri = $this->qrDataUri();
+        if ($qrDataUri !== null) {
+            $qrText = trim(Config::string('community_qr_text'));
+            if ($qrText === '') {
+                $qrText = '扫码关注，获取工具更新';
+            }
+            $qrBlock = '<div class="portal-qr">'
+                . '<img src="' . $esc($qrDataUri) . '" alt="站点二维码" width="96" height="96">'
+                . '<span>' . $esc($qrText) . '</span>'
+                . '</div>';
         }
 
         $toolsJson = $dataJson; // 整包注入，前端解析 window.ET_PORTAL
@@ -131,9 +147,10 @@ final class PortalRenderer
 
   <footer class="site-footer">
     <div class="container">
-      <div class="site-footer-bottom">
+      <div class="site-footer-bottom portal-footer-bottom">
         <p class="portal-footer-note">本合集由 {$esc($siteName)} 生成，打包于 {$esc(date('Y-m-d'))}。
             {$footerUpdate}</p>
+        {$qrBlock}
         <p class="site-footer-copyright">© {$esc($year)} {$esc($siteName)}</p>
       </div>
     </div>
@@ -262,6 +279,58 @@ HTML;
     {
         return '<svg class="icon" aria-hidden="true" focusable="false">'
             . '<use href="#i-' . Security::escape($name) . '" xlink:href="#i-' . Security::escape($name) . '"></use></svg>';
+    }
+
+    /**
+     * 站点二维码 data URI（打包时快照，file:// 离线可用）。
+     *
+     * 来源：站点设置 community_qr_image（与前台公众号二维码同一配置）。
+     * 支持 http(s) URL（打包机联网拉取，5 秒超时）/ 站内路径（读 public 文件）
+     * / data: URI（直接透传）。任何失败返回 null，门户降级为无二维码——
+     * 二维码是加分项，绝不能让它阻断打包。
+     */
+    public function qrDataUri(): ?string
+    {
+        $source = trim(Config::string('community_qr_image'));
+        if ($source === '') {
+            return null;
+        }
+
+        // 已是 data URI：直接透传
+        if (preg_match('#^data:image/(png|jpe?g|webp);base64,#i', $source) === 1) {
+            return $source;
+        }
+
+        $bytes = null;
+        if (preg_match('#^https?://#i', $source) === 1) {
+            $context = stream_context_create(['http' => ['timeout' => 5, 'follow_location' => 1]]);
+            $bytes = @file_get_contents($source, false, $context);
+        } elseif (str_starts_with($source, '/')) {
+            // 站内相对路径：限制在 public/ 内（防穿越）
+            try {
+                $file = Security::safePath(App::path('public'), ltrim($source, '/'));
+                $bytes = is_file($file) ? (string) file_get_contents($file) : null;
+            } catch (RuntimeException) {
+                return null;
+            }
+        }
+
+        if ($bytes === false || $bytes === null || strlen($bytes) > 512 * 1024) {
+            return null;
+        }
+
+        // 嗅探真实图片格式，避免信任 URL 后缀
+        $mime = match (substr($bytes, 0, 4)) {
+            "\x89PNG" => 'image/png',
+            "\xFF\xD8\xFF" => 'image/jpeg',
+            'RIFF' => str_starts_with(substr($bytes, 8, 4), 'WEBP') ? 'image/webp' : null,
+            default => null,
+        };
+        if ($mime === null) {
+            return null;
+        }
+
+        return 'data:' . $mime . ';base64,' . base64_encode($bytes);
     }
 
     private function readFile(string $path): string

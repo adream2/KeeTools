@@ -39,7 +39,7 @@ final class PackageAdminController extends AdminController
         // 可打包工具：已上架 + 单文件 + 离线可用，附文件实际大小（前端实时预估包体）
         $tools = [];
         foreach ($db->fetchAll(
-            'SELECT tool_id, title, version, type, dir_path, entry
+            'SELECT tool_id, title, version, type, dir_path, entry, updated_at
              FROM tools WHERE is_published = 1 AND single_file = 1 AND offline = 1
              ORDER BY title ASC'
         ) as $row) {
@@ -49,16 +49,36 @@ final class PackageAdminController extends AdminController
                 $bytes = (int) (filesize($path) ?: 0);
             }
             $tools[] = [
-                'tool_id'  => (string) $row['tool_id'],
-                'title'    => (string) $row['title'],
-                'version'  => (string) $row['version'],
-                'bytes'    => $bytes,
+                'tool_id'    => (string) $row['tool_id'],
+                'title'      => (string) $row['title'],
+                'version'    => (string) $row['version'],
+                'bytes'      => $bytes,
+                'updated_at' => (string) $row['updated_at'],
             ];
         }
+        $toolUpdatedMap = array_column($tools, 'updated_at', 'tool_id');
 
+        // 历史产物 + 变更清单（增量包辅助）：相对产物生成时刻，
+        // 「工具更新（updated_at 变化）」与「新增工具」视为变更
         $packages = [];
         foreach ($db->fetchAll('SELECT * FROM packages ORDER BY id DESC') as $row) {
-            $packages[] = $this->hydratePackage($row);
+            $package = $this->hydratePackage($row);
+            $baseIds = $package['tool_ids'];
+            $changed = [];
+            foreach ($baseIds as $toolId) {
+                // 工具可能已下架（不在 $toolUpdatedMap）——仍视为变更以便重新纳入
+                $current = $toolUpdatedMap[$toolId] ?? null;
+                if ($current === null || $current > (string) $package['created_at']) {
+                    $changed[] = $toolId;
+                }
+            }
+            foreach (array_column($tools, 'tool_id') as $toolId) {
+                if (!in_array($toolId, $baseIds, true)) {
+                    $changed[] = $toolId;
+                }
+            }
+            $package['changed'] = array_values(array_unique($changed));
+            $packages[] = $package;
         }
 
         return $this->render('packages', [

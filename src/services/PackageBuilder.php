@@ -319,9 +319,10 @@ final class PackageBuilder
                 $totalBytes += strlen($html);
             }
 
-            // ── 4. 纯文本说明 ──
+            // ── 4. 说明文件（txt 快速上手 + HTML 打印版，浏览器打印即存 PDF）──
             $this->updateTask($taskId, ['progress' => 84, 'stage' => '写入说明文件']);
             $siteUrl = site_url();
+            $qrDataUri = (new PortalRenderer())->qrDataUri();
             $textFiles = [
                 '使用说明.txt'       => self::usageText($version, $count, $siteUrl),
                 '关于KeeTools.txt'  => self::aboutText($slug, $version, $siteUrl),
@@ -331,6 +332,10 @@ final class PackageBuilder
                 file_put_contents($rootDir . DIRECTORY_SEPARATOR . $name, "\xEF\xBB\xBF" . $content);
                 $totalBytes += strlen($content) + 3;
             }
+
+            $usageHtml = self::usageHtml($version, $siteUrl, $index, $qrDataUri);
+            file_put_contents($rootDir . DIRECTORY_SEPARATOR . '使用说明.html', $usageHtml);
+            $totalBytes += strlen($usageHtml);
 
             if ($totalBytes > $maxBytes) {
                 throw new RuntimeException(sprintf(
@@ -714,6 +719,103 @@ final class PackageBuilder
 {$update}
 
 TXT;
+    }
+
+    /**
+     * 打印友好版使用说明（HTML，零依赖单文件）。
+     *
+     * 不直接产 PDF 的原因：嵌入中文字体需引入 TTF 子集化依赖，违背零依赖约束；
+     * 改为「浏览器打开 → Ctrl+P → 另存为 PDF」一步得到 PDF，教师无感知差异。
+     */
+    private static function usageHtml(
+        string $version,
+        string $siteUrl,
+        array $index,
+        ?string $qrDataUri
+    ): string {
+        $siteName = site_name();
+        $update = $siteUrl !== '' ? $siteUrl . '/?from=offline-pkg' : '';
+
+        $rows = '';
+        foreach ($index as $tool) {
+            $grades = grade_range_label(is_array($tool['grade_range']) ? $tool['grade_range'] : []);
+            $subjects = is_array($tool['subjects']) ? implode('、', $tool['subjects']) : '';
+            $rows .= '<tr><td>' . Security::escape((string) $tool['title'])
+                . '</td><td class="mono">' . Security::escape((string) $tool['version'])
+                . '</td><td>' . Security::escape($grades)
+                . '</td><td>' . Security::escape($subjects)
+                . '</td><td class="mono">' . Security::escape((string) $tool['file'])
+                . '</td></tr>';
+        }
+
+        $qrHtml = $qrDataUri !== null
+            ? '<div class="qr"><img src="' . Security::escape($qrDataUri) . '" alt="站点二维码"><span>扫码关注，获取工具更新</span></div>'
+            : '';
+
+        $updateHtml = $update !== ''
+            ? '<a href="' . Security::escape($update) . '">' . Security::escape($update) . '</a>'
+            : '<span class="muted">（部署站点后重新打包生成）</span>';
+        $today = date('Y-m-d');
+        $toolCount = count($index);
+
+        return <<<HTML
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>使用说明 — 课工具离线合集 v{$version}</title>
+<meta name="robots" content="noindex">
+<style>
+    body { font-family: system-ui, "Microsoft YaHei", sans-serif; max-width: 46rem;
+           margin: 2rem auto; padding: 0 1.25rem; color: #1f2937; line-height: 1.7; }
+    h1 { font-size: 1.5rem; border-bottom: 2px solid #2563eb; padding-bottom: .5rem; }
+    h2 { font-size: 1.15rem; margin-top: 2rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: .75rem; font-size: .85rem; }
+    th, td { border: 1px solid #d1d5db; padding: .4rem .6rem; text-align: left; }
+    th { background: #f3f4f6; }
+    .mono { font-family: Consolas, monospace; font-size: .8rem; }
+    .muted { color: #6b7280; }
+    ol li, ul li { margin: .3rem 0; }
+    .qr { display: flex; align-items: center; gap: .75rem; margin-top: 1rem; }
+    .qr img { width: 110px; height: 110px; border: 1px solid #d1d5db; border-radius: 6px; padding: 4px; }
+    .print-tip { background: #f0f6ff; border: 1px solid #bcd3f8; border-radius: 8px;
+                 padding: .75rem 1rem; font-size: .88rem; }
+    @media print { .print-tip, .no-print { display: none; } body { margin: 0; } }
+</style>
+</head>
+<body>
+<h1>课工具 KeeTools 离线合集 v{$version}</h1>
+<p>面向中小学老师的免费课堂工具集 —— 单文件即开即用，无需安装，断网也能用。</p>
+
+<h2>快速上手</h2>
+<ol>
+    <li>打开本目录的 <strong>index.html</strong>：全部工具导航，支持搜索与按学段 / 学科筛选。</li>
+    <li>tools/ 目录内是各工具的单文件，双击任意文件即用。</li>
+    <li>建议使用 Chrome、Edge 等现代浏览器；所有数据只保存在本机浏览器，不上传。</li>
+</ol>
+
+<div class="print-tip no-print">需要 PDF 版？直接按 <strong>Ctrl + P</strong>（Mac 为 ⌘ + P）选择「另存为 PDF」即可打印或保存本页。</div>
+
+<h2>工具清单（{$toolCount} 个）</h2>
+<table>
+    <thead><tr><th>工具</th><th>版本</th><th>适用学段</th><th>学科</th><th>文件</th></tr></thead>
+    <tbody>{$rows}</tbody>
+</table>
+
+<h2>常见问题</h2>
+<ul>
+    <li><strong>双击后空白？</strong>请更换 Chrome / Edge 浏览器再试。</li>
+    <li><strong>学校电脑限制本地文件？</strong>可将整个文件夹复制到桌面后打开。</li>
+    <li><strong>想要新工具？</strong>到在线站点获取最新版本：{$updateHtml}</li>
+</ul>
+
+{$qrHtml}
+
+<p class="muted">© {$siteName} · 打包于 {$today}</p>
+</body>
+</html>
+HTML;
     }
 
     private static function aboutText(string $slug, string $version, string $siteUrl): string
