@@ -1,10 +1,10 @@
 {
-  "id": "hello-edutools",
+  "id": "hello-keetools",
   "title": "示例工具（骨架参考）",
   "version": "0.1.0",
   "type": "fixed",
   "description": "P0 阶段的示例工具，用于验证扫描入库、ET-META 一致性与 _shared 同步链路。",
-  "author": "EduTools Team",
+  "author": "KeeTools Team",
   "entry": "index.html",
   "single_file": true,
   "offline": true,

@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>示例工具（骨架参考） — EduTools</title>
+<title>示例工具（骨架参考） — KeeTools 课工具</title>
 <!-- ET-META
-{"id":"hello-edutools","version":"0.1.0"}
+{"id":"hello-keetools","version":"0.1.0"}
 -->
 <style>
 /* 工具样式自包含，不引用任何外部资源 */
@@ -128,7 +128,7 @@ li { margin: 4px 0; }
 
   <div class="card">
     <h2>localStorage 读写（验证前缀规范）</h2>
-    <p>点击次数保存在 <code>et_hello-edutools_count</code>，刷新页面不清零。</p>
+    <p>点击次数保存在 <code>et_hello-keetools_count</code>，刷新页面不清零。</p>
     <div class="row">
       <span class="counter" id="counter">0</span>
       <button class="primary" id="btn-add">点我 +1</button>
@@ -296,7 +296,7 @@ li { margin: 4px 0; }
 (function () {
   'use strict';
 
-  var store = ET.store('hello-edutools');
+  var store = ET.store('hello-keetools');
 
   ET.ready(function () {
     var counterEl = ET.el('counter');
