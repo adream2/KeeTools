@@ -275,7 +275,7 @@ const STATS_SCHEMA = <<<'SQL'
 CREATE TABLE IF NOT EXISTS stats (
     id           INTEGER PRIMARY KEY,
     tool_id      TEXT NOT NULL DEFAULT '',
-    event_type   TEXT NOT NULL CHECK (event_type IN ('view', 'use_online', 'netdisk_click', 'download_direct', 'sponsor_click')),
+    event_type   TEXT NOT NULL CHECK (event_type IN ('view', 'use_online', 'use_offline', 'netdisk_click', 'download_direct', 'sponsor_click')),
     netdisk_type TEXT NULL,                           -- 仅 netdisk_click 用
     ip_hash      TEXT NULL,
     ua_hash      TEXT NULL,
@@ -301,7 +301,7 @@ try {
     $statsDdl = (string) ($stats->fetch(
         "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'stats'"
     )['sql'] ?? '');
-    if ($statsDdl !== '' && !str_contains($statsDdl, 'download_direct')) {
+    if ($statsDdl !== '' && (!str_contains($statsDdl, 'download_direct') || !str_contains($statsDdl, 'use_offline'))) {
         $rows = (int) $stats->fetchColumn('SELECT COUNT(*) FROM stats');
         $stats->execute('DROP TABLE stats');
         $stats->runSqlString(STATS_SCHEMA);

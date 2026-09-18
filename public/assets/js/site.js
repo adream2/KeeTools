@@ -135,18 +135,61 @@
     var buttons = document.querySelectorAll('[data-fullscreen-target]');
     Array.prototype.forEach.call(buttons, function (btn) {
       btn.addEventListener('click', function () {
-        var target = document.querySelector(btn.getAttribute('data-fullscreen-target'));
-        if (!target) {
-          return;
-        }
-        var request = target.requestFullscreen
-          || target.webkitRequestFullscreen
-          || target.msRequestFullscreen;
-        if (request) {
-          request.call(target);
-        }
+        togglePreviewFullscreen();
       });
     });
+  }
+
+  function togglePreviewFullscreen() {
+    /* 全屏体验 = 工具全屏：直接全屏 iframe 本体（与工具内全屏按钮等效同屏，无嵌套） */
+    var target = document.querySelector('.preview-frame') || document.querySelector('.tool-preview');
+    if (!target) {
+      return;
+    }
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      var exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exit) { exit.call(document); }
+      return;
+    }
+    var request = target.requestFullscreen || target.webkitRequestFullscreen || target.msRequestFullscreen;
+    if (request) { request.call(target); }
+  }
+
+  /**
+   * 工具 iframe 桥接（et-chrome 协议）：
+   *  - et-hello → 回复 et-origin（工具据此渲染页脚官网链接 / 统计端点）
+   *  - et-fullscreen-toggle → 工具内全屏按钮委托宿主统一 fullscreen（避免双层全屏）
+   *  - fullscreenchange → 向工具回传 et-fullscreen-change 同步按钮图标
+   */
+  function initToolIframeBridge() {
+    window.addEventListener('message', function (ev) {
+      var data = ev.data;
+      if (typeof data === 'string') {
+        try { data = JSON.parse(data); } catch (e) { return; }
+      }
+      if (!data || typeof data !== 'object') { return; }
+
+      if (data.type === 'et-hello' && ev.source) {
+        try {
+          ev.source.postMessage(JSON.stringify({ type: 'et-origin', origin: window.location.origin }), '*');
+        } catch (e) { /* 忽略 */ }
+      }
+      if (data.type === 'et-fullscreen-toggle') {
+        togglePreviewFullscreen();
+      }
+    });
+
+    function notifyFullscreen() {
+      var on = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      Array.prototype.forEach.call(document.querySelectorAll('iframe.preview-frame'), function (frame) {
+        try {
+          frame.contentWindow && frame.contentWindow.postMessage(
+            JSON.stringify({ type: 'et-fullscreen-change', value: on }), '*');
+        } catch (e) { /* 忽略 */ }
+      });
+    }
+    document.addEventListener('fullscreenchange', notifyFullscreen);
+    document.addEventListener('webkitfullscreenchange', notifyFullscreen);
   }
 
   /**
@@ -168,6 +211,7 @@
     initCopyButton();
     initCountdown();
     initFullscreenPreview();
+    initToolIframeBridge();
     initConfirmForms();
     initAnnouncements();
   }

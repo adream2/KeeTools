@@ -28,7 +28,7 @@ use Throwable;
 final class StatsService
 {
     /** 事件白名单（与 stats 表 CHECK 约束一致） */
-    public const EVENTS = ['view', 'use_online', 'netdisk_click', 'download_direct', 'sponsor_click'];
+    public const EVENTS = ['view', 'use_online', 'use_offline', 'netdisk_click', 'download_direct', 'sponsor_click'];
 
     /** 缓冲文件超过此大小（字节）时请求内惰性落库 */
     private const BUFFER_FLUSH_SIZE = 524288; // 512KB

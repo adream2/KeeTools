@@ -1383,6 +1383,7 @@
 
 .preview-frame:fullscreen {
   width: 100vw;
+  height: 100vh;
 }
 
 .preview-tip {
