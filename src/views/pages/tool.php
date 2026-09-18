@@ -24,6 +24,9 @@ $useUrl = url('/tool/' . rawurlencode($toolId) . '/use');
 $communityQr = trim(Config::string('community_qr_image'));
 $communityText = trim(Config::string('community_qr_text'));
 
+// 工具定制需求入口（后台「赞助」Tab 配置；未配置时返回 null，页面零痕迹）
+$customEntry = SiteOps::customToolEntry();
+
 // 结构化数据（SEO）
 $jsonLd = [
     '@context'    => 'https://schema.org', // et-allow-external（JSON-LD 结构化数据词汇表标识，非资源加载）
@@ -155,6 +158,23 @@ $jsonLd = [
           <p class="tool-get-note" style="margin-top: var(--sp-2);">
             <?= e($communityText !== '' ? $communityText : '扫码关注，新工具上线第一时间通知') ?>
           </p>
+        </div>
+      </div>
+    <?php endif; ?>
+
+    <?php if ($customEntry !== null): ?>
+      <div class="card">
+        <div class="card-head">
+          <h2 class="card-title"><?= icon('wrench') ?>工具定制</h2>
+        </div>
+        <div class="card-body">
+          <p class="tool-get-note" style="margin: 0 0 var(--sp-3);"><?= e($customEntry['note']) ?></p>
+          <?php if ($customEntry['url'] !== null): ?>
+            <a class="btn btn-primary" style="width: 100%; justify-content: center;"
+               href="<?= e($customEntry['url']) ?>" target="_blank" rel="noopener">
+              <?= icon('external-link') ?>说说我的需求
+            </a>
+          <?php endif; ?>
         </div>
       </div>
     <?php endif; ?>

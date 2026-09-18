@@ -395,6 +395,31 @@ final class SiteOps
         return $rows;
     }
 
+    // ── 工具定制入口（P4 §五运营配套）─────────────────
+
+    /**
+     * 工具定制需求收集入口。
+     *
+     * 关闭零痕迹：链接与文案都为空时返回 null，前台不输出任何东西。
+     * URL 一律过 Security::safeExternalUrl 白名单（只放行 http(s) / mailto / 站内路径）。
+     *
+     * @return array{url: ?string, note: string}|null
+     */
+    public static function customToolEntry(): ?array
+    {
+        $url = Security::safeExternalUrl(trim(Config::string('custom_tool_url')));
+        $note = trim(Config::string('custom_tool_note'));
+
+        if ($url === null && $note === '') {
+            return null;
+        }
+
+        return [
+            'url'  => $url,
+            'note' => $note !== '' ? $note : '课堂上想要什么工具？告诉我们，按你的教学习惯做。',
+        ];
+    }
+
     // ── 日期窗口 ────────────────────────────────────
 
     /**
