@@ -11,6 +11,59 @@
 
 ### 新增
 
+- **P4 规模化（2026-09-18，进行中）**
+  - **工具生产流水线**
+    - `tools/_template/`：新工具骨架模板（`index.html.tpl` / `manifest.json.tpl` /
+      `CHANGELOG.md.tpl` + README），`@@NAME@@` 占位符避开 CSS 百分号与 JS 花括号
+    - `scripts/new_tool.py` 重写：从 `_template/` 渲染 → 自动登记 `shared.manifest.json`
+      → 自动跑 `sync_shared.py` 内联共享片段 → 跑 `check_manifest.py` / `check_no_external.py`
+      自检 + 体积守卫；新增 `--family` / `--accent` / `--yes`（非交互批量生产）
+    - 骨架自带 `et-chrome` 外壳、ET:INLINE 标记、翻页笔主操作、空格键、localStorage 持久化
+    - **单工具体积守卫**：`check_manifest.py` 超 `TOOL_MAX_KB`（默认 500KB）告警，
+      超限须在 `docs/工具例外清单.md` 登记（已登记 `pinyin-chart` 内嵌音频场景）
+  - **SEO（P4 §三）**
+    - `/sitemap.xml` + `/robots.txt` 动态端点（`SeoController`）：域名自适应；归档
+      `/tool/*/v/`、`/search`、`/admin`、`/netdisk/`、`/download/` 一律不进索引
+    - 站点布局补齐 SEO 头：`robots` / `canonical` / `keywords` / Open Graph / Twitter Card
+    - 详情页关键词由 学科 + 标签 + 学段 自动拼出；分类页新增**导语正文**
+      （`CategoryCopy`，学段 + 学科长尾词，如「小学数学课堂工具合集」；可用
+      `category_intro.{slug}` 在 `site_config` 覆盖）；首页 SEO 标题与关键词可在后台覆盖
+    - `/search` 结果页 `noindex,follow`；`/tools` 为稳定列表页正常收录
+  - **数据驱动看板（P4 §四）**
+    - 仪表盘新增「工具数增长（近 12 个月）」柱状图与「学科分布」条形图 +
+      规模目标进度（≥30 工具 / ≥5 学科有工具）
+    - 统计看板新增**零使用工具清单**（近 30 天无任何事件的已上架工具），
+      支持一键「重做元数据」或「下架」（新增 `POST /admin/tools/{id}/published`，
+      只改站点索引，不动 `tools/` 目录与 manifest）
+  - **P4 收尾（机制部分全部就位）**
+    - `hello-keetools`（P0 期空壳演示）改造为 **`tool-template`「工具模板示例」v1.0.0**：
+      完整 `et-chrome` 外壳 + 设置抽屉 + 视图切换 + 「开发四步」活文档；
+      `stats_enabled: false`（示例不污染统计口径）
+    - **工具定制需求入口**：`custom_tool_url` / `custom_tool_note`（后台「赞助」Tab 配置），
+      详情页侧栏卡片；未配置时页面零痕迹，URL 过 `Security::safeExternalUrl` 白名单
+      （新增 `SiteOps::customToolEntry()`）
+    - **体积审计** `scripts/asset_report.py`：`public/` 按目录与类型汇总 + 各工具 HTML
+      体积排行（> 500KB 自动提示登记例外清单）
+    - **规范补充** `docs/工具开发规范.md` §6.4.1：工具 HTML 中**禁止**出现
+      「完整的 `ET:INLINE` 标记文本」与「script 结束标签字面量」——前者会被 `sync_shared.py`
+      误注入、后者会提前闭合外层 `<script>`，两者都属"门禁全绿但页面已损坏"的静默故障
+    - **产出批次计划** `tasks/P4-工具批次计划.md`：依据 `KeeTools_工具清单.md` 拆 6 批
+      （每批 7–8 个，共 46 个新工具），含 id / type / 学段 / 学科 / 要点与每批 DoD
+    - **三项待决策定稿**：不引入 CI（单人开发，CI 覆盖不到部署自检）；工具总数软上限 100；
+      不做"用户提交工具"入口（V1 无用户系统，用定制需求入口承接）
+
+  - **首批新工具 5 个**（全部单文件、离线可用、大屏优先、各带独立 accent）
+    - `random-grouping` v1.0.0 — 随机分组：按组数 / 按每组人数两种分法，Fisher-Yates 洗牌，
+      余数分散保证人数均衡，组内可选按姓名排序（Intl.Collator）
+    - `math-drill` v1.0.0 — 口算题生成器：加减乘除可多选，减法不为负、除数不为 0、
+      可选是否进位借位与整除，答案显隐切换，打印 / 另存 PDF
+    - `tianzige-writer` v1.0.0 — 田字格字帖：田 / 米 / 空白格，描红 + 自写遍数可调，
+      内置 120 常用字，楷体 / 黑体（系统字体栈），打印友好
+    - `dictation-helper` v1.0.0 — 听写助手：词表自动报词、隐藏文字、朗读遍数 / 间隔 /
+      语速可调；语音能力检测（不支持时降级为「只显示词语」）
+    - `alphabet-chart` v1.0.0 — 英语字母表（fixed 型）：26 字母大小写 / 音标 / 例词，
+      元音高亮，卡片与列表双视图，点读发音 + 大小写书写提示
+
 - **P3 离线包（2026-09-18）**
   - **打包服务** `src/services/PackageBuilder.php`：异步任务模式（`package_tasks` 表），
     CLI（`scripts/build_package.php`，供 cron）与后台轮询端点惰性消费双端共用同一实现；
