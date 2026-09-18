@@ -48,6 +48,7 @@ const TABLES = [
     'categories', 'tools', 'tool_category', 'tool_netdisks',
     'admins', 'site_config', 'login_attempts', 'tool_overrides',
     'ad_slots', 'announcements', 'friend_links', 'sponsor_thanks',
+    'package_tasks', 'packages',
 ];
 
 /** P1 新增的业务表（建表 + 缺行种子共用清单） */
@@ -265,6 +266,41 @@ CREATE TABLE IF NOT EXISTS sponsor_thanks (
     note       TEXT NOT NULL DEFAULT '',
     amount     TEXT NULL,
     created_at TEXT NOT NULL
+);
+
+-- 离线包打包任务（P3）：后台创建 → CLI worker 或 Web 轮询端点惰性消费
+-- progress 为 0-100 整数；stage 为人类可读的当前阶段文案
+CREATE TABLE IF NOT EXISTS package_tasks (
+    id          INTEGER PRIMARY KEY,
+    slug        TEXT    NOT NULL,               -- 包标识，如 keetools
+    version     TEXT    NOT NULL,               -- 包版本，如 1.0.0
+    tool_ids    TEXT    NOT NULL DEFAULT '[]',  -- JSON 数组
+    with_portal INTEGER NOT NULL DEFAULT 1,     -- 是否内含导航门户
+    status      TEXT    NOT NULL DEFAULT 'pending'
+                        CHECK (status IN ('pending', 'running', 'done', 'failed')),
+    progress    INTEGER NOT NULL DEFAULT 0,
+    stage       TEXT    NOT NULL DEFAULT '',
+    message     TEXT    NOT NULL DEFAULT '',    -- 成功摘要或失败原因
+    package_id  INTEGER NULL,                   -- 成功后指向 packages.id
+    created_by  TEXT    NOT NULL DEFAULT '',
+    created_at  TEXT    NOT NULL,
+    updated_at  TEXT    NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_package_tasks_status ON package_tasks(status, id);
+
+-- 离线包产物（packages/ 目录全量 gitignore，此表是产物台账）
+CREATE TABLE IF NOT EXISTS packages (
+    id         INTEGER PRIMARY KEY,
+    slug       TEXT    NOT NULL,
+    version    TEXT    NOT NULL,
+    tool_ids   TEXT    NOT NULL DEFAULT '[]',   -- JSON 数组（重新生成用）
+    tool_count INTEGER NOT NULL DEFAULT 0,
+    size_bytes INTEGER NOT NULL DEFAULT 0,
+    sha256     TEXT    NOT NULL DEFAULT '',
+    file_name  TEXT    NOT NULL,                -- zip 文件名 = {slug}-{version}.zip
+    task_id    INTEGER NULL,
+    created_at TEXT    NOT NULL
 );
 SQL;
 

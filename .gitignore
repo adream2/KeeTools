@@ -29,10 +29,10 @@ storage/*.sqlite3
 storage/backup/
 
 # ─────────────────────────────────────────────
-# 产出物
+# 产出物（离线合集包与网盘上传清单均不入库）
 # ─────────────────────────────────────────────
-packages/*.zip
-packages/*.tar.gz
+/packages/*
+!/packages/.gitkeep
 /public/assets/css/*.min.css
 
 # ─────────────────────────────────────────────

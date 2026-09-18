@@ -18,6 +18,7 @@ use App\Admin\Controller\AuthController;
 use App\Admin\Controller\CategoryAdminController;
 use App\Admin\Controller\DashboardController;
 use App\Admin\Controller\NetdiskAdminController;
+use App\Admin\Controller\PackageAdminController;
 use App\Admin\Controller\SettingsController;
 use App\Admin\Controller\StatsAdminController;
 use App\Admin\Controller\ToolAdminController;
@@ -85,6 +86,14 @@ $router->group('/admin', ['auth', 'csrf'], function (App\Core\Router $r): void {
         $r->post('/netdisks/{id}/toggle', [NetdiskAdminController::class, 'toggle']);
         $r->post('/netdisks/{id}/delete', [NetdiskAdminController::class, 'delete']);
         $r->post('/netdisks/{id}/check', [NetdiskAdminController::class, 'check']);
+
+        // 离线包打包（P3，仅 admin）
+        $r->get('/package', [PackageAdminController::class, 'index']);
+        $r->post('/package/create', [PackageAdminController::class, 'create']);
+        $r->get('/package/status', [PackageAdminController::class, 'status']);
+        $r->get('/package/{id}/download', [PackageAdminController::class, 'download']);
+        $r->post('/package/{id}/delete', [PackageAdminController::class, 'delete']);
+        $r->post('/package/{id}/regen', [PackageAdminController::class, 'regen']);
     });
 
     // 统计看板（editor 只读可访问）

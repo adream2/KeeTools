@@ -1892,6 +1892,65 @@ hr {
   color: var(--c-text-light);
 }
 
+/* ── 离线包打包（P3）────────────────────────── */
+
+.pkg-tool-list {
+  display: grid;
+  /* 自适应卡片最小宽 / 列表最大高，无对应尺寸令牌 */
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); /* et-allow-literal */
+  gap: var(--sp-2) var(--sp-4);
+  padding: var(--sp-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  max-height: 20rem; /* et-allow-literal */
+  overflow-y: auto;
+}
+
+.pkg-tool-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.pkg-tool-name {
+  font-weight: 600;
+}
+
+.pkg-estimate {
+  margin: var(--sp-3) 0 var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--c-bg-soft);
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+}
+
+.pkg-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.pkg-progress {
+  flex: 0 0 14rem;
+  height: var(--sp-2);
+  background: var(--c-border);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+
+.pkg-progress-bar {
+  height: 100%;
+  width: 0;
+  background: var(--c-primary);
+  border-radius: var(--r-full);
+  transition: width var(--tr-base);
+}
+
+.pkg-progress-text {
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+}
+
 .sort-input {
   width: calc(var(--sp-16));
 }

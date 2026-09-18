@@ -1,0 +1,42 @@
+/* ============================================================
+ * 离线导航门户专属样式（P3）
+ *
+ * 通用视觉（header/footer/卡片/表单/hero）全部复用在线版
+ * tokens/base/components/site 四层（打包时内联 site.bundle.css），
+ * 本文件只放门户特有的布局。禁止在此重复定义在线版已有样式。
+ * ============================================================ */
+
+/* 搜索 + 筛选工具条 */
+.portal-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+    max-width: 44rem;
+    margin: var(--sp-6) auto 0;
+}
+
+.portal-toolbar .form-input:first-child {
+    flex: 1 1 16rem;
+}
+
+.portal-toolbar select.form-input {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 8rem;
+}
+
+/* 页脚说明（离线包品牌回流触点） */
+.portal-footer-note {
+    color: var(--c-text-muted);
+}
+
+.portal-footer-note a {
+    color: var(--c-primary);
+}
+
+/* 窄屏适配（教师在自家电脑偶用小窗口） */
+@media (max-width: 640px) {
+    .portal-toolbar select.form-input {
+        flex: 1 1 40%;
+    }
+}

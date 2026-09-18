@@ -11,6 +11,24 @@
 
 ### 新增
 
+- **P3 离线包（2026-09-18）**
+  - **打包服务** `src/services/PackageBuilder.php`：异步任务模式（`package_tasks` 表），
+    CLI（`scripts/build_package.php`，供 cron）与后台轮询端点惰性消费双端共用同一实现；
+    ZipArchive 逐文件 addFile 分批落盘（禁 addFromString 大文件进内存）、
+    体积守卫 `PACKAGE_MAX_SIZE_MB`（默认 10MB，超限中止提示拆包）、
+    DB 状态 + `var/tmp/package.lock` 文件锁双保险（同时仅 1 个任务）、
+    临时目录 `var/tmp/package-{taskId}/` 成功/失败/超时均清理、产物记录 sha256 台账（`packages` 表）
+  - **离线导航门户** `src/services/PortalRenderer.php`：与在线版共用同一 CSS 层与类名
+    （内联 site.bundle.css + 门户专属 `assets-src/css/portal.css` + 图标 sprite），
+    单文件 `index.html`，`file://` 双击可用、零网络请求；数据内嵌 + `tools-index.json` 附赠；
+    本地搜索 + 学段/学科筛选 + 版本号展示；门户 JS 为 ES5（老教室浏览器兼容）；
+    站点外链全部带 UTM `?from=offline-pkg`（品牌回流主力触点）
+  - **后台打包页**（仅 admin，editor 403）：工具多选 + 实时包体预估 + 进度条轮询 +
+    历史产物（下载 / 删除 / 按原配置重新生成）；打包完成提示到「网盘管理」回填链接（联动 P1）
+  - **分发辅助**：产物旁自动生成网盘上传清单（包名/体积/SHA256/建议网盘/提取码占位，
+    不随包分发）；打包前校验工具 HTML 内 ET-META 版本与站点记录一致，避免发旧包
+  - 包结构：`{slug}-{version}/`（index.html + tools-index.json + tools/*.html + 使用说明.txt + 关于KeeTools.txt）
+
 - **P2 标杆工具（2026-09-18，5 个工具 + 共享基建）**
   - **`_shared/` 基建沉淀**：
     - `ui/et-chrome.js` + `ui/et-chrome.css` — 工具通用外壳（顶栏 / 状态胶囊 / 深浅色主题 /

@@ -18,6 +18,7 @@ $nav = [
     'tools'      => ['工具管理', 'wrench'],
     'categories' => ['分类管理', 'folder-tree'],
     'netdisks'   => ['网盘管理', 'cloud'],
+    'packages'   => ['离线包打包', 'package'],
     'stats'      => ['统计看板', 'bar-chart-3'],
     'settings'   => ['站点设置', 'settings'],
     'system'     => ['系统信息', 'info'],
