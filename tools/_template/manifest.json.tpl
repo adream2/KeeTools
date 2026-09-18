@@ -1,0 +1,21 @@
+{
+  "id": "@@TOOL_ID@@",
+  "title": "@@TITLE@@",
+  "version": "@@VERSION@@",
+  "type": "@@TYPE@@",
+  "description": "@@DESCRIPTION@@",
+  "author": "@@AUTHOR@@",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": @@GRADES_JSON@@,
+  "subjects": @@SUBJECTS_JSON@@,
+  "tags": @@TAGS_JSON@@,
+  "family": @@FAMILY_JSON@@,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "@@TODAY@@",
+  "updated_at": "@@TODAY@@"
+}

@@ -15,6 +15,7 @@
 
 import argparse
 import json
+import os
 import re
 import sys
 from datetime import date
@@ -50,6 +51,9 @@ VALID_SCREEN = {"large", "any"}
 
 MAX_TITLE_LEN = 40
 MAX_DESC_LEN = 60
+
+# 单工具体积守卫（P4 §一）：HTML 超过此体积即告警（提示抽共享逻辑 / 登记例外清单）
+DEFAULT_MAX_TOOL_KB = 500
 
 
 class Result:
@@ -88,6 +92,15 @@ def parse_date(value: str) -> date | None:
         return date.fromisoformat(value)
     except ValueError:
         return None
+
+
+def max_tool_kb() -> int:
+    """单个工具 HTML 体积上限（KB），可由环境变量 TOOL_MAX_KB 覆盖。"""
+    raw = os.environ.get("TOOL_MAX_KB", str(DEFAULT_MAX_TOOL_KB))
+    try:
+        return max(1, int(raw))
+    except ValueError:
+        return DEFAULT_MAX_TOOL_KB
 
 
 def validate_str_field(res: Result, data: dict, key: str) -> None:
@@ -235,6 +248,16 @@ def check_one(tool_dir: Path) -> Result:
                     res.err(f"ET-META id 不一致 (manifest: {mid}, html: {meta.get('id')})")
                 if meta.get("version") != ver:
                     res.err(f"ET-META version 不一致 (manifest: {ver}, html: {meta.get('version')})")
+
+    # ── 体积守卫（P4 §一）────────────────────
+    if html_path.exists():
+        limit_kb = max_tool_kb()
+        size_kb = html_path.stat().st_size / 1024
+        if size_kb > limit_kb:
+            res.warn(
+                f"index.html 体积 {size_kb:.0f}KB 超过 TOOL_MAX_KB={limit_kb}KB"
+                "（考虑抽共享逻辑到 _shared/ 或登记 docs/工具例外清单.md）"
+            )
 
     return res
 

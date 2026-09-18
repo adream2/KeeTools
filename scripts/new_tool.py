@@ -1,14 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""新工具脚手架。
+"""新工具脚手架（P4 批量生产流水线）。
 
-生成 tools/{id}/ 骨架：manifest.json + index.html（含 ET-META 与 ET:INLINE 标记）
-+ CHANGELOG.md，并自动跑一次校验。
+生成 tools/{id}/ 骨架：
+    manifest.json  —— 契约（docs/manifest规范.md §3）
+    index.html     —— 含 ET-META + ET:INLINE 标记 + et-chrome 可用外壳
+    CHANGELOG.md   —— 变更记录
+并自动完成：
+    1. 在 tools/_shared/shared.manifest.json 登记共享片段
+    2. 跑一次 sync_shared.py 把共享片段内联进 HTML
+    3. 跑 check_manifest.py / check_no_external.py 自检
+    4. 体积守卫：HTML 超过 TOOL_MAX_KB（默认 500KB）时告警
+
+模板来源：tools/_template/*.tpl（唯一来源，改模板不必改本脚本）
 
 用法：
     python scripts/new_tool.py                             # 交互式输入
     python scripts/new_tool.py --id my-tool --title "我的工具" \
-        --type shell --subjects 通用 --grades 1-12
+        --type shell --subjects 通用 --grades 1-12 --yes
 
 退出码：0 = 成功，1 = 失败
 
@@ -17,6 +26,7 @@
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -25,6 +35,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TOOLS_DIR = ROOT / "tools"
+TEMPLATE_DIR = TOOLS_DIR / "_template"
+SHARED_MANIFEST = TOOLS_DIR / "_shared" / "shared.manifest.json"
 
 ID_RE = re.compile(r"^[a-z0-9-]+$")
 
@@ -35,93 +47,28 @@ VALID_SUBJECTS = (
     "历史", "地理", "科学", "信息技术", "体育", "音乐", "美术",
 )
 
-MANIFEST_FIELD_ORDER = [
-    "id", "title", "version", "type", "description", "author", "entry",
-    "single_file", "offline", "grade_range", "subjects", "tags", "family",
-    "license", "dependencies", "screen", "stats_enabled", "created_at", "updated_at",
-]
+# 每个学科一套默认 accent，避免批量产物颜色雷同（品质基线：各工具独立 accent）
+SUBJECT_ACCENTS = {
+    "通用": "#2563eb", "语文": "#dc2626", "数学": "#0891b2", "英语": "#7c3aed",
+    "物理": "#4f46e5", "化学": "#059669", "生物": "#16a34a", "政治": "#b91c1c",
+    "历史": "#b45309", "地理": "#0d9488", "科学": "#0284c7", "信息技术": "#4338ca",
+    "体育": "#ea580c", "音乐": "#db2777", "美术": "#c026d3",
+}
 
-HTML_TEMPLATE = """<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{title} — KeeTools 课工具</title>
-<!-- ET-META
-{{"id":"{tool_id}","version":"{version}"}}
--->
-<style>
-/* 工具样式：自包含，不引用任何外部资源 */
-:root {{
-  --bg: #f5f6f8;
-  --fg: #1f2328;
-  --accent: #2563eb;
-}}
-* {{ box-sizing: border-box; }}
-html, body {{ height: 100%; }}
-body {{
-  margin: 0;
-  background: var(--bg);
-  color: var(--fg);
-  font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
-  font-size: 16px;
-}}
-#app {{
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 24px;
-}}
-</style>
-</head>
-<body>
+# 默认引用的共享片段（键 = ET:INLINE 的 name，值 = _shared 内相对路径）
+DEFAULT_SHARED = {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js",
+}
 
-<!-- 页面结构 -->
-<main id="app">
-  <h1 style="font-size: 48px; margin: 0;">{title}</h1>
-  <p style="font-size: 20px; color: #57606a;">工具骨架已就绪，开始实现吧。</p>
-</main>
-
-<script>
-(function () {{
-  'use strict';
-
-  var LS_PREFIX = 'et_{tool_id}_';
-
-  function el(id) {{ return document.getElementById(id); }}
-
-  function init() {{
-    // TODO: 实现工具逻辑
-    console.log('LS prefix:', LS_PREFIX);
-  }}
-
-  if (document.readyState === 'loading') {{
-    document.addEventListener('DOMContentLoaded', init);
-  }} else {{
-    init();
-  }}
-}})();
-</script>
-
-</body>
-</html>
-"""
-
-CHANGELOG_TEMPLATE = """# {title} 更新记录
-
-遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与[语义化版本](https://semver.org/lang/zh-CN/)。
-
-## [Unreleased]
-
-## [{version}] - {today}
-
-### 新增
-
-- 初始版本
-"""
+TEMPLATES = {
+    "manifest.json": "manifest.json.tpl",
+    "index.html": "index.html.tpl",
+    "CHANGELOG.md": "CHANGELOG.md.tpl",
+}
 
 
 def prompt(question: str, default: str = "") -> str:
@@ -132,7 +79,7 @@ def prompt(question: str, default: str = "") -> str:
 
 def pick(question: str, options: tuple[str, ...], default: str) -> str:
     while True:
-        print(f"{question}")
+        print(question)
         print("  " + " / ".join(options))
         answer = prompt(">", default)
         if answer in options:
@@ -140,71 +87,95 @@ def pick(question: str, options: tuple[str, ...], default: str) -> str:
         print(f"  [ERR] 取值必须是：{', '.join(options)}")
 
 
-def ordered_manifest(data: dict) -> dict:
-    return {k: data[k] for k in MANIFEST_FIELD_ORDER if k in data}
+def class_prefix(tool_id: str) -> str:
+    """工具 id → 自身 CSS 类名前缀（去连字符，取前 12 字符）。"""
+    return re.sub(r"[^a-z0-9]", "", tool_id)[:12] or "tool"
 
 
-def build_files(tool_id: str, title: str, ttype: str, subjects: list[str],
-                grades: list[str], description: str, author: str) -> dict:
-    today = date.today().isoformat()
-    version = "1.0.0"
-
-    manifest = ordered_manifest({
-        "id": tool_id,
-        "title": title,
-        "version": version,
-        "type": ttype,
-        "description": description,
-        "author": author,
-        "entry": "index.html",
-        "single_file": True,
-        "offline": True,
-        "grade_range": grades,
-        "subjects": subjects,
-        "tags": [s for s in subjects],
-        "license": "free",
-        "dependencies": [],
-        "screen": "large",
-        "stats_enabled": True,
-        "created_at": today,
-        "updated_at": today,
-    })
+def build_tokens(params: dict, version: str = "1.0.0") -> dict:
+    subjects = params["subjects"]
+    primary = subjects[0] if subjects else "通用"
+    accent = params["accent"] or SUBJECT_ACCENTS.get(primary, "#2563eb")
 
     return {
-        "manifest.json": json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
-        "index.html": HTML_TEMPLATE.format(tool_id=tool_id, title=title, version=version),
-        "CHANGELOG.md": CHANGELOG_TEMPLATE.format(title=title, version=version, today=today),
+        "@@TOOL_ID@@": params["tool_id"],
+        "@@TITLE@@": params["title"],
+        "@@VERSION@@": version,
+        "@@TYPE@@": params["ttype"],
+        "@@DESCRIPTION@@": params["description"],
+        "@@AUTHOR@@": params["author"],
+        "@@SUB@@": " · ".join(subjects) if subjects else "课堂工具",
+        "@@ACCENT@@": accent,
+        "@@PREFIX@@": class_prefix(params["tool_id"]),
+        "@@GRADES_JSON@@": json.dumps(params["grades"], ensure_ascii=False),
+        "@@SUBJECTS_JSON@@": json.dumps(subjects, ensure_ascii=False),
+        "@@TAGS_JSON@@": json.dumps(subjects, ensure_ascii=False),
+        "@@FAMILY_JSON@@": json.dumps(params["family"], ensure_ascii=False),
+        "@@TODAY@@": date.today().isoformat(),
     }
 
 
+def render(name: str, tokens: dict) -> str:
+    path = TEMPLATE_DIR / TEMPLATES[name]
+    text = path.read_text(encoding="utf-8")
+    for token, value in tokens.items():
+        text = text.replace(token, value)
+    leftover = re.findall(r"@@[A-Z_]+@@", text)
+    if leftover:
+        raise ValueError(f"模板 {path.name} 存在未替换占位符：{', '.join(sorted(set(leftover)))}")
+    return text
+
+
+def build_files(params: dict) -> dict:
+    if not TEMPLATE_DIR.exists():
+        raise FileNotFoundError(f"模板目录不存在：{TEMPLATE_DIR.relative_to(ROOT).as_posix()}")
+    tokens = build_tokens(params)
+    files = {name: render(name, tokens) for name in TEMPLATES}
+
+    # manifest 必须是合法 JSON（模板改坏时立刻暴露，而不是等扫描失败）
+    json.loads(files["manifest.json"])
+    return files
+
+
 def gather_args(args) -> dict:
-    """命令行参数优先，缺失则交互式询问。"""
-    tool_id = args.id or prompt("工具 id（小写字母/数字/连字符）")
+    """命令行参数优先，缺失则交互式询问；--yes 模式下缺失项直接取默认值。"""
+    interactive = not args.yes
+
+    tool_id = args.id or (prompt("工具 id（小写字母/数字/连字符）") if interactive else "")
     while not ID_RE.match(tool_id):
         print("  [ERR] id 只能包含小写字母、数字与连字符")
         tool_id = prompt("工具 id")
 
-    title = args.title or prompt("工具标题", tool_id)
-    ttype = args.type or pick("工具类型", VALID_TYPES, "shell")
+    title = args.title or (prompt("工具标题", tool_id) if interactive else tool_id)
+    ttype = args.type or (pick("工具类型", VALID_TYPES, "shell") if interactive else "shell")
 
     if args.subjects:
         subjects = [s.strip() for s in args.subjects.split(",") if s.strip()]
-    else:
+    elif interactive:
         raw = prompt("学科（多个用逗号分隔）", "通用")
         subjects = [s.strip() for s in raw.split(",") if s.strip()]
+    else:
+        subjects = ["通用"]
+
     for s in subjects:
         if s not in VALID_SUBJECTS:
             print(f"  [WARN] 学科 '{s}' 不在推荐取值内，仍会写入")
 
     if args.grades:
         grades = [g.strip() for g in args.grades.split(",") if g.strip()]
-    else:
+    elif interactive:
         raw = prompt(f"学段（多个用逗号分隔，可选 {', '.join(VALID_GRADES)}）", "1-12")
         grades = [g.strip() for g in raw.split(",") if g.strip()]
+    else:
+        grades = ["1-12"]
 
-    description = args.description or prompt(
-        "一句话简介", f"{title}，适合课堂大屏使用。")
-    author = args.author or prompt("作者", "KeeTools Team")
+    description = args.description or (
+        prompt("一句话简介", f"{title}，适合课堂大屏使用。") if interactive
+        else f"{title}，适合课堂大屏使用。"
+    )
+    author = args.author or (prompt("作者", "KeeTools Team") if interactive else "KeeTools Team")
+    family = args.family or None
+    accent = args.accent or None
 
     return {
         "tool_id": tool_id,
@@ -214,11 +185,67 @@ def gather_args(args) -> dict:
         "grades": grades,
         "description": description,
         "author": author,
+        "family": family,
+        "accent": accent,
     }
 
 
+def register_shared(tool_id: str) -> None:
+    """把默认共享片段登记进 tools/_shared/shared.manifest.json。"""
+    if not SHARED_MANIFEST.exists():
+        print("[WARN] 未找到 shared.manifest.json，跳过共享片段登记")
+        return
+
+    try:
+        data = json.loads(SHARED_MANIFEST.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        print(f"[WARN] shared.manifest.json 解析失败（{exc}），跳过登记")
+        return
+
+    if not isinstance(data, dict):
+        print("[WARN] shared.manifest.json 顶层非对象，跳过登记")
+        return
+
+    data[tool_id] = dict(DEFAULT_SHARED)
+    SHARED_MANIFEST.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    print(f"[OK]   已登记 {len(DEFAULT_SHARED)} 个共享片段到 shared.manifest.json")
+
+
+def max_tool_kb() -> int:
+    try:
+        return max(1, int(os.environ.get("TOOL_MAX_KB", "500")))
+    except ValueError:
+        return 500
+
+
+def check_size(tool_dir: Path) -> None:
+    entry = tool_dir / "index.html"
+    if not entry.exists():
+        return
+
+    limit = max_tool_kb()
+    size_kb = entry.stat().st_size / 1024
+    if size_kb > limit:
+        print(f"[WARN] index.html 体积 {size_kb:.0f}KB 超过 TOOL_MAX_KB={limit}KB")
+        print("       考虑：抽共享逻辑到 tools/_shared/，或登记 docs/工具例外清单.md")
+    else:
+        print(f"[OK]   体积 {size_kb:.0f}KB（上限 {limit}KB）")
+
+
+def run_step(label: str, cmd: list[str]) -> bool:
+    result = subprocess.run(cmd, cwd=str(ROOT), check=False)
+    if result.returncode != 0:
+        print(f"[WARN] {label} 未通过，请修复后重跑")
+        return False
+    return True
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="生成新工具骨架")
+    parser = argparse.ArgumentParser(description="生成新工具骨架（含共享片段内联与自检）")
     parser.add_argument("--id", help="工具 id（等于目录名）")
     parser.add_argument("--title", help="工具标题")
     parser.add_argument("--type", choices=VALID_TYPES, help="工具类型")
@@ -226,6 +253,8 @@ def main() -> int:
     parser.add_argument("--grades", help="学段，逗号分隔")
     parser.add_argument("--description", help="一句话简介")
     parser.add_argument("--author", help="作者")
+    parser.add_argument("--family", help="family（同算法的不同玩法，kebab-case）")
+    parser.add_argument("--accent", help="主题色（默认按首个学科自动选取）")
     parser.add_argument("--yes", action="store_true", help="跳过交互（缺参数时报错）")
     args = parser.parse_args()
 
@@ -244,7 +273,12 @@ def main() -> int:
         print(f"[ERR]  目录已存在：{tool_dir.relative_to(ROOT).as_posix()}")
         return 1
 
-    files = build_files(**params)
+    try:
+        files = build_files(params)
+    except (FileNotFoundError, ValueError, json.JSONDecodeError) as exc:
+        print(f"[ERR]  生成失败：{exc}")
+        return 1
+
     tool_dir.mkdir(parents=True)
     for name, content in files.items():
         (tool_dir / name).write_text(content, encoding="utf-8", newline="\n")
@@ -253,26 +287,25 @@ def main() -> int:
     for name in files:
         print(f"       - {name}")
 
-    # ── 自动校验 ─────────────────────────────
-    print("\n== 自动校验 ==\n")
-    checks = [
-        ("manifest", [sys.executable, str(ROOT / "scripts" / "check_manifest.py"), tool_id]),
-        ("external", [sys.executable, str(ROOT / "scripts" / "check_no_external.py"),
-                      str(tool_dir)]),
+    print("\n== 共享片段登记 ==")
+    register_shared(tool_id)
+
+    print("\n== 内联共享片段 ==")
+    run_step("sync_shared", [sys.executable, str(ROOT / "scripts" / "sync_shared.py"), tool_id])
+
+    print("\n== 自检 ==")
+    results = [
+        run_step("manifest", [sys.executable, str(ROOT / "scripts" / "check_manifest.py"), tool_id]),
+        run_step("external", [sys.executable, str(ROOT / "scripts" / "check_no_external.py"), str(tool_dir)]),
     ]
-    failed = False
-    for label, cmd in checks:
-        result = subprocess.run(cmd, cwd=str(ROOT), check=False)
-        if result.returncode != 0:
-            failed = True
-            print(f"[WARN] {label} 校验未通过，请修复后重跑")
+    check_size(tool_dir)
 
     print("\n下一步：")
-    print(f"  1. 实现 tools/{tool_id}/index.html 的功能")
+    print(f"  1. 实现 tools/{tool_id}/index.html 的功能（ET:INLINE 标记内禁止手改）")
     print("  2. 后台点『扫描同步』或运行扫描脚本入库")
     print(f'  3. git add tools/{tool_id} && git commit -m "tool({tool_id}): v1.0.0 初始版本"')
 
-    return 1 if failed else 0
+    return 0 if all(results) else 1
 
 
 if __name__ == "__main__":

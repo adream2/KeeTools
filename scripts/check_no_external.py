@@ -48,7 +48,8 @@ ALLOWED_HOSTS = {
 }
 
 # 允许的 XML 命名空间（不是网络请求）
-NAMESPACE_HOSTS = {"www.w3.org", "schema.org"}
+# www.sitemaps.org：sitemap.xml 的 urlset 命名空间（/sitemap.xml 端点）
+NAMESPACE_HOSTS = {"www.w3.org", "schema.org", "www.sitemaps.org"}
 
 # 行内豁免标记
 EXEMPT_MARKER = "et-allow-external"

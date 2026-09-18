@@ -11,11 +11,12 @@
 |---|---|---|
 | [`init_db.php`](init_db.php) | **PHP 脚本**：建库建表（`storage/app.db` + `storage/stats.db`）+ 分类种子数据；幂等，支持 `--check`（只读校验）/ `--force`（删库重建） | 首次部署 / 表结构变更后 |
 | [`sync_shared.py`](sync_shared.py) | 把 `tools/_shared/` 片段幂等内联进各工具 HTML | 改完共享逻辑后 / 提交前 `--check` |
-| [`check_manifest.py`](check_manifest.py) | 校验 `manifest.json` 字段 + `ET-META` 一致性 | 新增或修改工具后 |
+| [`check_manifest.py`](check_manifest.py) | 校验 `manifest.json` 字段 + `ET-META` 一致性 + **体积守卫**（`TOOL_MAX_KB`，默认 500KB） | 新增或修改工具后 |
 | [`check_no_external.py`](check_no_external.py) | 零外部依赖检查（禁止 CDN / 在线字体 / 在线图标） | 提交前必跑 |
 | [`check_css_tokens.py`](check_css_tokens.py) | CSS 字面量检查（须用 `var(--...)` 令牌） | 改过 CSS 后 |
 | [`build_css.py`](build_css.py) | 四层 CSS 拼合产出到 `public/assets/css/` | 改过 CSS 源后 / 提交前 `--check` |
-| [`new_tool.py`](new_tool.py) | 新工具脚手架（生成 manifest / HTML / CHANGELOG） | 新建工具时 |
+| [`new_tool.py`](new_tool.py) | 新工具脚手架（模板取 `tools/_template/`，自动登记共享片段 + 内联 + 自检） | 新建工具时 |
+| [`asset_report.py`](asset_report.py) | 静态资源体积审计（`public/` 汇总 + 各工具 HTML 体积排行，只读） | 每批工具完成后 / 发版前 |
 | [`icons/prepare_source.py`](icons/prepare_source.py) | 从 Iconify 提取图标离线源（**唯一联网脚本**） | 改过 `icons.txt` 后（低频） |
 | [`icons/build_sprite.py`](icons/build_sprite.py) | 网站图标 sprite 子集化（离线） | 改过 `icons.txt` 后 |
 
@@ -49,6 +50,9 @@ python scripts/sync_shared.py
 
 # 图标清单变更 → 重建 sprite
 python scripts/icons/build_sprite.py
+
+# 体积审计（每批工具完成后）
+python scripts/asset_report.py
 ```
 
 ---
