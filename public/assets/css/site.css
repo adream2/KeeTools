@@ -608,6 +608,15 @@
   color: var(--c-primary);
 }
 
+/* 分类导语：比 page-desc 更重，用于承载 SEO 正文（P4 §三） */
+.page-lead {
+  max-width: 76ch;
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-lg);
+  line-height: 1.75;
+  color: var(--c-text);
+}
+
 .page-desc {
   font-size: var(--fs-base);
   color: var(--c-text-muted);
@@ -1148,6 +1157,93 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-3);
+}
+
+/* ═══════════════ 数据看板：增长曲线 / 学科分布（P4 §四）═══════════════ */
+
+.grow-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-1);
+  height: var(--chart-h);
+  padding-top: var(--sp-2);
+}
+
+.grow-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-1);
+  min-width: 0;
+  height: 100%;
+}
+
+.grow-bar {
+  width: 100%;
+  min-height: 2px;
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+  background: var(--c-primary);
+  opacity: .85;
+}
+
+.grow-bar--empty {
+  background: var(--c-border);
+  opacity: 1;
+}
+
+.grow-label {
+  font-size: var(--fs-xs);
+  color: var(--c-text-light);
+  white-space: nowrap;
+}
+
+.grow-hint {
+  margin-top: var(--sp-3);
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+}
+
+.dist-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.dist-row {
+  display: grid;
+  grid-template-columns: var(--dash-col-label) 1fr var(--dash-col-count);
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+  text-decoration: none;
+}
+
+.dist-name {
+  color: var(--c-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dist-track {
+  height: var(--chart-bar-h);
+  border-radius: var(--r-full);
+  background: var(--c-bg-soft);
+  overflow: hidden;
+}
+
+.dist-fill {
+  height: 100%;
+  border-radius: var(--r-full);
+  background: var(--c-primary);
+}
+
+.dist-count {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--c-text-muted);
 }
 
 /* 分类管理行 */
