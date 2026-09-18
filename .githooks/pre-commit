@@ -25,5 +25,6 @@ echo "── pre-commit 校验 ────────────────�
 "$PY" scripts/check_no_external.py
 "$PY" scripts/sync_shared.py --check
 "$PY" scripts/check_css_tokens.py
+"$PY" scripts/build_css.py --check
 
 echo "── 全部通过 ────────────────────────────────"

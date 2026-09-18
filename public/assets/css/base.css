@@ -1,0 +1,195 @@
+/* ═══════════════════════════════════════════════════════════════
+   base.css — 重置 + 基础排版
+   ═══════════════════════════════════════════════════════════════
+   硬规则：本文件**禁止字面量颜色与尺寸**，一律 var(--...)。
+   例外：媒体查询断点无法使用 var()，脚本已豁免 @media 行。
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── 重置 ─────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: var(--sp-0);
+  padding: var(--sp-0);
+  min-height: 100vh;
+  font-family: var(--ff-sans);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-normal);
+  line-height: var(--lh-base);
+  color: var(--c-text);
+  background-color: var(--c-bg-soft);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: var(--sp-0);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+}
+
+h1 { font-size: var(--fs-3xl); }
+h2 { font-size: var(--fs-2xl); }
+h3 { font-size: var(--fs-xl); }
+h4 { font-size: var(--fs-lg); }
+h5 { font-size: var(--fs-base); }
+h6 { font-size: var(--fs-sm); }
+
+p {
+  margin: var(--sp-0);
+}
+
+ul, ol {
+  margin: var(--sp-0);
+  padding-left: var(--sp-6);
+}
+
+figure, blockquote, dl, dd {
+  margin: var(--sp-0);
+}
+
+img, svg, video, canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* ── 链接 ─────────────────────────────────────────────────── */
+
+a {
+  color: var(--c-primary);
+  text-decoration: none;
+  transition: color var(--tr-fast);
+}
+
+a:hover {
+  color: var(--c-primary-hover);
+}
+
+/* ── 表单元素继承字体 ─────────────────────────────────────── */
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  margin: var(--sp-0);
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: var(--sp-0);
+}
+
+/* ── 表格 ─────────────────────────────────────────────────── */
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-0);
+}
+
+/* ── 代码 ─────────────────────────────────────────────────── */
+
+code, pre, kbd, samp {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-sm);
+}
+
+pre {
+  margin: var(--sp-0);
+  overflow-x: auto;
+}
+
+/* ── 分隔线 ───────────────────────────────────────────────── */
+
+hr {
+  border: none;
+  border-top: var(--bw-1) solid var(--c-border);
+  margin: var(--sp-6) var(--sp-0);
+}
+
+/* ── 选区与焦点 ───────────────────────────────────────────── */
+
+::selection {
+  background-color: var(--c-primary-weak);
+  color: var(--c-primary-active);
+}
+
+:focus-visible {
+  outline: var(--bw-2) solid var(--c-primary);
+  outline-offset: var(--sp-1);
+}
+
+/* ── 页面容器 ─────────────────────────────────────────────── */
+
+.container {
+  width: 100%;
+  max-width: var(--page-max);
+  margin: var(--sp-0) auto;
+  padding: var(--sp-0) var(--page-pad);
+}
+
+/* ── 无障碍工具类 ─────────────────────────────────────────── */
+
+.visually-hidden {
+  position: absolute;
+  width: var(--bw-1);
+  height: var(--bw-1);
+  padding: var(--sp-0);
+  margin: calc(var(--bw-1) * -1);
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: none;
+}
+
+.skip-link {
+  position: absolute;
+  top: calc(var(--header-h) * -1);
+  left: var(--sp-4);
+  z-index: var(--z-toast);
+  padding: var(--sp-2) var(--sp-4);
+  background-color: var(--c-primary);
+  color: var(--c-text-invert);
+  border-radius: var(--r-md);
+  transition: top var(--tr-base);
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+  color: var(--c-text-invert);
+}
+
+/* ── 响应式排版 ─────────────────────────────────────────────
+   断点数值无法用 var()（CSS 媒体查询不支持自定义属性），
+   响应式令牌在 tokens.css 中定义，此处只引用。
+   ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .container {
+    padding-left: var(--page-pad);
+    padding-right: var(--page-pad);
+  }
+}
+
+@media print {
+  body {
+    background: none;
+  }
+}

@@ -1,26 +1,68 @@
-# 网站图标清单（每行一个）
+# 本项目用到的网站图标清单（每行一个图标名）
 #
-# 格式：<图标集>:<图标名>
-# 可用图标集（许可证宽松，见 docs/图标与许可证.md）：
-#   lucide   — ISC
-#   tabler   — MIT
-#   phosphor — MIT
+# 格式：<图标集>:<图标名>    例：lucide:search
+# 产出：public/assets/icons/sprite.svg（symbol id 为 #i-<图标名>）
 #
-# 禁用的图标集（商标限制）：logos: / simple-icons:
+# 构建：python scripts/build_sprite.py  →  实为 python scripts/icons/build_sprite.py
+# 校验：python scripts/icons/build_sprite.py --check
 #
-# 加完图标后执行：
-#   python scripts/icons/build_sprite.py
+# 规范：docs/图标与许可证.md、assets-src/icons/README.md
 #
-# P0 阶段先放基础导航图标，后续按需增补。
+# ⚠️ 仅使用宽松许可图标集（Lucide ISC / Tabler MIT / Phosphor MIT）
+#    新增图标集须登记到 THIRD-PARTY-LICENSES.md
 
+# ── 导航与通用 ─────────────────────────────
 lucide:home
-lucide:search
-lucide:download
-lucide:external-link
 lucide:grid-2x2
-lucide:star
-lucide:clock
+lucide:search
 lucide:menu
 lucide:x
 lucide:chevron-right
-tabler:brand-wechat
+lucide:chevron-down
+lucide:chevron-left
+lucide:arrow-left
+lucide:external-link
+
+# ── 工具操作 ───────────────────────────────
+lucide:download
+lucide:play
+lucide:eye
+lucide:copy
+lucide:share-2
+lucide:star
+lucide:clock
+
+# ── 分类与学科 ─────────────────────────────
+lucide:book-open
+lucide:calculator
+lucide:languages
+lucide:flask-conical
+lucide:atom
+lucide:dna
+lucide:globe-2
+lucide:landmark
+lucide:palette
+lucide:music
+lucide:activity
+lucide:cpu
+
+# ── 后台 ───────────────────────────────────
+lucide:layout-dashboard
+lucide:wrench
+lucide:folder-tree
+lucide:settings
+lucide:info
+lucide:log-out
+lucide:refresh-cw
+lucide:plus
+lucide:pencil
+lucide:trash-2
+lucide:check
+lucide:alert-triangle
+lucide:user
+
+# ── 状态 ───────────────────────────────────
+lucide:loader
+lucide:inbox
+lucide:package
+lucide:wifi-off

@@ -116,11 +116,20 @@ def scan_file(path: Path) -> list[Finding]:
     except OSError:
         return findings
 
+    # 豁免标记写在注释里，必须在剥离注释前用原始行判断，
+    # 否则注释被去掉后标记永远匹配不到，逃生阀失效。
+    raw_lines = text.splitlines()
+
     for line_no, line in strip_comments(text):
-        if EXEMPT_MARKER in line:
+        raw = raw_lines[line_no - 1] if line_no - 1 < len(raw_lines) else ""
+        if EXEMPT_MARKER in raw or EXEMPT_MARKER in line:
             continue
         stripped = line.strip()
         if not stripped:
+            continue
+
+        # 媒体查询 / 特性查询的断点数值无法用 var()（CSS 规范限制），豁免整行
+        if stripped.startswith("@media") or stripped.startswith("@supports"):
             continue
 
         # 颜色字面量
