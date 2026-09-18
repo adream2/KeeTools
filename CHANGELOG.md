@@ -11,6 +11,71 @@
 
 ### 新增
 
+- **P2 标杆工具（2026-09-18，5 个工具 + 共享基建）**
+  - **`_shared/` 基建沉淀**：
+    - `ui/et-chrome.js` + `ui/et-chrome.css` — 工具通用外壳（顶栏 / 状态胶囊 / 深浅色主题 /
+      全屏 / WebAudio 音效开关 / 帮助弹窗 / toast / L1 首次运行提示 / L2 页脚回流 +
+      postMessage 站点发现协议 `et-hello`/`et-origin`，收不到回复时优雅降级为纯文本）
+    - `ui/et-import.js` + `ui/et-import.css` — **通用数据导入组件**：粘贴文本 / 文件
+      （CSV·TXT·JSON 拖放）、RFC4180 引号 CSV 解析、UTF-8/UTF-16/GBK(GB18030) 编码自动识别、
+      表头与列自动识别（姓名/学号/权重）、去重、空行处理、前 10 行预览、逐行报错定位
+    - `logic/random-pick.js` — 加权随机 / 候选池 / 洗牌 / 多抽
+    - `logic/countdown.js` — 漂移校正倒计时引擎（绝对时钟 + 100ms 粒度）+ 格式化
+    - `logic/scoreboard.js` — 多队计分 / 历史 / 撤销 / 8 色调色板
+    - `icons/icons.svg` — 工具图标 symbol 集（Lucide 子集约 40 个，ISC，独立于网站 sprite）
+  - **工具 5 个**（全部单文件、`file://` 双击可用、深浅色主题、全屏、空格键快捷操作）：
+    - `random-name-classic` v1.0.0 — 随机点名器：大屏舞台、点名定格动画 + 彩带特效、
+      不重复点名 / 已点标记 / 加权抽取 / 历史（复用 et-import + random-pick）
+    - `wheel-spinner` v1.0.0 — 课堂大转盘：SVG 扇区按权重分配、rAF 缓动旋转 +
+      指针扫过扇区边界 tick 音效、中奖放大展示、抽中自动移除（可撤销）
+    - `countdown-timer` v1.0.0 — 课堂倒计时：SVG 进度环、8 档预设 + 自定义时分秒、
+      运行中 ±30 秒、最后 30 秒变色 / 10 秒滴答、「时间到」全屏提醒
+    - `pinyin-chart` v1.0.0 — 汉语拼音表（fixed 型渲染器模式验证）：63 项内置数据、
+      卡片 / 列表双视图、点击朗读（SpeechSynthesis 优雅降级）、分节连读、实时检索、
+      数据内联 JSON 可整体替换
+    - `scoreboard` v1.0.0 — 小组计分板：2–8 队、±1/±5、计分历史弹窗、一键撤销、
+      领先队伍皇冠高亮、队伍名批量导入（复用 et-import + scoreboard）
+  - **规范修订**（浏览器基准，见 `docs/工具开发规范.md` §4.1）：工具侧由
+    "Win7 + 老版浏览器 ES5" 修订为**现代浏览器优先**（Chrome/Edge 90+、Safari 14+），
+    浏览器内置能力必须能力检测 + 优雅降级；`AGENTS.md` §6.3 同步更新
+  - 浏览器实测：5 工具全部通过（HTTP 与 `file://` 双协议、导入/解析/交互/动画全链路、
+    DevTools 无页面错误、Network 零外部请求）
+- **P2 工具体验修订 v1.1.0（2026-09-18，用户反馈 9 项全量落地）**
+  - **去启动弹窗**：取消 L1 首次运行提示（工具侧 `et-tip` 与下载注入 `BrandInjector` toast 均移除），
+    品牌回流仅保留低调页脚（规范 §八改为两层设计）
+  - **设置抽屉**（edupick 交互）：数据型工具右上角 ⚙ 抽屉集中收纳导入/导出/选项/记录，
+    `et-chrome` 新增 `opt.settings` API 与抽屉组件
+  - **按学号快速生成**：random-name / wheel / scoreboard 均支持起止号 + `{n}` 模板一键生成，免手打名单
+  - **离线名单**：工具同目录可选 `roster.js`（`window.ET_ROSTER`，`file://` 生效）或 `roster.txt`
+    （仅 http），打开即自动加载、优先于本机数据（PPT 直开免设置）
+  - **iframe 全屏委托**：工具全屏按钮 postMessage 给宿主统一 fullscreen（`et-fullscreen-toggle`
+    / `et-fullscreen-change`），`site.js` 实现桥接 + `et-hello`→`et-origin` 应答（页脚官网链接生效），
+    消除详情页"全屏体验"与工具内全屏的双层嵌套
+  - **PWA 可封装**：`et-chrome` 自动注入 blob manifest + theme-color（不支持的环境静默）
+  - **模块化离线统计**：新增 `ui/et-stats.js`——独立打开且联网时 sendBeacon 上报
+    `use_offline`（text/plain 免预检），端点未配置零请求；整块可删、删后完全不联网；
+    `StatsService::EVENTS` 与 `init_db` CHECK 白名单扩至 6 事件（旧表自动重建）；
+    `BrandInjector` 改为注入 `ET_SITE_ORIGIN`（下载单文件获得页脚链接与统计端点）
+  - **拼音朗读修复**：改为朗读例字汉字（中文 TTS 最准）+ 优选本地中文语音包（zh-CN localService）+
+    语速放缓至 0.65，无中文语音包时明确提示
+  - **提示音量提升**：WebAudio 增益按教室大屏调校（MASTER_GAIN 0.5，单项峰值 ×2.5）
+- **P2 激光笔适配 v1.2.0（2026-09-18）**
+  - `et-chrome` 新增 `opt.primary` / `opt.secondary` 约定：翻页笔上下页键
+    （PageDown / PageUp，HID 翻页键）即工具主 / 副操作键，输入框聚焦与弹窗打开时不响应
+  - 接入工具：random-name-classic（点名）、wheel-spinner（旋转）、countdown-timer
+    （下页开始/暂停 · 上页重置）、pinyin-chart（下页连读下一节 · 上页上一节，领读不碰鼠标）
+- **P2 精致化 v1.3.0（2026-09-18，用户反馈三项）**
+  - **拼音标准读音**：新增构建脚本 `scripts/pinyin_gen_audio.py`——用 Windows 中文标准语音
+    （Huihui/Kangkang）合成 58 个音节 8kHz WAV，Python 标准库裁剪静音 + 峰值归一 + base64
+    内嵌（约 460KB 入库），运行时零依赖完全离线；`speak()` 优先播内嵌音频，缺项回落 TTS。
+    根治 TTS 读拼音变英语音的问题
+  - **双层全屏根治**：iframe 内工具不再渲染自身全屏按钮（宿主「全屏体验」是唯一全屏入口）；
+    站点 CSS 预览区 `:fullscreen` 时隐藏 preview-bar/preview-tip，全屏即纯工具本体
+  - **打开即用**：random-name-classic 无离线名单/本机数据时自动载入默认学号名单（1–40 号），
+    打开即可点名；设置只用于改参数
+  - **品质升级**：`et-chrome` 全局极光呼吸背景（accent 渐变 + 16s 动画，老内核友好）；
+    点名结果 / 倒计时数字改 fg→主题色渐变大字 + 辉光；点名舞台玻璃化
+
 - **P1 转化（2026-09-18，全部 8 个模块）**
   - **统计体系**：`services/StatsService.php`（append-only JSONL 缓冲 + 批量落库 + 限流 + use_online 去重）、
     `POST /api/track` 端点、`scripts/flush_stats.php`（cron 每分钟落库，缓冲超 512KB 惰性落库、看板渲染前自动 flush）、

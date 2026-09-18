@@ -39,7 +39,8 @@
 |---|---|---|---|---|---|
 | Lucide | `assets-src/icons/lucide.json`（Iconify JSON 子集） | 46（+4 别名） | `python scripts/icons/prepare_source.py`（**唯一联网脚本**，一次性提取后入库） | 2026-09-18 | `lastModified=1789279477`（2026-09-13） |
 
-**工具图标**：位于 `tools/_shared/icons/`，同样来源于上述宽松许可证图标集，内联进工具 HTML。
+**工具图标**：位于 `tools/_shared/icons/icons.svg`（Lucide 子集手工内联，约 40 个 `<symbol>`，
+ISC 许可证，`currentColor` 跟随主题），经 `sync_shared.py` 内联进各工具 HTML，与网站 sprite 相互独立。
 
 ### 待补充
 
@@ -84,9 +85,11 @@
 
 | 资源 | 来源 | 许可证 | 用途 |
 |---|---|---|---|
-| （待补充） | — | — | 工具内置知识数据（拼音表 / 元素周期表等）的版权状态需逐项确认 |
+| 汉语拼音音节真人录音（183 个 mp3） | github.com/hugolpz/audio-cmn（`18k-abr/syllabs/`），Chen Wang 录制 | **CC BY-SA**（仓库 README 明示；原音源 shtooka/cmn） | `tools/pinyin-chart/` 点读音频（base64 内嵌） |
 
-> ⚠️ **注意**：`fixed` 型工具的内置数据可能涉及教材配套资料版权，登记前需确认来源合法性或仅使用公共领域 / 自编数据。
+> 署名义务：已在 `tools/pinyin-chart/README.md` 与工具内帮助弹窗注明
+> "音频：Chen Wang 录制（audio-cmn，CC BY-SA）"。CC BY-SA 具有相同方式共享义务，
+> 音频原文以独立 mp3 形式内嵌、未做演绎修改（仅格式/码率经上游转换），在此登记以履行披露。
 
 ---
 
@@ -95,3 +98,4 @@
 | 日期 | 操作 | 说明 |
 |---|---|---|
 | 2026-09-18 | 建立登记表 | 初始登记，当前仅 Lucide + Tabler |
+| 2026-09-18 | P2 工具图标集 | `tools/_shared/icons/icons.svg` 内联 Lucide 子集（ISC）约 40 符号，供 5 个 P2 工具使用 |

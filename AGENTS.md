@@ -173,7 +173,7 @@ python scripts/sync_shared.py
 
 ### 6.3 JavaScript
 
-- 工具代码：ES5 + 少量 ES6（兼容老版 Chrome / 360），**禁止** `?.`、`??`、`structuredClone`、`:has()`
+- 工具代码：**现代浏览器优先**（Chrome/Edge 90+、Safari 14+，2026-09-18 修订，详见 `docs/工具开发规范.md` §4.1），可用 ES2018+；引用浏览器内置能力须能力检测 + 优雅降级
 - 网站代码：可用 ES2018（前台访客浏览器较新），但仍避免 `?.` 以外的新语法滥用
 - 变量 `camelCase`，常量 `UPPER_SNAKE`
 
