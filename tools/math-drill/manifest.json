@@ -1,0 +1,21 @@
+{
+  "id": "math-drill",
+  "title": "口算题生成器",
+  "version": "1.0.0",
+  "type": "shell",
+  "description": "按加减乘除与数值范围一键生成口算题卷，答案可显隐，可直接打印或另存为 PDF。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["1-6"],
+  "subjects": ["数学"],
+  "tags": ["口算", "计算练习", "出题", "打印", "随堂练习", "大屏"],
+  "family": "math-drill",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-18",
+  "updated_at": "2026-09-18"
+}
