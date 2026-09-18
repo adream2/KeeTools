@@ -127,21 +127,27 @@
           <tbody>
             <?php
             $rows = [];
+            $titles = [];
             foreach (array_keys($toolRanking) as $event) {
                 foreach ($toolRanking[$event] as $i => $r) {
                     $tid = $r['tool_id'];
+                    $titles[$tid] = $r['title'];
                     $rows[$tid] = $rows[$tid] ?? ['view' => 0, 'use_online' => 0, 'netdisk_click' => 0];
                     $rows[$tid][$event] = $r['n'];
                 }
             }
-            usort($rows, static fn (array $a, array $b): int => $b['netdisk_click'] <=> $a['netdisk_click'] ?: $b['view'] <=> $a['view']);
+            // uasort 保持 tool_id 字符串键（usort 会重排为整数索引，丢掉键名）
+            uasort($rows, static fn (array $a, array $b): int => $b['netdisk_click'] <=> $a['netdisk_click'] ?: $b['view'] <=> $a['view']);
             ?>
             <?php if ($rows === []): ?>
               <tr><td colspan="4" class="table-sub">暂无数据</td></tr>
             <?php else: ?>
               <?php foreach ($rows as $tid => $r): ?>
                 <tr>
-                  <td><a href="<?= e(url('/tool/' . rawurlencode($tid))) ?>" target="_blank" rel="noopener"><?= e($tid) ?></a></td>
+                  <td>
+                    <strong><?= e($titles[$tid] ?? $tid) ?></strong>
+                    <div class="table-sub"><a href="<?= e(url('/tool/' . rawurlencode($tid))) ?>" target="_blank" rel="noopener"><?= e($tid) ?></a></div>
+                  </td>
                   <td class="tool-meta-mono"><?= e((string) $r['view']) ?></td>
                   <td class="tool-meta-mono"><?= e((string) $r['use_online']) ?></td>
                   <td class="tool-meta-mono"><?= e((string) $r['netdisk_click']) ?></td>

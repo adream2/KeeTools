@@ -42,8 +42,11 @@ final class StatsAdminController extends AdminController
              GROUP BY netdisk_type ORDER BY n DESC"
         );
 
-        // ── 工具排行（各维度 Top 10）────────────────
+        // ── 工具排行（各维度 Top 10，带工具名）──────
+        // tools 表在业务库、stats 在统计库，无法跨库 JOIN：
+        // 统计侧只取 tool_id，名称由业务库批量映射（工具被删时回退 tool_id）
         $toolRanking = [];
+        $toolIds = [];
         foreach (['view', 'use_online', 'netdisk_click'] as $event) {
             $rows = $db->fetchAll(
                 "SELECT tool_id, COUNT(*) AS n FROM stats
@@ -55,7 +58,36 @@ final class StatsAdminController extends AdminController
                 static fn (array $r): array => ['tool_id' => (string) $r['tool_id'], 'n' => (int) $r['n']],
                 $rows
             );
+            foreach ($toolRanking[$event] as $row) {
+                $toolIds[] = $row['tool_id'];
+            }
         }
+
+        $toolTitles = [];
+        if ($toolIds !== [] && App::hasDb()) {
+            $uniqueIds = array_values(array_unique($toolIds));
+            $placeholders = implode(', ', array_map(
+                static fn (int $i): string => ':tid' . $i,
+                array_keys($uniqueIds)
+            ));
+            $params = [];
+            foreach ($uniqueIds as $i => $tid) {
+                $params[':tid' . $i] = $tid;
+            }
+            foreach (App::db()->fetchAll(
+                'SELECT tool_id, title FROM tools WHERE tool_id IN (' . $placeholders . ')',
+                $params
+            ) as $row) {
+                $toolTitles[(string) $row['tool_id']] = (string) $row['title'];
+            }
+        }
+        foreach ($toolRanking as &$ranking) {
+            foreach ($ranking as &$row) {
+                $row['title'] = $toolTitles[$row['tool_id']] ?? $row['tool_id'];
+            }
+            unset($row);
+        }
+        unset($ranking);
 
         // ── 近 30 天趋势 ────────────────────────────
         $trend = $this->dailyTrend($db, 30);
