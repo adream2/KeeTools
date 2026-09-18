@@ -41,13 +41,24 @@ final class ToolController
         // 详情页浏览：服务端直记，不依赖前台 JS
         StatsService::record('view', $toolId);
 
+        // SEO 三件套（P4 §三）：标题含版本与品牌、描述用工具简介、
+        // 关键词由 学科 + 标签 拼出（不堆砌，只放真实相关词）
+        $keywordParts = array_filter(array_merge(
+            [(string) $tool['title']],
+            is_array($tool['subjects'] ?? null) ? $tool['subjects'] : [],
+            is_array($tool['tags'] ?? null) ? $tool['tags'] : [],
+            [grade_range_label(is_array($tool['grade_range'] ?? null) ? $tool['grade_range'] : [])],
+            ['课堂工具', '免费', '免安装'],
+        ));
+
         $html = View::render('pages/tool', [
-            'pageTitle' => $tool['title'] . ' v' . $tool['version'] . ' — ' . site_name(),
-            'pageDesc'  => $tool['description'],
-            'tool'      => $tool,
-            'stage'     => $stage,
-            'related'   => $related,
-            'netdisks'  => $netdisks,
+            'pageTitle'   => $tool['title'] . ' v' . $tool['version'] . ' — ' . site_name(),
+            'pageDesc'    => $tool['description'],
+            'pageKeywords' => implode(',', array_unique(array_map('strval', $keywordParts))),
+            'tool'        => $tool,
+            'stage'       => $stage,
+            'related'     => $related,
+            'netdisks'    => $netdisks,
         ]);
 
         return Response::html($html);

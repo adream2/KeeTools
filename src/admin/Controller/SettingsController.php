@@ -30,7 +30,9 @@ final class SettingsController extends AdminController
     /** 基本 Tab 可在后台编辑的键：[key => 说明] */
     private const EDITABLE = [
         'SITE_NAME'               => '站点名称',
-        'SITE_DESCRIPTION'        => '站点描述（SEO）',
+        'SITE_DESCRIPTION'        => '站点描述（首页 meta description）',
+        'seo_home_title'          => '首页 SEO 标题（留空则用「站点名 — 免费课堂工具集」）',
+        'site_keywords'           => '首页关键词（逗号分隔，留空则按学科自动生成）',
         'DOWNLOAD_DIRECT_ENABLED' => '单文件直接下载开关',
     ];
 
@@ -58,6 +60,8 @@ final class SettingsController extends AdminController
         'sponsor_alipay_qr' => '支付宝收款码图片地址',
         'community_qr_image' => '公众号二维码图片地址（详情页 / 中间页引流）',
         'community_qr_text'  => '公众号引导文案',
+        'custom_tool_url'    => '工具定制需求入口链接（留空且无文案 = 全站不显示）',
+        'custom_tool_note'   => '工具定制引导文案（详情页侧栏）',
     ];
 
     /** 赞助 Tab 的开关键 */

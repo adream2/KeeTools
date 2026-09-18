@@ -11,6 +11,7 @@ use App\Services\SiteOps;
  *     一级学段页 = 下属学科；二级学科页 = 同学段兄弟学科
  * @var list<array<string, mixed>> $tools
  * @var int $total
+ * @var string $intro 分类导语（SEO：避免空列表页，见 App\Services\CategoryCopy）
  */
 $isActive = static fn (string $slug): bool => $slug === $category['slug'];
 ?><nav class="breadcrumb" aria-label="面包屑">
@@ -30,6 +31,9 @@ $isActive = static fn (string $slug): bool => $slug === $category['slug'];
     <?php endif; ?>
     <?= e((string) $category['name']) ?>
   </h1>
+  <?php if (($intro ?? '') !== ''): ?>
+    <p class="page-lead"><?= e((string) $intro) ?></p>
+  <?php endif; ?>
   <p class="page-desc">共 <strong><?= e((string) $total) ?></strong> 个免费课堂工具</p>
 </div>
 

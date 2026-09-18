@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Frontend\Controller;
 
 use App\Core\App;
+use App\Core\Config;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\View;
@@ -35,11 +36,33 @@ final class HomeController
             $stages = $repository->stageCards();
         }
 
+        // 首页 TDK（P4 §三）：标题与关键词均可在后台覆盖，未覆盖时按学科自动生成
+        $customTitle = trim(Config::string('seo_home_title'));
+        $title = $customTitle !== '' ? $customTitle : (site_name() . ' — 免费课堂工具集');
+
+        $keywords = trim(Config::string('site_keywords'));
+        if ($keywords === '') {
+            $subjectNames = [];
+            foreach ($stages as $stage) {
+                foreach ($stage['subjects'] as $subject) {
+                    if ($subject['count'] > 0) {
+                        $subjectNames[] = (string) $subject['name'];
+                    }
+                }
+            }
+            $keywords = implode(',', array_slice(array_unique(array_merge(
+                ['课堂工具', '教学工具', '免费教学软件', '免安装', '断网可用', '大屏投影'],
+                $subjectNames,
+            )), 0, 24));
+        }
+
         $html = View::render('pages/home', [
-            'pageTitle' => site_name() . ' — 免费课堂工具集',
-            'dbReady'   => $dbReady,
-            'featured'  => $featured,
-            'stages'    => $stages,
+            'pageTitle'    => $title,
+            'pageDesc'     => site_description(),
+            'pageKeywords' => $keywords,
+            'dbReady'      => $dbReady,
+            'featured'     => $featured,
+            'stages'       => $stages,
         ]);
 
         return Response::html($html);

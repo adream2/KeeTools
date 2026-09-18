@@ -28,6 +28,7 @@ use App\Frontend\Controller\FriendLinkController;
 use App\Frontend\Controller\HomeController;
 use App\Frontend\Controller\NetdiskController;
 use App\Frontend\Controller\SearchController;
+use App\Frontend\Controller\SeoController;
 use App\Frontend\Controller\StatsController;
 use App\Frontend\Controller\SponsorController;
 use App\Frontend\Controller\ToolController;
@@ -44,6 +45,10 @@ $router->get('/netdisk/{id}', [NetdiskController::class, 'show'], ['csrf']);
 $router->get('/friend-links', [FriendLinkController::class, 'index'], ['csrf']);
 $router->post('/netdisk/{id}/report', [NetdiskController::class, 'report'], ['csrf']);
 $router->get('/download/{id}', [DownloadController::class, 'download'], ['csrf']);
+
+// ── SEO（P4 §三）────────────────────────────────────
+$router->get('/sitemap.xml', [SeoController::class, 'sitemap']);
+$router->get('/robots.txt', [SeoController::class, 'robots']);
 
 // ── 统计上报（不挂 csrf：改用 IP 限流 + 参数白名单，见 安全规范.md §6）──
 
@@ -68,6 +73,7 @@ $router->group('/admin', ['auth', 'csrf'], function (App\Core\Router $r): void {
     $r->get('/tools', [ToolAdminController::class, 'index']);
     $r->post('/tools/scan', [ToolAdminController::class, 'scan']);
     $r->post('/tools/batch', [ToolAdminController::class, 'batch']);
+    $r->post('/tools/{id}/published', [ToolAdminController::class, 'setPublished']);
     $r->get('/tools/{id}/edit', [ToolAdminController::class, 'edit']);
     $r->post('/tools/{id}/update', [ToolAdminController::class, 'update']);
 

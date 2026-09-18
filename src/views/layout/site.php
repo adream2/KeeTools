@@ -3,13 +3,19 @@
  * 前台布局
  *
  * 模板变量（由 View::render 注入）：
- *   $content   —— 子模板渲染结果（必填）
- *   $pageTitle —— 页面标题
- *   $pageDesc  —— meta description
+ *   $content        —— 子模板渲染结果（必填）
+ *   $pageTitle      —— 页面标题
+ *   $pageDesc       —— meta description
+ *   $pageRobots     —— robots 指令（默认 index,follow；搜索页/归档页传 noindex）
+ *   $pageKeywords   —— meta keywords（可选）
+ *   $pageCanonical  —— 规范链接绝对地址（默认当前路径）
  *
  * @var string $content
  * @var string|null $pageTitle
  * @var string|null $pageDesc
+ * @var string|null $pageRobots
+ * @var string|null $pageKeywords
+ * @var string|null $pageCanonical
  */
 
 use App\Core\View;
@@ -18,6 +24,13 @@ use App\Services\SiteOps;
 $title = isset($pageTitle) && $pageTitle !== '' ? $pageTitle : site_name();
 $desc = $pageDesc ?? site_description();
 $announcements = SiteOps::announcements();
+
+// SEO：canonical 与 robots（P4 §三）
+$requestPath = (string) (parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) ?? '/');
+$origin = site_url();
+$canonical = $pageCanonical ?? ($origin . $requestPath);
+$robots = $pageRobots ?? 'index,follow';
+$keywords = trim((string) ($pageKeywords ?? ''));
 ?><!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -25,6 +38,17 @@ $announcements = SiteOps::announcements();
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e($title) ?></title>
 <meta name="description" content="<?= e($desc) ?>">
+<?php if ($keywords !== ''): ?>
+<meta name="keywords" content="<?= e($keywords) ?>">
+<?php endif; ?>
+<meta name="robots" content="<?= e($robots) ?>">
+<link rel="canonical" href="<?= e($canonical) ?>">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="<?= e(site_name()) ?>">
+<meta property="og:title" content="<?= e($title) ?>">
+<meta property="og:description" content="<?= e($desc) ?>">
+<meta property="og:url" content="<?= e($canonical) ?>">
+<meta name="twitter:card" content="summary">
 <link rel="stylesheet" href="<?= e(asset('css/site.bundle.css')) ?>">
 </head>
 <body>

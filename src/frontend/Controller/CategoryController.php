@@ -7,6 +7,7 @@ use App\Core\App;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\View;
+use App\Services\CategoryCopy;
 use App\Services\ToolRepository;
 
 /**
@@ -46,14 +47,29 @@ final class CategoryController
             );
         }
 
+        // SEO（P4 §三）：分类页必须有实质内容（导语），不能是空列表
+        $intro = CategoryCopy::intro(
+            $category,
+            (int) $result['total'],
+            $parent !== null ? (string) $parent['name'] : null
+        );
+
         $html = View::render('pages/category', [
-            'pageTitle' => $category['name'] . ' — ' . site_name(),
-            'pageDesc'  => $category['name'] . '相关的免费课堂工具',
+            'pageTitle' => $category['name'] . '课堂工具 — ' . site_name(),
+            'pageDesc'  => $intro !== '' ? mb_substr($intro, 0, 120) : ($category['name'] . '相关的免费课堂工具'),
+            'pageKeywords' => implode(',', array_filter([
+                (string) $category['name'],
+                (string) ($parent['name'] ?? ''),
+                '课堂工具',
+                '免费',
+                '免安装',
+            ])),
             'category'  => $category,
             'parent'    => $parent,
             'chips'     => $result['chips'],
             'tools'     => $result['tools'],
             'total'     => $result['total'],
+            'intro'     => $intro,
         ]);
 
         return Response::html($html);
