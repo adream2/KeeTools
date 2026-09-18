@@ -3,5 +3,50 @@
   "hello-keetools": {
     "et-util": "logic/et-util.js",
     "icons": "icons/icons.svg"
+  },
+  "random-name-classic": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-import-css": "ui/et-import.css",
+    "et-import": "ui/et-import.js",
+    "et-stats": "ui/et-stats.js",
+    "random-pick": "logic/random-pick.js"
+  },
+  "wheel-spinner": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-import-css": "ui/et-import.css",
+    "et-import": "ui/et-import.js",
+    "et-stats": "ui/et-stats.js",
+    "random-pick": "logic/random-pick.js"
+  },
+  "countdown-timer": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js",
+    "countdown": "logic/countdown.js"
+  },
+  "scoreboard": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-import-css": "ui/et-import.css",
+    "et-import": "ui/et-import.js",
+    "et-stats": "ui/et-stats.js",
+    "scoreboard": "logic/scoreboard.js"
+  },
+  "pinyin-chart": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
   }
 }

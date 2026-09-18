@@ -1,0 +1,237 @@
+/*!
+ * et-import.css — 通用数据导入组件样式
+ *
+ * 共享样式源。改这里，然后跑：python scripts/sync_shared.py
+ * 依赖 et-chrome.css 的令牌变量（--et-*），须先注入。
+ * 类名前缀 etimp-，避免与工具样式冲突。
+ */
+
+/* ============ 页签 ============ */
+.etimp-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+    padding: 4px;
+    border-radius: 11px;
+    background: var(--et-surface-2);
+    border: 1px solid var(--et-line);
+}
+
+.etimp-tab {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--et-muted);
+    background: transparent;
+    cursor: pointer;
+    transition: color .14s, background .14s;
+}
+
+.etimp-tab:hover { color: var(--et-fg); }
+
+.etimp-tab.is-active {
+    color: var(--et-accent);
+    background: var(--et-surface);
+    box-shadow: var(--et-shadow-md);
+}
+
+/* ============ 粘贴区 ============ */
+.etimp-textarea {
+    width: 100%;
+    min-height: 150px;
+    padding: 12px 14px;
+    border: 1px solid var(--et-line-strong);
+    border-radius: 10px;
+    background: var(--et-surface-2);
+    color: var(--et-fg);
+    font-family: var(--et-mono);
+    font-size: 13px;
+    line-height: 1.7;
+    resize: vertical;
+    transition: border-color .14s, box-shadow .14s;
+}
+
+.etimp-textarea:focus {
+    outline: none;
+    border-color: var(--et-accent);
+    box-shadow: 0 0 0 3px var(--et-accent-weak);
+}
+
+.etimp-textarea::placeholder { color: var(--et-muted); opacity: .7; }
+
+/* ============ 拖放区 ============ */
+.etimp-drop {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 150px;
+    padding: 24px;
+    border: 2px dashed var(--et-line-strong);
+    border-radius: 12px;
+    color: var(--et-muted);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .16s, background .16s, color .16s;
+}
+
+.etimp-drop:hover,
+.etimp-drop.is-over {
+    border-color: var(--et-accent);
+    color: var(--et-accent);
+    background: var(--et-accent-weak);
+}
+
+.etimp-drop .et-icon { width: 30px; height: 30px; stroke-width: 1.6; }
+.etimp-drop__main { font-size: 14px; font-weight: 700; }
+.etimp-drop__hint { font-size: 12px; }
+
+.etimp-file {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+}
+
+/* ============ 格式说明 ============ */
+.etimp-help {
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--et-surface-2);
+    border: 1px solid var(--et-line);
+    font-size: 12.5px;
+    color: var(--et-muted);
+    line-height: 1.8;
+}
+
+.etimp-help b { color: var(--et-fg); }
+.etimp-help code {
+    font-family: var(--et-mono);
+    font-size: 12px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: var(--et-accent-weak);
+    color: var(--et-accent);
+}
+
+/* ============ 解析结果 ============ */
+.etimp-result { margin-top: 14px; }
+
+.etimp-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.etimp-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--et-surface-2);
+    border: 1px solid var(--et-line);
+    color: var(--et-muted);
+}
+
+.etimp-chip--ok { color: var(--et-ok); border-color: var(--et-ok); background: rgba(5, 150, 105, .08); }
+.etimp-chip--warn { color: var(--et-warn); border-color: var(--et-warn); background: rgba(217, 119, 6, .08); }
+.etimp-chip--err { color: var(--et-err); border-color: var(--et-err); background: rgba(220, 38, 38, .08); }
+
+.etimp-table-wrap {
+    max-height: 220px;
+    overflow: auto;
+    border: 1px solid var(--et-line);
+    border-radius: 10px;
+}
+
+.etimp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+}
+
+.etimp-table th,
+.etimp-table td {
+    padding: 7px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--et-line);
+    white-space: nowrap;
+}
+
+.etimp-table th {
+    position: sticky;
+    top: 0;
+    background: var(--et-surface-2);
+    color: var(--et-muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    z-index: 1;
+}
+
+.etimp-table tr:last-child td { border-bottom: none; }
+.etimp-table td.etimp-dim { color: var(--et-muted); }
+.etimp-table td.etimp-num { font-variant-numeric: tabular-nums; }
+
+.etimp-errors {
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(220, 38, 38, .07);
+    border: 1px solid rgba(220, 38, 38, .35);
+    font-size: 12.5px;
+    color: var(--et-err);
+    line-height: 1.8;
+    max-height: 110px;
+    overflow: auto;
+}
+
+.etimp-empty {
+    padding: 14px;
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--et-muted);
+    border: 1px dashed var(--et-line);
+    border-radius: 10px;
+}
+
+/* 选项行 */
+.etimp-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+    margin-top: 12px;
+    font-size: 13px;
+}
+
+.etimp-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    color: var(--et-fg);
+    user-select: none;
+}
+
+.etimp-check input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--et-accent);
+    cursor: pointer;
+}

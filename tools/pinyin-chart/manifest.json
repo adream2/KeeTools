@@ -1,0 +1,31 @@
+{
+  "id": "pinyin-chart",
+  "title": "汉语拼音表",
+  "version": "1.4.0",
+  "type": "fixed",
+  "description": "声母、韵母、整体认读音节大屏点读表，点击发音，支持检索与卡片/列表视图。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "1-2"
+  ],
+  "subjects": [
+    "语文"
+  ],
+  "tags": [
+    "拼音",
+    "点读",
+    "语文",
+    "大屏",
+    "识字"
+  ],
+  "family": "pinyin-chart",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-18",
+  "updated_at": "2026-09-18"
+}

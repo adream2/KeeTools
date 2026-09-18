@@ -1,0 +1,31 @@
+{
+  "id": "random-name-classic",
+  "title": "随机点名器（经典版）",
+  "version": "1.4.0",
+  "type": "shell",
+  "description": "导入名单即可随机点名，支持不重复、已点标记、加权抽取，大屏投影后排清晰可见。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "1-12"
+  ],
+  "subjects": [
+    "通用"
+  ],
+  "tags": [
+    "点名",
+    "课堂互动",
+    "抽签",
+    "大屏",
+    "随机"
+  ],
+  "family": "random-name",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-18",
+  "updated_at": "2026-09-18"
+}
