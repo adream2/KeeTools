@@ -7,7 +7,7 @@
 
 ## 一、项目一句话说明
 
-**EduTools**（工作区代号 `KeeTools`）—— 面向中小学老师的**单文件 HTML 课堂工具集**。只做工具，不做题库。工具全免费，靠网盘分发（合集包）/ 赞助 / 站内广告 / 工具定制变现。
+**KeeTools**（中文名「**课工具**」，仓库 / 工作区名 `KeeTools`）—— 面向中小学老师的**单文件 HTML 课堂工具集**。只做工具，不做题库。工具全免费，靠网盘分发（合集包）/ 赞助 / 站内广告 / 工具定制变现。
 
 ---
 
@@ -141,7 +141,7 @@ python scripts/sync_shared.py
 | `var/` | 临时产物 | ✅（不入 git） |
 | `storage/` | 数据库 / 持久化数据 | 运行时写入 |
 | `packages/` | 离线包产出 | 后台生成 |
-| `.githooks/` | git 钩子（`pre-commit` 跑四项校验） | 需 `core.hooksPath` 指向此处 |
+| `.githooks/` | git 钩子（`pre-commit` 跑六项校验） | 需 `core.hooksPath` 指向此处 |
 
 各目录内的 `README.md` 说明该目录的局部约定：
 
@@ -194,20 +194,24 @@ python scripts/sync_shared.py
 ## 七、常用命令
 
 ```bash
-# ── 校验类（提交前必跑）
-python scripts/check_manifest.py          # manifest 完整性 + ET-META 一致性
-python scripts/check_no_external.py       # 检查是否有非本站域名 URL
-python scripts/sync_shared.py --check     # 检查共享逻辑是否已同步
-python scripts/check_css_tokens.py        # 检查 CSS 是否用了字面量
+# ── 校验类（提交前必跑，已由 pre-commit 自动执行）
+python scripts/check_manifest.py               # manifest 完整性 + ET-META 一致性
+python scripts/check_no_external.py            # 检查是否有非本站域名 URL
+python scripts/sync_shared.py --check          # 检查共享逻辑是否已同步
+python scripts/check_css_tokens.py             # 检查 CSS 是否用了字面量
+python scripts/build_css.py --check            # 检查 CSS 产物是否为最新
+python scripts/icons/build_sprite.py --check   # 检查 sprite 产物是否为最新
 
 # ── 构建类
-python scripts/icons/build_sprite.py      # 生成图标 sprite
-python scripts/sync_shared.py             # 同步共享逻辑到所有工具
-python scripts/sync_shared.py <tool-id>   # 只同步指定工具
+python scripts/build_css.py                    # 生成 public/assets/css/
+python scripts/icons/build_sprite.py           # 生成图标 sprite（离线）
+python scripts/icons/prepare_source.py         # 提取图标离线源（唯一联网脚本，低频）
+python scripts/sync_shared.py                  # 同步共享逻辑到所有工具
+python scripts/sync_shared.py <tool-id>        # 只同步指定工具
 
 # ── 本地开发
-php -S localhost:8000 -t public           # 启动开发服务器
-python -m http.server 8000 --directory public   # 纯静态预览
+php -S 127.0.0.1:8000 -t public public/router.php   # 启动开发服务器（须带 router.php）
+python -m http.server 8000 --directory public       # 纯静态预览（无 PHP 路由）
 
 # ── Git
 git status

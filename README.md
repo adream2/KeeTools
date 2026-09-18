@@ -1,7 +1,7 @@
-# EduTools · 中小学课堂工具集
+# KeeTools · 课工具 — 中小学课堂工具集
 
 > 面向 K12 老师的**单文件 HTML 课堂工具集**。只做工具，不做题库。
-> 工作区代号：`KeeTools`
+> 英文名：`KeeTools`；中文名：**课工具**
 
 ---
 
@@ -9,7 +9,7 @@
 
 老师需要的课堂工具（随机点名、大转盘、倒计时、计分板、拼音表……）通常散落在各种网站，要么被广告包围，要么需要注册，要么断网就废。
 
-EduTools 的做法是：**每个工具就是一个 HTML 文件**，双击打开就能用，断网也能用，投影到教室大屏不糊。
+KeeTools 的做法是：**每个工具就是一个 HTML 文件**，双击打开就能用，断网也能用，投影到教室大屏不糊。
 
 - 🎯 **只做工具**：不做题库、不做课程、不做作业系统
 - 📦 **单文件分发**：一个 HTML = 一个工具，无需安装、无需联网
@@ -77,7 +77,7 @@ php -S localhost:8000 -t public
 | `var/` | 临时产物隔离区（不入版本管控） |
 | `storage/` | SQLite 数据库（不入版本管控） |
 | `packages/` | 离线合集包产出（不入版本管控） |
-| `.githooks/` | git 钩子（`pre-commit` 跑四项校验） |
+| `.githooks/` | git 钩子（`pre-commit` 跑六项校验） |
 
 ---
 
@@ -104,18 +104,21 @@ php -S localhost:8000 -t public
 ## 常用命令
 
 ```bash
-# 校验（提交前必跑）
-python scripts/check_manifest.py        # manifest 完整性 + ET-META 一致性
-python scripts/check_no_external.py     # 是否有非本站域名 URL
-python scripts/sync_shared.py --check   # 共享逻辑是否已同步
-python scripts/check_css_tokens.py      # CSS 是否用了字面量
+# 校验（提交前必跑，pre-commit 已自动执行）
+python scripts/check_manifest.py               # manifest 完整性 + ET-META 一致性
+python scripts/check_no_external.py            # 是否有非本站域名 URL
+python scripts/sync_shared.py --check          # 共享逻辑是否已同步
+python scripts/check_css_tokens.py             # CSS 是否用了字面量
+python scripts/build_css.py --check            # CSS 产物是否最新
+python scripts/icons/build_sprite.py --check   # sprite 产物是否最新
 
 # 构建
-python scripts/icons/build_sprite.py    # 生成图标 sprite
-python scripts/sync_shared.py           # 同步共享逻辑到所有工具
+python scripts/build_css.py                    # 生成 public/assets/css/
+python scripts/icons/build_sprite.py           # 生成图标 sprite
+python scripts/sync_shared.py                  # 同步共享逻辑到所有工具
 
 # 开发
-php -S localhost:8000 -t public         # 启动开发服务器
+php -S 127.0.0.1:8000 -t public public/router.php   # 启动开发服务器（须带 router.php）
 ```
 
 ---

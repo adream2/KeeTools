@@ -33,7 +33,6 @@ storage/backup/
 # ─────────────────────────────────────────────
 packages/*.zip
 packages/*.tar.gz
-/public/assets/icons/sprite.svg
 /public/assets/css/*.min.css
 
 # ─────────────────────────────────────────────

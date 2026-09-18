@@ -15,7 +15,7 @@
   "version": "1.2.0",
   "type": "shell",
   "description": "导入名单即可随机点名，支持去重、已点标记、加权抽取。适合课堂互动与大屏投影。",
-  "author": "EduTools Team",
+  "author": "KeeTools Team",
   "entry": "index.html",
   "single_file": true,
   "offline": true,
