@@ -1,8 +1,10 @@
 {
   "_comment": "声明各工具引用了哪些共享片段。格式：{工具id: {片段name: _shared 内的相对路径}}。标记内的 src 也可独立工作，此处登记便于集中改路径。",
-  "hello-keetools": {
+  "tool-template": {
     "et-util": "logic/et-util.js",
-    "icons": "icons/icons.svg"
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js"
   },
   "random-name-classic": {
     "et-util": "logic/et-util.js",
@@ -43,6 +45,45 @@
     "scoreboard": "logic/scoreboard.js"
   },
   "pinyin-chart": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "random-grouping": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-import-css": "ui/et-import.css",
+    "et-import": "ui/et-import.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "math-drill": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "tianzige-writer": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "dictation-helper": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-import-css": "ui/et-import.css",
+    "et-import": "ui/et-import.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "alphabet-chart": {
     "et-util": "logic/et-util.js",
     "icons": "icons/icons.svg",
     "et-chrome-css": "ui/et-chrome.css",
