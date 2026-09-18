@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>示例工具（骨架参考） — EduTools</title>
+<!-- ET-META
+{"id":"hello-edutools","version":"0.1.0"}
+-->
+<style>
+/* 工具样式自包含，不引用任何外部资源 */
+:root {
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --fg: #1f2328;
+  --muted: #57606a;
+  --accent: #2563eb;
+  --line: #e4e7eb;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+.wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+h1 {
+  font-size: 40px;
+  margin: 0 0 8px;
+  letter-spacing: -0.5px;
+}
+.sub {
+  color: var(--muted);
+  margin: 0 0 32px;
+  font-size: 18px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+.card h2 {
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin: 0 0 12px;
+  font-weight: 600;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+button {
+  font: inherit;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--fg);
+  cursor: pointer;
+}
+button:hover { border-color: var(--accent); color: var(--accent); }
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+button.primary:hover { opacity: 0.9; color: #fff; }
+code {
+  background: #eef1f4;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: Consolas, Menlo, monospace;
+  font-size: 14px;
+}
+.counter {
+  font-size: 64px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  line-height: 1.1;
+}
+ul { margin: 8px 0 0; padding-left: 22px; }
+li { margin: 4px 0; }
+</style>
+</head>
+<body>
+
+<!-- 图标集合（由 sync_shared.py 注入） -->
+<!-- ET:INLINE name="icons" src="icons/icons.svg" type="svg" -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <!--
+    工具用图标 symbol 集合（内联源，独立于网站 sprite）。
+
+    P2 阶段按实际需要往这里加。格式：
+
+      <symbol id="i-play" viewBox="0 0 24 24">
+        <path d="..." fill="currentColor"/>
+      </symbol>
+
+    要求：
+    - 图标集只用 ISC / MIT / Apache-2.0 宽松许可（Lucide / Tabler / Phosphor）
+    - 新增图标集需登记 THIRD-PARTY-LICENSES.md
+    - 颜色统一用 currentColor 跟随主题
+
+    工具内用法：
+      <svg class="et-icon"><use href="#i-play"></use></svg>
+  -->
+</svg>
+<!-- /ET:INLINE -->
+
+<main class="wrap">
+  <h1>示例工具</h1>
+  <p class="sub">验证 <code>manifest</code> 扫描 / <code>ET-META</code> 一致性 / <code>_shared</code> 同步链路。</p>
+
+  <div class="card">
+    <h2>localStorage 读写（验证前缀规范）</h2>
+    <p>点击次数保存在 <code>et_hello-edutools_count</code>，刷新页面不清零。</p>
+    <div class="row">
+      <span class="counter" id="counter">0</span>
+      <button class="primary" id="btn-add">点我 +1</button>
+      <button id="btn-reset">重置</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>共享逻辑（来自 _shared）</h2>
+    <p>下面的 <code>ET.*</code> 方法与无外部依赖检查，全部由 <code>scripts/sync_shared.py</code> 注入。</p>
+    <ul id="checklist"></ul>
+  </div>
+</main>
+
+<!-- 共享逻辑（由 sync_shared.py 注入） -->
+<!-- ET:INLINE name="et-util" src="logic/et-util.js" -->
+<script>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * et-util.js — 工具通用小工具函数
+ *
+ * 共享逻辑源。改这里，然后跑：python scripts/sync_shared.py
+ * 禁止手工编辑工具 HTML 内 ET:INLINE 之间的内容。
+ *
+ * 兼容性：ES5，Win7 + 老版 Chrome / 360 可运行。
+ * 依赖：无。
+ * 全局：挂载 window.ET（单一命名空间，不污染其他全局）
+ */
+(function (global) {
+    'use strict';
+
+    var ET = global.ET || {};
+
+    /** 按 id 取元素 */
+    ET.el = function (id) {
+        return document.getElementById(id);
+    };
+
+    /** 按选择器取首个元素 */
+    ET.qs = function (selector, root) {
+        return (root || document).querySelector(selector);
+    };
+
+    /** 按选择器取全部元素，返回真数组 */
+    ET.qsa = function (selector, root) {
+        var list = (root || document).querySelectorAll(selector);
+        var out = [];
+        for (var i = 0; i < list.length; i++) {
+            out.push(list[i]);
+        }
+        return out;
+    };
+
+    /** 创建元素 */
+    ET.create = function (tag, className, text) {
+        var node = document.createElement(tag);
+        if (className) {
+            node.className = className;
+        }
+        if (text !== undefined && text !== null) {
+            node.textContent = String(text);
+        }
+        return node;
+    };
+
+    /** HTML 转义（用于把用户数据放进 HTML 字符串时） */
+    ET.escapeHtml = function (value) {
+        return String(value === undefined || value === null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    };
+
+    /** 触发自定义事件（老浏览器用 createEvent 降级） */
+    ET.emit = function (target, name, detail) {
+        var event;
+        if (typeof global.CustomEvent === 'function') {
+            event = new global.CustomEvent(name, { detail: detail });
+        } else {
+            event = document.createEvent('CustomEvent');
+            event.initCustomEvent(name, false, false, detail);
+        }
+        target.dispatchEvent(event);
+    };
+
+    /**
+     * localStorage 读写（带前缀与异常兜底）
+     * 前缀规范：et_{toolId}_
+     */
+    ET.store = function (toolId) {
+        var prefix = 'et_' + toolId + '_';
+
+        function available() {
+            try {
+                var probe = prefix + '__probe__';
+                global.localStorage.setItem(probe, '1');
+                global.localStorage.removeItem(probe);
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+
+        var ok = available();
+
+        return {
+            /** 读取，解析失败返回 fallback */
+            get: function (key, fallback) {
+                if (!ok) {
+                    return fallback;
+                }
+                try {
+                    var raw = global.localStorage.getItem(prefix + key);
+                    if (raw === null) {
+                        return fallback;
+                    }
+                    return JSON.parse(raw);
+                } catch (err) {
+                    return fallback;
+                }
+            },
+            /** 写入，失败静默（隐私模式 / 配额满） */
+            set: function (key, value) {
+                if (!ok) {
+                    return false;
+                }
+                try {
+                    global.localStorage.setItem(prefix + key, JSON.stringify(value));
+                    return true;
+                } catch (err) {
+                    return false;
+                }
+            },
+            /** 删除 */
+            remove: function (key) {
+                if (!ok) {
+                    return;
+                }
+                try {
+                    global.localStorage.removeItem(prefix + key);
+                } catch (err) {
+                    /* 静默 */
+                }
+            }
+        };
+    };
+
+    /** DOM 就绪回调（脚本在 head 内也能安全调用） */
+    ET.ready = function (callback) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', callback);
+        } else {
+            callback();
+        }
+    };
+
+    global.ET = ET;
+})(window);
+</script>
+<!-- /ET:INLINE -->
+
+<script>
+(function () {
+  'use strict';
+
+  var store = ET.store('hello-edutools');
+
+  ET.ready(function () {
+    var counterEl = ET.el('counter');
+    var count = store.get('count', 0);
+
+    function render() {
+      counterEl.textContent = String(count);
+    }
+
+    ET.el('btn-add').addEventListener('click', function () {
+      count += 1;
+      store.set('count', count);
+      render();
+    });
+
+    ET.el('btn-reset').addEventListener('click', function () {
+      count = 0;
+      store.remove('count');
+      render();
+    });
+
+    render();
+
+    var checks = [
+      'ET.el / ET.create 可用：' + (typeof ET.create === 'function' ? '是' : '否'),
+      'ET.store 可用：' + (store.set('__probe__', 1) ? '是' : '否'),
+      'ET.escapeHtml(<a>)：' + ET.escapeHtml('<a>'),
+      '无外部请求：DevTools Network 应为空'
+    ];
+    var ul = ET.el('checklist');
+    for (var i = 0; i < checks.length; i++) {
+      ul.appendChild(ET.create('li', null, checks[i]));
+    }
+    store.remove('__probe__');
+  });
+})();
+</script>
+
+</body>
+</html>

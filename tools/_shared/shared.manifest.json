@@ -1,0 +1,7 @@
+{
+  "_comment": "声明各工具引用了哪些共享片段。格式：{工具id: {片段name: _shared 内的相对路径}}。标记内的 src 也可独立工作，此处登记便于集中改路径。",
+  "hello-edutools": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg"
+  }
+}

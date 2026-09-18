@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <!--
+    工具用图标 symbol 集合（内联源，独立于网站 sprite）。
+
+    P2 阶段按实际需要往这里加。格式：
+
+      <symbol id="i-play" viewBox="0 0 24 24">
+        <path d="..." fill="currentColor"/>
+      </symbol>
+
+    要求：
+    - 图标集只用 ISC / MIT / Apache-2.0 宽松许可（Lucide / Tabler / Phosphor）
+    - 新增图标集需登记 THIRD-PARTY-LICENSES.md
+    - 颜色统一用 currentColor 跟随主题
+
+    工具内用法：
+      <svg class="et-icon"><use href="#i-play"></use></svg>
+  -->
+</svg>

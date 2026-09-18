@@ -1,0 +1,29 @@
+#!/bin/sh
+# EduTools pre-commit 钩子
+#
+# 安装（每个 clone 需执行一次）：
+#     git config core.hooksPath .githooks
+#
+# 跳过（仅在明确知道自己在做什么时）：
+#     git commit --no-verify
+
+set -e
+
+PY=python
+if ! command -v "$PY" >/dev/null 2>&1; then
+    PY=python3
+fi
+
+if ! command -v "$PY" >/dev/null 2>&1; then
+    echo "[WARN] 未找到 python / python3，跳过 pre-commit 校验。"
+    exit 0
+fi
+
+echo "── pre-commit 校验 ──────────────────────────"
+
+"$PY" scripts/check_manifest.py
+"$PY" scripts/check_no_external.py
+"$PY" scripts/sync_shared.py --check
+"$PY" scripts/check_css_tokens.py
+
+echo "── 全部通过 ────────────────────────────────"

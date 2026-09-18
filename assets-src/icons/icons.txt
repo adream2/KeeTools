@@ -1,0 +1,26 @@
+# 网站图标清单（每行一个）
+#
+# 格式：<图标集>:<图标名>
+# 可用图标集（许可证宽松，见 docs/图标与许可证.md）：
+#   lucide   — ISC
+#   tabler   — MIT
+#   phosphor — MIT
+#
+# 禁用的图标集（商标限制）：logos: / simple-icons:
+#
+# 加完图标后执行：
+#   python scripts/icons/build_sprite.py
+#
+# P0 阶段先放基础导航图标，后续按需增补。
+
+lucide:home
+lucide:search
+lucide:download
+lucide:external-link
+lucide:grid-2x2
+lucide:star
+lucide:clock
+lucide:menu
+lucide:x
+lucide:chevron-right
+tabler:brand-wechat
