@@ -43,8 +43,15 @@ OUT_FILE = ROOT / "public" / "assets" / "icons" / "sprite.svg"
 
 SVG_TAG_RE = re.compile(r"<svg\b([^>]*)>(.*)</svg\s*>", re.DOTALL | re.IGNORECASE)
 VIEWBOX_RE = re.compile(r'viewBox\s*=\s*"([^"]+)"', re.IGNORECASE)
-# 去掉硬编码颜色，改用 currentColor 跟随主题
-HARD_COLOR_RE = re.compile(r'\s(fill|stroke)\s*=\s*"(?!none)[^"]*"', re.IGNORECASE)
+# 去掉硬编码颜色，改用 currentColor 跟随主题。
+# 保留 none / currentColor / inherit：它们不是硬编码颜色，删掉反而会让图标失去描边。
+HARD_COLOR_RE = re.compile(
+    r'\s(fill|stroke)\s*=\s*"(?!(?:none|currentColor|inherit)\s*")[^"]*"',
+    re.IGNORECASE,
+)
+
+# Iconify 别名链最大回溯深度，防御异常源文件造成的死循环
+MAX_ALIAS_DEPTH = 8
 
 BANNER = (
     "<!-- 此文件由 scripts/icons/build_sprite.py 自动生成，请勿手工修改 -->\n"
@@ -105,7 +112,7 @@ class IconSource:
         return self.json_cache[key]
 
     def from_json(self, set_name: str, short: str) -> tuple[str | None, str]:
-        """从本地 Iconify JSON 集合中取图标 body。"""
+        """从本地 Iconify JSON 集合中取图标 body（支持别名回溯）。"""
         for path in self.json_sets():
             if set_name and path.stem.lower() != set_name.lower():
                 continue
@@ -113,8 +120,8 @@ class IconSource:
             icons = data.get("icons")
             if not isinstance(icons, dict):
                 continue
-            entry = icons.get(short)
-            if not isinstance(entry, dict):
+            entry = self.resolve_icon(data, icons, short)
+            if entry is None:
                 continue
             body = entry.get("body")
             if not isinstance(body, str):
@@ -124,6 +131,37 @@ class IconSource:
             box = f"0 0 {width} {height}"
             return body, box
         return None, ""
+
+    @staticmethod
+    def resolve_icon(data: dict, icons: dict, short: str) -> dict | None:
+        """解析图标定义，沿 `aliases` 的 parent 链回溯到真实图标。
+
+        Lucide 中 `home` / `trash-2` / `alert-triangle` / `globe-2` 等只是别名，
+        定义体挂在被指向的图标上（`house` / `trash` / `triangle-alert` / `earth`）。
+        """
+        aliases = data.get("aliases")
+        if not isinstance(aliases, dict):
+            aliases = {}
+
+        name = short
+        for _ in range(MAX_ALIAS_DEPTH):
+            entry = icons.get(name)
+            if isinstance(entry, dict) and isinstance(entry.get("body"), str):
+                return entry
+
+            alias = aliases.get(name)
+            if not isinstance(alias, dict):
+                # 也可能是带 body 的别名条目
+                if isinstance(entry, dict):
+                    return entry
+                return None
+
+            parent = alias.get("parent")
+            if not isinstance(parent, str) or not parent or parent == name:
+                return None
+            name = parent
+
+        return None
 
     def from_svg_file(self, short: str) -> tuple[str | None, str]:
         path = SVG_SRC_DIR / f"{short}.svg"

@@ -32,11 +32,20 @@ search                 ← 允许：不带前缀（此时只查 svg/search.svg�
 
 ## 准备离线图标源
 
-### 方式 A：Iconify JSON 集合（推荐）
+### 方式 A：Iconify JSON 集合（推荐，当前项目即用此法）
 
-1. 从 Iconify 的图标集仓库离线获取整个集合的 JSON，例如 Lucide 的 `lucide.json`
-2. 放到本目录，命名 `<图标集名>.json`
-3. 格式（Iconify 标准格式，只用到 `icons` / `width` / `height`）：
+本项目的 `lucide.json` 是**按 `icons.txt` 提取的子集**（不是整个图标库，约 14KB）。
+
+准备方式（**一次性，需联网**；此后构建全程离线）：
+
+```bash
+# 逐个图标拉取子集，产物落盘后即与网络无关
+curl "https://api.iconify.design/lucide.json?icons=search,download,home" -o lucide.json
+```
+
+或从 Iconify 图标集仓库离线获取整集后裁剪，放到本目录命名 `<图标集名>.json`。
+
+格式（Iconify 标准格式，只用到 `icons` / `aliases` / `width` / `height`）：
 
 ```json
 {
@@ -46,11 +55,18 @@ search                 ← 允许：不带前缀（此时只查 svg/search.svg�
   "icons": {
     "search": { "body": "<circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/>" },
     "download": { "body": "<path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><polyline points=\"7 10 12 15 17 10\"/><line x1=\"12\" y1=\"15\" x2=\"12\" y2=\"3\"/>" }
+  },
+  "aliases": {
+    "home": { "parent": "house" }
   }
 }
 ```
 
-> 只需 `icons` 字段即可，`aliases` / `chars` 等未使用字段可保留或删除。
+> **别名常被忽略**：Lucide 里 `home` / `trash-2` / `alert-triangle` / `globe-2` 等
+> 并没有自己的 `body`，定义体挂在被指向的图标（`house` / `trash` / `triangle-alert` / `earth`）上。
+> `build_sprite.py` 会沿 `aliases.parent` 链自动回溯，所以 `icons.txt` 里可以放心写常用名。
+>
+> 若某图标在 `icons` 和 `aliases` 中都不存在，脚本会 `[ERR]` 报出并使用退出码 `1`。
 
 ### 方式 B：单个 SVG 文件
 
@@ -68,6 +84,7 @@ search                 ← 允许：不带前缀（此时只查 svg/search.svg�
 
 - 提取 `viewBox`（缺失则默认 `0 0 24 24`）
 - **移除所有硬编码 `fill` / `stroke` 颜色值**，让图标跟随 `currentColor`
+  （`none` / `currentColor` / `inherit` 会保留，删掉它们会使图标失去描边）
 
 ---
 

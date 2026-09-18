@@ -33,12 +33,17 @@
 
 **使用方式**：通过 `scripts/icons/build_sprite.py` 按需子集化，产出 `public/assets/icons/sprite.svg`，仅包含 `assets-src/icons/icons.txt` 中声明的图标。
 
+**已内置图标集明细**：
+
+| 图标集 | 内置形式 | 图标数 | 获取方式 | 获取日期 | 上游快照 |
+|---|---|---|---|---|---|
+| Lucide | `assets-src/icons/lucide.json`（Iconify JSON 子集） | 46（+4 别名） | `python scripts/icons/prepare_source.py`（**唯一联网脚本**，一次性提取后入库） | 2026-09-18 | `lastModified=1789279477`（2026-09-13） |
+
 **工具图标**：位于 `tools/_shared/icons/`，同样来源于上述宽松许可证图标集，内联进工具 HTML。
 
 ### 待补充
 
 - [ ] 若后续引入 Material Symbols（Apache-2.0），需在此登记并在页面保留 NOTICE
-- [ ] 图标集版本号与获取日期
 
 ---
 

@@ -3,8 +3,8 @@
 # 格式：<图标集>:<图标名>    例：lucide:search
 # 产出：public/assets/icons/sprite.svg（symbol id 为 #i-<图标名>）
 #
-# 构建：python scripts/build_sprite.py  →  实为 python scripts/icons/build_sprite.py
-# 校验：python scripts/icons/build_sprite.py --check
+# 取源：python scripts/icons/prepare_source.py          仅新增图标时跑（唯一联网步骤）
+# 构建：python scripts/icons/build_sprite.py            离线，pre-commit 会跑 --check
 #
 # 规范：docs/图标与许可证.md、assets-src/icons/README.md
 #
@@ -34,6 +34,8 @@ lucide:clock
 
 # ── 分类与学科 ─────────────────────────────
 lucide:book-open
+lucide:school
+lucide:graduation-cap
 lucide:calculator
 lucide:languages
 lucide:flask-conical
