@@ -15,8 +15,8 @@ use App\Services\SiteOps;
 <section class="hero">
   <h1 class="hero-title"><?= e(site_name()) ?><span class="hero-title-cn">课工具</span></h1>
   <p class="hero-subtitle">
-    面向中小学老师的免费课堂工具集。<br>
-    单文件即开即用，无需安装，断网也能用。
+    免费离线课堂工具集：下载单文件，U盘插上就能用，教室断网也能上课。<br>
+    不下载？在线应急使用，效果一样。
   </p>
 
   <form class="form-search hero-search" action="<?= e(url('/search')) ?>" method="get" role="search">
@@ -27,7 +27,8 @@ use App\Services\SiteOps;
   </form>
 
   <div class="hero-features">
-    <span class="hero-feature"><?= icon('check') ?>零依赖单文件</span>
+    <span class="hero-feature"><?= icon('check') ?>U盘即插即用</span>
+    <span class="hero-feature"><?= icon('check') ?>断网可用</span>
     <span class="hero-feature"><?= icon('check') ?>数据存本地</span>
     <span class="hero-feature"><?= icon('check') ?>完全免费</span>
   </div>
@@ -100,7 +101,7 @@ use App\Services\SiteOps;
   <?php elseif ($dbReady): ?>
     <div class="empty">
       <div class="empty-title">暂无工具</div>
-      <div>在后台执行「扫描同步」后，工具会出现在这里。</div>
+      <div>把工具目录放进 <code>tools/</code> 即自动上架，无需任何后台操作。</div>
     </div>
   <?php endif; ?>
 </section>
@@ -110,7 +111,7 @@ use App\Services\SiteOps;
   <div class="card sponsor-home-cta">
     <div class="card-body">
       <h2 class="section-title"><?= icon('heart') ?>支持课工具</h2>
-      <p class="tool-get-note">所有工具免费，站点靠各位老师的自愿支持维持。哪怕一杯奶茶，都是持续更新的动力。</p>
+      <p class="tool-get-note">所有工具免费，站点靠大家的自愿支持维持。哪怕一杯奶茶，都是持续更新的动力。</p>
       <a class="btn btn-primary" href="<?= e(url('/sponsor')) ?>">支持本站</a>
     </div>
   </div>

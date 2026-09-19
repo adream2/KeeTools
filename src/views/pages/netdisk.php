@@ -109,7 +109,7 @@ $communityText = trim(Config::string('community_qr_text'));
         <?php endif; ?>
         <?php if (Config::bool('sponsor_enabled', false)): ?>
           <div class="netdisk-cta-sponsor">
-            <p>本站所有工具免费，靠各位老师的支持维持服务器与网盘。</p>
+            <p>本站所有工具免费，靠大家的自愿支持维持服务器与网盘。</p>
             <a class="btn btn-sm" href="<?= e(url('/sponsor')) ?>"><?= icon('heart') ?>支持本站</a>
           </div>
         <?php endif; ?>

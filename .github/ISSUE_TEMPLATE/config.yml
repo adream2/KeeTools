@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 参与共建指南
+    url: https://github.com/adream2/KeeTools/blob/main/CONTRIBUTING.md
+    about: 新工具提案 / 开发流程 / 版权要求，开工前必读

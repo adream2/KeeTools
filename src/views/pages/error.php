@@ -54,7 +54,13 @@ $title = $titles[$status] ?? '出错了';
             </details>
           <?php else: ?>
             <p style="color: var(--c-text-muted); line-height: var(--lh-loose);">
-              服务器遇到问题，请稍后再试。若持续出现，请联系管理员。
+              <?php if ($status === 404): ?>
+                你要找的页面可能已被移动或删除，试试从首页重新进入，或用页头搜索找到需要的工具。
+              <?php elseif ($status === 403): ?>
+                你没有权限进行此操作。如需访问后台，请联系站点管理员。
+              <?php else: ?>
+                服务器遇到问题，请稍后再试。
+              <?php endif; ?>
             </p>
           <?php endif; ?>
 

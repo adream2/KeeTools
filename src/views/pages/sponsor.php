@@ -92,7 +92,7 @@
   btn.addEventListener('click', function () {
     try {
       var x = new XMLHttpRequest();
-      x.open('POST', '/api/sponsor/click', true);
+      x.open('POST', '<?= e(url('/api/sponsor/click')) ?>', true);
       x.send();
     } catch (e) {}
     btn.disabled = true;

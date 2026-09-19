@@ -6,6 +6,12 @@
  * @var int $toolCount
  * @var int $subjectCount
  */
+use App\Services\SiteOps;
+
+// 页脚联系方式是否已在后台配置：决定「通过页脚联系」文案是否成立（未配置不承诺渠道）
+$footerCfg = SiteOps::footer();
+$hasFooterContact = $footerCfg['contact_email'] !== '' || $footerCfg['contact_text'] !== [];
+
 $stats = [];
 if ($toolCount > 0) {
     $stats[] = ['num' => (string) $toolCount, 'label' => '课堂工具'];
@@ -23,7 +29,7 @@ $stats[] = ['num' => '0', 'label' => '外部依赖'];
 
 <div class="page-head">
   <h1 class="page-title">关于 <?= e(site_name()) ?></h1>
-  <p class="page-desc">面向中小学老师的免费课堂工具集</p>
+  <p class="page-desc">面向中小学课堂的免费工具集——老师、学生、家长都用得上</p>
 </div>
 
 <?php if ($stats !== []): ?>
@@ -96,7 +102,8 @@ $stats[] = ['num' => '0', 'label' => '外部依赖'];
     <p class="about-licenses-note">
       以上许可证（ISC / MIT / CC BY-SA / Arphic Public License）均允许商用；
       完整登记与上游快照信息见仓库内 <code>THIRD-PARTY-LICENSES.md</code>。
-      若您是相关素材的权利人且认为本站的使用方式不妥，请通过页脚联系方式与我们沟通。
+      若您是相关素材的权利人且认为本站的使用方式不妥，
+      <?= $hasFooterContact ? '请通过页脚联系方式与我们沟通。' : '请与我们联系以便及时处理。' ?>
     </p>
   </div>
 </div>
@@ -106,8 +113,14 @@ $stats[] = ['num' => '0', 'label' => '外部依赖'];
     <h2 class="card-title"><?= icon('heart') ?>支持与反馈</h2>
   </div>
   <div class="card-body">
-    <p>工具问题、新建工具需求或合作意向，欢迎通过页脚方式联系。
-    如果这些工具帮到了你的课堂，欢迎<a href="<?= e(url('/sponsor')) ?>">支持本站</a>，
-    帮助我们把更多工具做得更好用。</p>
+    <?php if ($hasFooterContact): ?>
+      <p>工具问题、新建工具需求或合作意向，欢迎通过页脚底部的联系方式联系我们。
+      如果这些工具帮到了你的课堂，欢迎<a href="<?= e(url('/sponsor')) ?>">支持本站</a>，
+      帮助我们把更多工具做得更好用。</p>
+    <?php else: ?>
+      <p>工具问题、新建工具需求或合作意向，欢迎向我们反馈；使用中遇到的一切问题都欢迎指出。
+      如果这些工具帮到了你的课堂，欢迎<a href="<?= e(url('/sponsor')) ?>">支持本站</a>，
+      帮助我们把更多工具做得更好用。</p>
+    <?php endif; ?>
   </div>
 </div>
