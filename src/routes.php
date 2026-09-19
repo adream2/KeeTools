@@ -22,6 +22,7 @@ use App\Admin\Controller\PackageAdminController;
 use App\Admin\Controller\SettingsController;
 use App\Admin\Controller\StatsAdminController;
 use App\Admin\Controller\ToolAdminController;
+use App\Frontend\Controller\AboutController;
 use App\Frontend\Controller\CategoryController;
 use App\Frontend\Controller\DownloadController;
 use App\Frontend\Controller\FriendLinkController;
@@ -43,6 +44,7 @@ $router->get('/tool/{id}', [ToolController::class, 'detail'], ['csrf']);
 $router->get('/tool/{id}/use', [ToolController::class, 'use'], ['csrf']);
 $router->get('/netdisk/{id}', [NetdiskController::class, 'show'], ['csrf']);
 $router->get('/friend-links', [FriendLinkController::class, 'index'], ['csrf']);
+$router->get('/about', [AboutController::class, 'index'], ['csrf']);
 $router->post('/netdisk/{id}/report', [NetdiskController::class, 'report'], ['csrf']);
 $router->get('/download/{id}', [DownloadController::class, 'download'], ['csrf']);
 

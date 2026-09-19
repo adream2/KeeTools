@@ -247,6 +247,76 @@
   line-height: var(--lh-loose);
 }
 
+/* ── 关于页（/about）───────────────────────── */
+
+.about-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-5);
+}
+
+@media (min-width: 700px) {
+  .about-stats {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.about-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-4) var(--sp-3);
+  text-align: center;
+}
+
+.about-stat strong {
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-bold);
+  color: var(--c-primary);
+}
+
+.about-stat span {
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+}
+
+.about-card {
+  margin-bottom: var(--sp-5);
+}
+
+.about-card .card-body p {
+  margin: var(--sp-0) var(--sp-0) var(--sp-3);
+  color: var(--c-text-muted);
+  line-height: var(--lh-loose);
+}
+
+.about-licenses h3 {
+  margin: var(--sp-4) var(--sp-0) var(--sp-2);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-medium);
+  color: var(--c-text);
+}
+
+.about-licenses ul {
+  margin: var(--sp-0) var(--sp-0) var(--sp-3);
+  padding-left: var(--sp-5);
+  color: var(--c-text-muted);
+}
+
+.about-licenses li {
+  margin-bottom: var(--sp-2);
+  line-height: var(--lh-loose);
+}
+
+.about-licenses-note {
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background-color: var(--c-primary-weak);
+  font-size: var(--fs-sm);
+}
+
 .site-footer-col-list {
   list-style: none;
   margin: var(--sp-0);

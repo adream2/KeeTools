@@ -64,6 +64,7 @@ final class SeoController
 
         $urls[] = ['loc' => '/', 'lastmod' => date('Y-m-d'), 'priority' => '1.0'];
         $urls[] = ['loc' => '/tools', 'lastmod' => date('Y-m-d'), 'priority' => '0.9'];
+        $urls[] = ['loc' => '/about', 'lastmod' => date('Y-m-d'), 'priority' => '0.5'];
 
         if (App::hasDb()) {
             $repository = new ToolRepository();

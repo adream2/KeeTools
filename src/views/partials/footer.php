@@ -18,6 +18,7 @@ $sponsor = SiteOps::sponsor();
 $navLinks = SiteOps::footerNav();
 if ($navLinks === []) {
     $navLinks = [['label' => '全部工具', 'url' => url('/tools')]];
+    $navLinks[] = ['label' => '关于', 'url' => url('/about')];
     if (SiteOps::hasFriendPageContent()) {
         $navLinks[] = ['label' => '友情链接', 'url' => url('/friend-links')];
     }

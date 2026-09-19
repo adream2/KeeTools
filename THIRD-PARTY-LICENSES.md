@@ -75,9 +75,8 @@ ISC 许可证，`currentColor` 跟随主题），经 `sync_shared.py` 内联进�
 
 | 框架 | 版本 | 许可证 | 说明 |
 |---|---|---|---|
-| （无） | — | — | 自写 CSS（tokens / base / components / site），见 `docs/需求文档-v2.md` §3.1 |
+| （无） | — | — | 自写 CSS（tokens / base / components / site） |
 
-> 兜底说明：若 P1 阶段决定切换至 TailwindCSS 本地构建产物，需在此登记 Tailwind 版本与 MIT 许可证，并说明"仅使用本地构建产物，无运行时外部依赖"。
 
 ---
 
@@ -104,3 +103,4 @@ ISC 许可证，`currentColor` 跟随主题），经 `sync_shared.py` 内联进�
 |---|---|---|
 | 2026-09-18 | 建立登记表 | 初始登记，当前仅 Lucide + Tabler |
 | 2026-09-18 | P2 工具图标集 | `tools/_shared/icons/icons.svg` 内联 Lucide 子集（ISC）约 40 符号，供 5 个 P2 工具使用 |
+| 2026-09-19 | 关于页上线 | `/about` 面向访客展示本登记表的署名版（图标集 / 拼音音频 CC BY-SA / 笔顺数据 Arphic），新增素材时两处同步维护 |
