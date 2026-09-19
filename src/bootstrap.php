@@ -22,6 +22,7 @@ use App\Core\Router;
 use App\Core\Security;
 use App\Core\Session;
 use App\Core\View;
+use App\Services\ToolScanner;
 
 // ── 1. 路径与自动加载 ──────────────────────────────
 // 顺序不可颠倒：必须先注册自动加载器，否则下面 App::setBasePath()
@@ -144,7 +145,24 @@ if (Env::isProduction()) {
     }
 }
 
-// ── 8. 路由 ────────────────────────────────────────
+// ── 8. 工具自动同步（惰性增量）─────────────────────
+// 2026-09-19 定稿：工具放入 tools/ 目录即自动上架，无需手动扫描。
+// 只比对 manifest mtime（N 次 stat + 1 条查询），有变化才重扫对应工具；
+// 目录消失自动下架。任何异常只记日志，绝不阻断页面渲染。
+// CLI（init_db / 打包脚本）不触发，保持行为可控。
+
+if (App::hasDb() && PHP_SAPI !== 'cli') {
+    try {
+        $autoSync = (new ToolScanner())->syncChanged();
+        if ($autoSync['added'] !== [] || $autoSync['updated'] !== [] || $autoSync['unpublished'] !== []) {
+            Logger::info('工具自动同步', $autoSync);
+        }
+    } catch (Throwable $e) {
+        Logger::warning('工具自动同步失败（已跳过，不影响本次请求）', ['error' => $e->getMessage()]);
+    }
+}
+
+// ── 9. 路由 ────────────────────────────────────────
 
 $router = new Router();
 $router->load(__DIR__ . '/routes.php');

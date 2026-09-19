@@ -189,8 +189,8 @@ use App\Core\Csrf;
                     </div>
                   </td>
                   <td class="dash-actions">
-                    <a class="btn btn-sm" href="<?= e(url('/admin/tools/' . rawurlencode($row['tool_id']) . '/edit')) ?>">
-                      <?= icon('edit') ?>重做元数据
+                    <a class="btn btn-sm" target="_blank" rel="noopener" href="<?= e(url('/tool/' . rawurlencode($row['tool_id']))) ?>">
+                      <?= icon('external-link') ?>看前台
                     </a>
                     <form method="post" action="<?= e(url('/admin/tools/' . rawurlencode($row['tool_id']) . '/published')) ?>">
                       <?= Csrf::field() ?>

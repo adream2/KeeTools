@@ -245,18 +245,18 @@ final class PackageBuilder
                     [':id' => $toolId]
                 );
                 if ($row === null) {
-                    throw new RuntimeException("工具 {$toolId} 不在库中，请先在后台执行「扫描同步」");
+                    throw new RuntimeException("工具 {$toolId} 不在库中：请确认 tools/ 目录下存在该工具（放入后自动同步）");
                 }
 
                 $src = Security::safePath(App::path('tools'), (string) $row['dir_path'], (string) $row['entry']);
                 if (!is_file($src)) {
-                    throw new RuntimeException("工具 {$toolId} 的文件缺失，请先执行「扫描同步」");
+                    throw new RuntimeException("工具 {$toolId} 的 entry 文件缺失，请检查 tools/ 目录");
                 }
 
                 $metaVersion = self::readMetaVersion($src);
                 if ($metaVersion !== null && $metaVersion !== (string) $row['version']) {
                     throw new RuntimeException(sprintf(
-                        '工具 %s 文件内版本（%s）与站点记录（%s）不一致，请先执行「扫描同步」再打包',
+                        '工具 %s 文件内 ET-META 版本（%s）与 manifest（%s）不一致，请先修正后重试打包',
                         $toolId,
                         $metaVersion,
                         (string) $row['version']
@@ -786,7 +786,7 @@ TXT;
 </head>
 <body>
 <h1>课工具 KeeTools 离线合集 v{$version}</h1>
-<p>面向中小学老师的免费课堂工具集 —— 单文件即开即用，无需安装，断网也能用。</p>
+<p>面向中小学课堂的免费工具集 —— 老师讲课、学生自学、家长辅导都用得上；单文件即开即用，无需安装，断网也能用。</p>
 
 <h2>快速上手</h2>
 <ol>
@@ -832,8 +832,8 @@ HTML;
 {$siteName}
 {$desc}
 
-课工具是面向中小学老师的免费课堂工具集：单文件即开即用、
-无需安装、断网也能用。所有工具永久免费，数据全部保存在本地。
+课工具是面向中小学课堂的免费工具集：老师、学生、家长都用得上；
+单文件即开即用、无需安装、断网也能用。所有工具永久免费，数据全部保存在本地。
 
 在线获取最新工具：{$update}
 本合集：{$slug} v{$version}（生成于 {$generatedAt}）

@@ -10,7 +10,6 @@
  * @var bool $storageWritable
  * @var bool $envFileExists
  */
-use App\Core\Csrf;
 
 $growMax = 0;
 foreach ($growth as $point) {
@@ -49,13 +48,9 @@ foreach ($distribution as $item) {
     <span class="stat-num"><?= e((string) $stats['mismatch']) ?></span>
     <span class="stat-label">版本不一致</span>
   </a>
-  <a class="stat-card" href="<?= e(url('/admin/categories')) ?>">
-    <span class="stat-num"><?= e((string) $stats['categories']) ?></span>
-    <span class="stat-label">分类</span>
-  </a>
   <a class="stat-card" href="<?= e(url('/admin/tools')) ?>">
     <span class="stat-num"><?= e((string) $stats['netdisks']) ?></span>
-    <span class="stat-label">网盘链接（P1）</span>
+    <span class="stat-label">网盘链接</span>
   </a>
 </div>
 
@@ -65,12 +60,7 @@ foreach ($distribution as $item) {
       <h2 class="card-title">快捷操作</h2>
     </div>
     <div class="card-body dash-actions">
-      <form method="post" action="<?= e(url('/admin/tools/scan')) ?>">
-        <?= Csrf::field() ?>
-        <button class="btn btn-primary" type="submit"><?= icon('refresh-cw') ?>扫描同步工具</button>
-      </form>
       <a class="btn" href="<?= e(url('/admin/tools')) ?>"><?= icon('wrench') ?>管理工具</a>
-      <a class="btn" href="<?= e(url('/admin/categories')) ?>"><?= icon('folder-tree') ?>管理分类</a>
       <a class="btn" href="<?= e(url('/admin/settings')) ?>"><?= icon('settings') ?>站点设置</a>
     </div>
   </div>
@@ -108,7 +98,7 @@ foreach ($distribution as $item) {
     </div>
     <div class="card-body">
       <?php if ($growMax === 0): ?>
-        <p class="tool-get-note">暂无入库记录 —— 先跑「扫描同步工具」。</p>
+        <p class="tool-get-note">暂无入库记录 —— 把工具目录放进 tools/ 即自动同步。</p>
       <?php else: ?>
         <div class="grow-chart">
           <?php foreach ($growth as $point): ?>

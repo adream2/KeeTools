@@ -37,7 +37,7 @@ use App\Core\View;
     <div class="card-head"><h2 class="card-title">页脚快捷导航</h2></div>
     <div class="card-body">
       <div class="form-group">
-        <label class="form-label" for="nav-footer">快捷导航（每行一条：名称 | URL，留空使用默认「全部工具 / 支持本站 / 后台」）</label>
+        <label class="form-label" for="nav-footer">快捷导航（每行一条：名称 | URL，留空使用默认「全部工具 / 关于 / 支持本站」；后台入口不显示在前台）</label>
         <textarea class="form-input" id="nav-footer" name="footer_nav" rows="4"
                   placeholder="全部工具 | /tools&#10;关于本站 | /about"><?= e($footerNavText) ?></textarea>
       </div>

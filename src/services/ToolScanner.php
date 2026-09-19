@@ -11,18 +11,23 @@ use RuntimeException;
 /**
  * 工具扫描器
  *
- * 遍历 tools/ 目录（跳过 _ 前缀目录）→ 校验 manifest → 入库 upsert。
+ * 工具目录 → 数据库索引的唯一通道。2026-09-19 起不再提供手动「扫描同步」：
+ * bootstrap 每次请求调用 syncChanged() 做惰性增量同步 ——
+ *   新目录 → 自动入库上架（is_published 默认 1）
+ *   manifest mtime 变化 → 自动重扫该工具
+ *   目录消失 → 自动下架（保留行，目录回来即恢复）
+ * 数据库只做索引 / 排序 / 统计 / 用户态（推荐 / 上架 / 排序），manifest 是唯一真源。
+ *
  * 校验规则与 scripts/check_manifest.py 保持一致，但有两处刻意差异：
  *
  *   1. ET-META 缺失 / id / version 不一致 → 不阻断入库，而是置
- *      tools.meta_mismatch = 1 并记入 warnings，让后台列表能「高亮报错」
- *      （P0 验收标准 #5）。提交门禁仍由 check_manifest.py 按 ERR 拦截。
+ *      tools.meta_mismatch = 1 并记入 warnings，后台列表能「高亮报错」。
+ *      提交门禁仍由 check_manifest.py 按 ERR 拦截。
  *   2. CHANGELOG.md 缺失 → warning 而非 error（不影响站点运行，
- *      提交门禁会拦住；扫描器若也硬拦会让工具从后台消失，反而不易修复）。
+ *      提交门禁会拦住；扫描器若也硬拦会让工具从前台消失，反而不易修复）。
  *
- * 用户态字段（is_featured / is_published / sort_order）在 upsert 时原样保留；
- * tools/ 不可写期间后台产生的降级覆盖（tool_overrides）会合并进 manifest
- * 后再校验、入库，保证库里数据 = 用户最后一次编辑的结果。
+ * tools/ 不可写期间后台编辑产生的降级覆盖（tool_overrides）会合并进 manifest
+ * 后再校验、入库（历史兼容，编辑入口已移除，覆盖层只减不增）。
  */
 final class ToolScanner
 {
@@ -82,44 +87,36 @@ final class ToolScanner
     }
 
     /**
-     * 扫描全部工具目录并同步入库。
+     * 惰性增量同步（自动上架）：比对目录 manifest mtime 与库内记录，只重扫变化的部分。
      *
-     * @return array{
-     *     scanned: int,
-     *     created: list<string>,
-     *     updated: list<string>,
-     *     failed: array<string, list<string>>,
-     *     warnings: array<string, list<string>>,
-     *     meta_mismatch: list<string>,
-     *     missing: list<string>,
-     * }
+     * 调用点 = bootstrap（每次请求入口一次）。开销：N 个工具 = N 次 stat + 1 条查询，
+     * 无变化时零写入。校验失败的工具不入库（与前行为一致），下次请求自动重试。
+     *
+     * @return array{added: list<string>, updated: list<string>, unpublished: list<string>, failed: array<string, list<string>>}
      */
-    public function scan(): array
+    public function syncChanged(): array
     {
-        $report = [
-            'scanned'       => 0,
-            'created'       => [],
-            'updated'       => [],
-            'failed'        => [],
-            'warnings'      => [],
-            'meta_mismatch' => [],
-            'missing'       => [],
-        ];
+        $report = ['added' => [], 'updated' => [], 'unpublished' => [], 'failed' => []];
 
-        if (!is_dir($this->toolsPath)) {
-            $report['failed']['_tools'] = ['tools/ 目录不存在: ' . $this->toolsPath];
-
+        if (!$this->hasDb() || !is_dir($this->toolsPath)) {
             return $report;
         }
 
-        $seen = [];
+        clearstatcache();
         $names = scandir($this->toolsPath);
         if ($names === false) {
-            $report['failed']['_tools'] = ['tools/ 目录读取失败'];
-
             return $report;
         }
 
+        $known = [];
+        foreach ($this->db()->fetchAll('SELECT tool_id, dir_path, manifest_mtime FROM tools') as $row) {
+            $known[(string) $row['dir_path']] = [
+                'tool_id' => (string) $row['tool_id'],
+                'mtime'   => (int) $row['manifest_mtime'],
+            ];
+        }
+
+        $current = [];
         foreach ($names as $name) {
             if ($name === '.' || $name === '..' || str_starts_with($name, '_')) {
                 continue;
@@ -127,37 +124,34 @@ final class ToolScanner
             if (!is_dir($this->toolsPath . DIRECTORY_SEPARATOR . $name)) {
                 continue;
             }
+            $current[$name] = true;
 
-            $report['scanned']++;
-            $seen[$name] = true;
+            $manifestFile = $this->toolsPath . DIRECTORY_SEPARATOR . $name . DIRECTORY_SEPARATOR . 'manifest.json';
+            $mtime = is_file($manifestFile) ? (int) filemtime($manifestFile) : 0;
+
+            if (isset($known[$name]) && $known[$name]['mtime'] === $mtime) {
+                continue; // 无变化，零成本跳过
+            }
 
             $result = $this->scanOne($name);
-            $toolId = $result['tool_id'] ?? $name;
-
+            $toolId = (string) ($result['tool_id'] ?? $name);
             if ($result['status'] === 'skipped') {
                 $report['failed'][$toolId] = $result['errors'];
-                if ($result['warnings'] !== []) {
-                    $report['warnings'][$toolId] = $result['warnings'];
-                }
-                continue;
-            }
-
-            $report[$result['status']][] = $toolId;
-            if ($result['warnings'] !== []) {
-                $report['warnings'][$toolId] = $result['warnings'];
-            }
-            if ($result['meta_mismatch']) {
-                $report['meta_mismatch'][] = $toolId;
+            } elseif ($result['status'] === 'created') {
+                $report['added'][] = $toolId;
+            } else {
+                $report['updated'][] = $toolId;
             }
         }
 
-        // 库里有、磁盘上已消失的目录：只报告，不改用户态（是否下架由后台决定）
-        if ($this->hasDb()) {
-            foreach ($this->db()->fetchAll('SELECT tool_id, dir_path FROM tools') as $row) {
-                $dir = (string) $row['dir_path'];
-                if ($dir !== '' && !isset($seen[$dir])) {
-                    $report['missing'][] = (string) $row['tool_id'];
-                }
+        // 目录消失 → 自动下架（保留行与用户态，目录回来即自动恢复上架）
+        foreach ($known as $dirName => $info) {
+            if ($dirName !== '' && !isset($current[$dirName])) {
+                $this->db()->execute(
+                    'UPDATE tools SET is_published = 0 WHERE tool_id = :id',
+                    [':id' => $info['tool_id']]
+                );
+                $report['unpublished'][] = $info['tool_id'];
             }
         }
 

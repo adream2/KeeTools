@@ -8,14 +8,10 @@
 use App\Core\Csrf;
 ?><div class="page-head">
   <h1 class="page-title">工具管理</h1>
-  <p class="page-desc">扫描 tools/ 目录同步入库；编辑元数据会回写 manifest.json</p>
-</div>
-
-<div class="admin-toolbar">
-  <form method="post" action="<?= e(url('/admin/tools/scan')) ?>">
-    <?= Csrf::field() ?>
-    <button class="btn btn-primary" type="submit"><?= icon('refresh-cw') ?>扫描同步</button>
-  </form>
+  <p class="page-desc">
+    工具放入 <code>tools/</code> 目录即自动上架（manifest 有改动也会自动同步）；
+    此处只调整推荐 / 上架 / 排序
+  </p>
 </div>
 
 <?php if (!$dbReady): ?>
@@ -25,8 +21,8 @@ use App\Core\Csrf;
   </div>
 <?php elseif ($tools === []): ?>
   <div class="empty">
-    <div class="empty-title">还没有工具入库</div>
-    <div>把工具目录放进 <code>tools/</code> 后，点击上方「扫描同步」。</div>
+    <div class="empty-title">还没有工具</div>
+    <div>把工具目录放进 <code>tools/</code>，刷新本页即自动上架。</div>
   </div>
 <?php else: ?>
 <form method="post" action="<?= e(url('/admin/tools/batch')) ?>">
@@ -73,10 +69,6 @@ use App\Core\Csrf;
             </td>
             <td>
               <div class="table-actions">
-                <a class="btn btn-sm"
-                   href="<?= e(url('/admin/tools/' . rawurlencode($toolId) . '/edit')) ?>">
-                  <?= icon('pencil') ?>编辑
-                </a>
                 <a class="btn btn-sm btn-ghost" target="_blank" rel="noopener"
                    href="<?= e(url('/tool/' . rawurlencode($toolId))) ?>">
                   <?= icon('external-link') ?>前台

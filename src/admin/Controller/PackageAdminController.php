@@ -31,7 +31,7 @@ final class PackageAdminController extends AdminController
     public function index(Request $request): Response
     {
         if (!$this->dbReady()) {
-            return $this->render('packages', ['dbReady' => false], 'packages');
+            return $this->render('packages', ['dbReady' => false], 'package');
         }
 
         $db = App::db();
@@ -89,7 +89,7 @@ final class PackageAdminController extends AdminController
             'task'      => $this->builder->latestTask(),
             'zipReady'  => class_exists(ZipArchive::class),
             'maxSizeMb' => Config::int('PACKAGE_MAX_SIZE_MB', 10),
-        ], 'packages');
+        ], 'package');
     }
 
     public function create(Request $request): Response

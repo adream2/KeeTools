@@ -15,7 +15,6 @@ declare(strict_types=1);
  */
 
 use App\Admin\Controller\AuthController;
-use App\Admin\Controller\CategoryAdminController;
 use App\Admin\Controller\DashboardController;
 use App\Admin\Controller\NetdiskAdminController;
 use App\Admin\Controller\PackageAdminController;
@@ -73,17 +72,13 @@ $router->group('/admin', ['auth', 'csrf'], function (App\Core\Router $r): void {
 
     // 工具管理
     $r->get('/tools', [ToolAdminController::class, 'index']);
-    $r->post('/tools/scan', [ToolAdminController::class, 'scan']);
     $r->post('/tools/batch', [ToolAdminController::class, 'batch']);
     $r->post('/tools/{id}/published', [ToolAdminController::class, 'setPublished']);
-    $r->get('/tools/{id}/edit', [ToolAdminController::class, 'edit']);
-    $r->post('/tools/{id}/update', [ToolAdminController::class, 'update']);
+    // 编辑页已移除（2026-09-19 定稿）：manifest 是唯一真源，改文件后自动同步
 
-    // 分类管理
-    $r->get('/categories', [CategoryAdminController::class, 'index']);
-    $r->post('/categories/create', [CategoryAdminController::class, 'create']);
-    $r->post('/categories/update', [CategoryAdminController::class, 'update']);
-    $r->post('/categories/delete', [CategoryAdminController::class, 'delete']);
+    // 分类不由后台管理（2026-09-19 定稿）：学段/学科结构与工具挂载完全来自
+    // manifest（grade_range + subjects），由 ToolScanner::syncCategories 派生，
+    // 分类骨架由 scripts/init_db.php 预置 —— 后台手动增删改只会破坏前台结构。
 
     // 网盘链接管理（仅 admin：editor 无权访问）
     $r->group('', ['role'], function (App\Core\Router $r): void {
