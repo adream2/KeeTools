@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>时钟认识 — KeeTools 课工具</title>
 <!-- ET-META
-{"id":"clock-learning","version":"1.0.0"}
+{"id":"clock-learning","version":"1.1.0"}
 -->
 
 <!-- 共享外壳样式（由 sync_shared.py 注入） -->
@@ -684,6 +684,15 @@ html[data-et-theme="dark"] {
     stroke-linecap: round;
 }
 
+.clocklearnin-second {
+    stroke: var(--et-err);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+}
+
+.clocklearnin-svg.is-second-off .clocklearnin-second,
+.clocklearnin-svg.is-second-off .clocklearnin-hit--second { display: none; }
+
 .clocklearnin-pin {
     fill: var(--et-accent);
     stroke: var(--et-surface);
@@ -829,6 +838,7 @@ html[data-et-theme="dark"] {
         <div class="clocklearnin-seg" role="group" aria-label="学习模式">
             <button class="clocklearnin-seg__btn is-on" type="button" data-cmode="read">读数模式</button>
             <button class="clocklearnin-seg__btn" type="button" data-cmode="set">摆针模式</button>
+            <button class="clocklearnin-seg__btn" type="button" data-cmode="free">自由拨针</button>
         </div>
         <div class="clocklearnin-ask" id="clAsk">请读出钟面上的时间</div>
         <div class="clocklearnin-score" id="clScore"></div>
@@ -843,12 +853,14 @@ html[data-et-theme="dark"] {
                     <g id="clNumbers"></g>
                     <line id="clHourHand" class="clocklearnin-hour" x1="100" y1="100" x2="100" y2="54" transform="rotate(0 100 100)"/>
                     <line id="clMinuteHand" class="clocklearnin-minute" x1="100" y1="100" x2="100" y2="26" transform="rotate(0 100 100)"/>
+                    <line id="clSecondHand" class="clocklearnin-second" x1="100" y1="108" x2="100" y2="16" transform="rotate(0 100 100)"/>
                     <circle class="clocklearnin-pin" cx="100" cy="100" r="5"/>
                     <line id="clHitHour" class="clocklearnin-hit" x1="100" y1="100" x2="100" y2="54" transform="rotate(0 100 100)" data-hand="hour"/>
                     <line id="clHitMinute" class="clocklearnin-hit" x1="100" y1="100" x2="100" y2="26" transform="rotate(0 100 100)" data-hand="minute"/>
+                    <line id="clHitSecond" class="clocklearnin-hit clocklearnin-hit--second" x1="100" y1="100" x2="100" y2="16" transform="rotate(0 100 100)" data-hand="second"/>
                 </svg>
             </div>
-            <div class="clocklearnin-digital" id="clDigital" hidden>--:--</div>
+            <div class="clocklearnin-digital" id="clDigital" hidden>--:--:--</div>
         </div>
 
         <div class="clocklearnin-panel">
@@ -1757,12 +1769,14 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
         level: levelById(store.get('level', 'hour')).id,
         showDigital: store.get('showDigital', false) === true,
         minuteTicks: store.get('minuteTicks', true) !== false,
+        showSecond: store.get('showSecond', true) !== false,
         handHint: store.get('handHint', false) === true
     };
 
-    var mode = 'read';                    /* read = 读数模式，set = 摆针模式 */
-    var clock = { hour: 3, minute: 0 };   /* 钟面当前时间，hour 取 0–11（0 表示 12 点） */
-    var target = { hour: 3, minute: 0 };  /* 本题目标时间 */
+    var MODES = ['read', 'set', 'free'];   /* read = 读数，set = 摆针，free = 自由拨针 */
+    var mode = 'read';
+    var clock = { hour: 3, minute: 0, second: 0 };   /* 钟面当前时间，hour 取 0–11（0 表示 12 点） */
+    var target = { hour: 3, minute: 0 };             /* 本题目标时间 */
     var revealed = false;
     var dragHand = null;
 
@@ -1776,6 +1790,7 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
     var gNumbers = document.getElementById('clNumbers');
     var hourHand = document.getElementById('clHourHand');
     var minuteHand = document.getElementById('clMinuteHand');
+    var secondHand = document.getElementById('clSecondHand');
     var digitalEl = document.getElementById('clDigital');
     var askEl = document.getElementById('clAsk');
     var scoreEl = document.getElementById('clScore');
@@ -1785,6 +1800,9 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
     var minuteInput = document.getElementById('clMinute');
     var feedbackEl = document.getElementById('clFeedback');
     var tipEl = document.getElementById('clTip');
+    var checkBtnText = document.getElementById('clCheck').querySelector('span');
+    var revealBtn = document.getElementById('clReveal');
+    var nextBtn = document.getElementById('clNext');
     var modeBtns = ET.qsa('[data-cmode]');
 
     var chrome = ET.Chrome.mount({
@@ -1800,8 +1818,9 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
         help: '<div style="font-size:13.5px;line-height:2">' +
             '<p style="margin:0 0 8px"><b>读数模式</b>：看钟面读出时间，填写「几时几分」后点「核对」。</p>' +
             '<p style="margin:0 0 8px"><b>摆针模式</b>：按给出的时间，拖动时针与分针摆出正确位置。</p>' +
-            '<p style="margin:0 0 8px"><b>难度阶梯</b>：整点 / 半点 / 5 分 / 1 分，在设置里切换。</p>' +
-            '<p style="margin:0 0 8px"><b>快捷键</b>：空格 = 核对，← / → = 切换模式。</p>' +
+            '<p style="margin:0 0 8px"><b>自由拨针</b>：三根指针都能拖，随意转动探究时针、分针、秒针的关系，不判题。</p>' +
+            '<p style="margin:0 0 8px"><b>难度阶梯</b>：整点 / 半点 / 5 分 / 1 分，在设置里切换（自由拨针不受此限制）。</p>' +
+            '<p style="margin:0 0 8px"><b>快捷键</b>：空格 = 核对，← / → = 轮流切换三种模式。</p>' +
             '<p style="margin:0"><b>数据</b>：成绩统计保存在浏览器本地（localStorage）。</p></div>'
     });
 
@@ -1815,8 +1834,15 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
         return h === 0 ? 12 : h;
     }
 
-    function fmtTime(t) {
-        return pad2(hourLabel(t.hour)) + ':' + pad2(t.minute);
+    function fmtTime(t, withSec) {
+        var s = pad2(hourLabel(t.hour)) + ':' + pad2(t.minute);
+        if (withSec) { return s + ':' + pad2(t.second || 0); }
+        return s;
+    }
+
+    /* 秒针是否参与显示与拖动（可在设置里关闭） */
+    function useSecond() {
+        return prefs.showSecond;
     }
 
     function isTypingTarget(node) {
@@ -1834,6 +1860,7 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
     function snapMinute(m) {
         var v = Math.round(m) % 60;
         if (v < 0) { v += 60; }
+        if (mode === 'free') { return v; }
         if (prefs.level === 'hour') { return 0; }
         if (prefs.level === 'half') {
             if (v < 15) { return 0; }
@@ -1887,21 +1914,32 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
         svgEl.classList.toggle('is-minute-off', !prefs.minuteTicks);
     }
 
+    function applySecondVisible() {
+        svgEl.classList.toggle('is-second-off', !useSecond());
+    }
+
     function applyHands() {
         var hourAngle = clock.hour * 30 + clock.minute * 0.5;   /* 半点时指向两数字之间 */
         var minuteAngle = clock.minute * 6;
+        var secondAngle = (clock.second || 0) * 6;
         hourHand.setAttribute('transform', 'rotate(' + hourAngle + ' 100 100)');
         minuteHand.setAttribute('transform', 'rotate(' + minuteAngle + ' 100 100)');
+        secondHand.setAttribute('transform', 'rotate(' + secondAngle + ' 100 100)');
         document.getElementById('clHitHour').setAttribute('transform', 'rotate(' + hourAngle + ' 100 100)');
         document.getElementById('clHitMinute').setAttribute('transform', 'rotate(' + minuteAngle + ' 100 100)');
+        document.getElementById('clHitSecond').setAttribute('transform', 'rotate(' + secondAngle + ' 100 100)');
     }
 
     /* ---------- 文案 ---------- */
 
     function renderAsk() {
-        askEl.textContent = mode === 'read'
-            ? '请读出钟面上的时间'
-            : '请把指针摆到 ' + fmtTime(target);
+        if (mode === 'read') {
+            askEl.textContent = '请读出钟面上的时间';
+        } else if (mode === 'set') {
+            askEl.textContent = '请把指针摆到 ' + fmtTime(target);
+        } else {
+            askEl.textContent = '自由拨针：拖动任意指针，随意探究时针、分针、秒针的关系';
+        }
     }
 
     function renderDigital() {
@@ -1910,7 +1948,7 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
             return;
         }
         digitalEl.hidden = false;
-        digitalEl.textContent = fmtTime(clock);
+        digitalEl.textContent = fmtTime(clock, useSecond());
     }
 
     function renderScore() {
@@ -1928,18 +1966,23 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
     function handHintText() {
         var now = hourLabel(clock.hour);
         var next = hourLabel((clock.hour + 1) % 12);
-        if (clock.minute === 0) {
-            return '指针提示：时针正指向 <b>' + now + '</b>，分针指向 12。';
-        }
-        return '指针提示：时针在 <b>' + now + '</b> 和 <b>' + next +
-            '</b> 之间，分针指向 ' + clock.minute + ' 分。';
+        var head = clock.minute === 0
+            ? '指针提示：时针正指向 <b>' + now + '</b>，分针指向 12。'
+            : '指针提示：时针在 <b>' + now + '</b> 和 <b>' + next +
+                '</b> 之间，分针指向 ' + clock.minute + ' 分。';
+        if (!useSecond()) { return head; }
+        return head + '秒针指向 ' + (clock.second || 0) + ' 秒（秒针走一圈，分针走一小格）。';
     }
 
     function renderTip() {
         var parts = [];
-        parts.push(mode === 'read'
-            ? '短针是<b>时针</b>，长针是<b>分针</b>；分针走一圈，时针走一大格。'
-            : '按住时针或分针拖动到目标位置，指针会吸附到当前难度允许的刻度。');
+        if (mode === 'read') {
+            parts.push('短针是<b>时针</b>，长针是<b>分针</b>，细针是<b>秒针</b>；分针走一圈，时针走一大格。');
+        } else if (mode === 'set') {
+            parts.push('按住时针或分针拖动到目标位置，指针会吸附到当前难度允许的刻度。');
+        } else {
+            parts.push('拖动任意一根指针自由探究：秒针走一圈 = 分针走一小格，分针走一圈 = 时针走一大格。自由拨针不判题。');
+        }
         if (prefs.handHint) { parts.push(handHintText()); }
         var lv = levelById(prefs.level);
         parts.push('当前难度：<b>' + lv.name + '</b>（' + lv.tip + '）');
@@ -1953,12 +1996,14 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
         revealed = false;
         dragHand = null;
         if (mode === 'read') {
-            clock = { hour: target.hour, minute: target.minute };
+            clock = { hour: target.hour, minute: target.minute, second: 0 };
             hourInput.value = '';
             minuteInput.value = '';
-        } else {
+        } else if (mode === 'set') {
             /* 摆针模式：指针停在一个明显不同的起点 */
-            clock = { hour: (target.hour + 6) % 12, minute: 0 };
+            clock = { hour: (target.hour + 6) % 12, minute: 0, second: 0 };
+        } else {
+            /* 自由拨针：不改动钟面，保留当前时刻继续探究 */
         }
         applyHands();
         renderAsk();
@@ -1966,10 +2011,29 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
         renderFeedback('');
         renderTip();
         chrome.beep('tick');
-        chrome.setStatus(mode === 'read' ? '看钟面读出时间' : '目标 ' + fmtTime(target), 'ok');
+        if (mode === 'read') {
+            chrome.setStatus('看钟面读出时间', 'ok');
+        } else if (mode === 'set') {
+            chrome.setStatus('目标 ' + fmtTime(target), 'ok');
+        } else {
+            chrome.setStatus('自由拨针 · 任意拖动指针', 'ok');
+        }
+    }
+
+    /* 自由拨针模式下的「读数」：把当前钟面读出来，仅作自我核对，不计分 */
+    function freeReadOut() {
+        revealed = true;
+        renderDigital();
+        renderFeedback('当前钟面：' + fmtTime(clock, useSecond()), 'ok');
+        chrome.beep('ok');
+        chrome.setStatus('当前钟面 ' + fmtTime(clock, useSecond()), 'ok');
     }
 
     function check() {
+        if (mode === 'free') {
+            freeReadOut();
+            return;
+        }
         var ok;
         if (mode === 'read') {
             var h = parseInt(hourInput.value, 10);
@@ -2004,7 +2068,7 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
     function reveal() {
         revealed = true;
         if (mode === 'set') {
-            clock = { hour: target.hour, minute: target.minute };
+            clock = { hour: target.hour, minute: target.minute, second: 0 };
             applyHands();
             renderTip();
         }
@@ -2020,6 +2084,8 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
         store.set('level', id);
         if (mode === 'read') {
             nextQuestion();
+        } else if (mode === 'free') {
+            renderTip();
         } else {
             clock.minute = snapMinute(clock.minute);
             applyHands();
@@ -2034,9 +2100,12 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
         if (mode === next) { return; }
         mode = next;
         dragHand = null;
-        svgEl.classList.toggle('is-set', mode === 'set');
+        svgEl.classList.toggle('is-set', mode === 'set' || mode === 'free');
         answerEl.hidden = (mode !== 'read');
         setHintEl.hidden = (mode !== 'set');
+        checkBtnText.textContent = (mode === 'free') ? '读数' : '核对';
+        revealBtn.hidden = (mode === 'free');
+        nextBtn.hidden = (mode === 'free');
         syncModeButtons();
         nextQuestion();
     }
@@ -2081,11 +2150,23 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
     function nearestHand(deg) {
         var ha = clock.hour * 30 + clock.minute * 0.5;
         var ma = clock.minute * 6;
-        return angularDiff(deg, ha) <= angularDiff(deg, ma) ? 'hour' : 'minute';
+        var best = 'hour';
+        var bestDiff = angularDiff(deg, ha);
+        var d = angularDiff(deg, ma);
+        if (d < bestDiff) { best = 'minute'; bestDiff = d; }
+        if (useSecond()) {
+            d = angularDiff(deg, (clock.second || 0) * 6);
+            if (d < bestDiff) { best = 'second'; }
+        }
+        return best;
     }
 
     function applyDrag(deg) {
-        if (dragHand === 'minute') {
+        if (dragHand === 'second') {
+            var s = Math.round(deg / 6) % 60;
+            if (s < 0) { s += 60; }
+            clock.second = s;
+        } else if (dragHand === 'minute') {
             clock.minute = snapMinute(deg / 6);
         } else {
             var raw = (deg - clock.minute * 0.5) / 30;
@@ -2100,15 +2181,16 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
 
     function bindClockDrag() {
         svgEl.addEventListener('pointerdown', function (e) {
-            if (mode !== 'set' || e.button !== 0) { return; }
+            if ((mode !== 'set' && mode !== 'free') || e.button !== 0) { return; }
             var p = svgPoint(e);
             if (!p) { return; }
             var hand = e.target.getAttribute ? e.target.getAttribute('data-hand') : null;
             var deg = angleOf(p);
-            if (!hand) {
+            if (!hand || (hand === 'second' && !useSecond())) {
                 if (radiusOf(p) > 100) { return; }
                 hand = nearestHand(deg);
             }
+            if (hand === 'second' && !useSecond()) { hand = 'minute'; }
             e.preventDefault();
             dragHand = hand;
             try { svgEl.setPointerCapture(e.pointerId); } catch (err) { /* 忽略 */ }
@@ -2192,12 +2274,21 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
             store.set('minuteTicks', v);
             applyMinuteTicks();
         });
+        addSwitch(body, '显示秒针', prefs.showSecond, function (v) {
+            prefs.showSecond = v;
+            store.set('showSecond', v);
+            applySecondVisible();
+            applyHands();
+            renderDigital();
+            renderTip();
+        });
         addSwitch(body, '显示指针提示数字', prefs.handHint, function (v) {
             prefs.handHint = v;
             store.set('handHint', v);
             renderTip();
         });
         body.appendChild(ET.create('p', 'et-drawer__tip', '指针提示会描述当前钟面（如「时针在 3 和 4 之间」），适合讲读法时使用。'));
+        body.appendChild(ET.create('p', 'et-drawer__tip', '「自由拨针」模式不受难度阶梯限制，三根指针都能随意拖动。'));
 
         body.appendChild(heading('成绩'));
         var scoreRow = ET.create('div', 'et-drawer__row');
@@ -2232,12 +2323,11 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
             if (e.code === 'Space') {
                 e.preventDefault();
                 check();
-            } else if (e.key === 'ArrowLeft') {
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
                 e.preventDefault();
-                setMode('read');
-            } else if (e.key === 'ArrowRight') {
-                e.preventDefault();
-                setMode('set');
+                var i = MODES.indexOf(mode);
+                var step = (e.key === 'ArrowRight') ? 1 : MODES.length - 1;
+                setMode(MODES[(i + step) % MODES.length]);
             }
         });
     }
@@ -2247,7 +2337,8 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
     renderTicks();
     renderNumbers();
     applyMinuteTicks();
-    svgEl.classList.toggle('is-set', mode === 'set');
+    applySecondVisible();
+    svgEl.classList.toggle('is-set', mode === 'set' || mode === 'free');
     answerEl.hidden = (mode !== 'read');
     setHintEl.hidden = (mode !== 'set');
     syncModeButtons();

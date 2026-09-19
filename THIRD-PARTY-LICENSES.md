@@ -86,10 +86,15 @@ ISC 许可证，`currentColor` 跟随主题），经 `sync_shared.py` 内联进�
 | 资源 | 来源 | 许可证 | 用途 |
 |---|---|---|---|
 | 汉语拼音音节真人录音（183 个 mp3） | github.com/hugolpz/audio-cmn（`18k-abr/syllabs/`），Chen Wang 录制 | **CC BY-SA**（仓库 README 明示；原音源 shtooka/cmn） | `tools/pinyin-chart/` 点读音频（base64 内嵌） |
+| 汉字笔画中位线数据（210 字） | npm `hanzi-writer-data@2.0.1`，派生自 Make Me a Hanzi | **Arphic Public License**（允许商用，须保留许可证文本与声明） | `tools/stroke-order/` 逐笔书写动画（内联，运行时不联网） |
 
 > 署名义务：已在 `tools/pinyin-chart/README.md` 与工具内帮助弹窗注明
 > "音频：Chen Wang 录制（audio-cmn，CC BY-SA）"。CC BY-SA 具有相同方式共享义务，
 > 音频原文以独立 mp3 形式内嵌、未做演绎修改（仅格式/码率经上游转换），在此登记以履行披露。
+>
+> `hanzi-writer-data` 的笔画中位线派生自 Make Me a Hanzi（Arphic Public License），
+> 工具内仅保留每字各笔的中位线采样点（medians），未含原始 SVG 轮廓；
+> 已在 `tools/stroke-order/index.html` 的帮助弹窗与设置抽屉注明来源与许可证。
 
 ---
 

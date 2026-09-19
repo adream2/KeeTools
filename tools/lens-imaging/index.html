@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>凸透镜成像模拟 — KeeTools 课工具</title>
 <!-- ET-META
-{"id":"lens-imaging","version":"1.0.0"}
+{"id":"lens-imaging","version":"1.0.1"}
 -->
 
 <!-- 共享外壳样式（由 sync_shared.py 注入） -->
@@ -1580,7 +1580,6 @@ try { ET.Stats.send('use_offline', 'lens-imaging'); } catch (e) { /* 静默 */ }
 
     var state = {
         f: pick(FOCALS, Number(store.get('f', 10)), 10),
-        mul: pick(MULS, Number(store.get('mul', 3)), 3),
         u: (isFinite(savedU) && savedU > 0) ? savedU : 30,
         screenOn: store.get('screenOn', false) === true,
         screenX: Number(store.get('screenX', 0)) || 0,
@@ -1933,6 +1932,7 @@ try { ET.Stats.send('use_offline', 'lens-imaging'); } catch (e) { /* 静默 */ }
             var p = Math.min(1, (now - tween.t0) / tween.dur);
             var e = 1 - Math.pow(1 - p, 3);
             state[tween.prop] = tween.from + (tween.to - tween.from) * e;
+            renderChips();
             if (p >= 1) { state[tween.prop] = tween.to; tween = null; afterChange(); }
             draw();
             if (tween) { raf = window.requestAnimationFrame(tick); }
@@ -1957,6 +1957,7 @@ try { ET.Stats.send('use_offline', 'lens-imaging'); } catch (e) { /* 静默 */ }
     }
 
     function afterChange() {
+        renderChips();
         renderFoot();
         save();
         requestDraw();
@@ -2019,47 +2020,49 @@ try { ET.Stats.send('use_offline', 'lens-imaging'); } catch (e) { /* 静默 */ }
     function save() {
         store.set('f', state.f);
         store.set('u', state.u);
-        store.set('mul', state.mul);
         store.set('screenOn', state.screenOn);
         store.set('screenX', state.screenX);
         store.set('rays', state.rays);
         store.set('labels', state.labels);
     }
 
+    /* 当前物距相当于焦距的多少倍（供典型位置按钮高亮 / 循环取用） */
+    function mulNow() {
+        return state.u / state.f;
+    }
+
     function setFocal(f) {
         if (FOCALS.indexOf(f) === -1) { return; }
+        tween = null;
         state.f = f;
-        state.u = state.mul * f;
+        /* 换透镜时物距不变，只重新夹取范围 */
         clampU();
         clampScreen();
         layout();
-        renderChips();
         afterChange();
         chrome.beep('tick');
     }
 
     function setMul(mul) {
         if (MULS.indexOf(mul) === -1) { return; }
-        state.mul = mul;
         var target = Math.max(state.f * 0.15, Math.min(state.f * 3.3, mul * state.f));
         tweenTo('u', target, 340);
-        renderChips();
         chrome.beep('ok');
     }
 
+    /* 循环到下一个「典型位置」：按 u/f 的实际倍率决定下一站 */
     function cycleTypical() {
-        var idx = MULS.indexOf(state.mul);
-        var next = MULS[(idx + 1 + MULS.length) % MULS.length];
+        var cur = mulNow();
+        var next = MULS[0];
+        for (var i = 0; i < MULS.length; i++) {
+            if (MULS[i] < cur - 0.02) { next = MULS[i]; break; }
+        }
         setMul(next);
         chrome.toast('典型位置：u = ' + (next === 1.5 ? '1.5f' : next + 'f'));
     }
 
     function moveScreenToImage() {
         var o = optics();
-        if (!state.screenOn) {
-            state.screenOn = true;
-            document.getElementById('chkScreen').checked = true;
-        }
         if (!isFinite(o.v) || o.v <= 0) {
             chrome.toast(isFinite(o.v) ? '此时成虚像，光屏上接不到' : '此时不成像，无法在光屏上得到像', 'warn');
             chrome.beep('err');
@@ -2067,6 +2070,10 @@ try { ET.Stats.send('use_offline', 'lens-imaging'); } catch (e) { /* 静默 */ }
             save();
             requestDraw();
             return;
+        }
+        if (!state.screenOn) {
+            state.screenOn = true;
+            document.getElementById('chkScreen').checked = true;
         }
         var target = Math.max(state.f * 0.25, Math.min(state.f * 3.3, o.v));
         tweenTo('screenX', target, 320);
@@ -2080,12 +2087,12 @@ try { ET.Stats.send('use_offline', 'lens-imaging'); } catch (e) { /* 静默 */ }
         for (i = 0; i < list.length; i++) {
             list[i].classList.toggle('is-active', Number(list[i].getAttribute('data-f')) === state.f);
         }
-        /* 物距接近某个典型位置时点亮对应按钮 */
-        var mulNow = state.u / state.f;
+        /* 物距接近某个典型位置时点亮对应按钮（跟随实际 u/f 实时更新） */
+        var m = mulNow();
         list = document.getElementById('segU').querySelectorAll('button');
         for (i = 0; i < list.length; i++) {
             var mul = Number(list[i].getAttribute('data-mul'));
-            list[i].classList.toggle('is-active', Math.abs(mulNow - mul) < 0.02);
+            list[i].classList.toggle('is-active', Math.abs(m - mul) < 0.02);
         }
     }
 
