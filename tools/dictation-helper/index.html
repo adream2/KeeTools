@@ -1732,7 +1732,7 @@ html[data-et-theme="dark"] {
  * 兼容性：现代浏览器（TextDecoder GBK / FileReader / Drag&Drop）。
  * 全局：ET.Import
  *
- * 用法：
+ * 用法（名单模式，默认）：
  *   ET.Import.open({
  *     toolId: 'random-name-classic',
  *     title: '导入名单',
@@ -1740,6 +1740,21 @@ html[data-et-theme="dark"] {
  *     current: '张三\n李四',                // 可选，回填当前数据便于增改
  *     onConfirm: function (rows, meta) { … }  // rows: [{name, id, weight}]
  *   });
+ *
+ * 用法（自定义字段模式，词表 / 题表等非名单数据）：
+ *   ET.Import.open({
+ *     toolId: 'word-flashcard',
+ *     title: '导入单词表',
+ *     fields: [
+ *       { key: 'word', label: '单词', keys: ['单词', '英文', 'word'] },
+ *       { key: 'ipa',  label: '音标', keys: ['音标', '发音', 'phonetic'] },
+ *       { key: 'mean', label: '释义', keys: ['释义', '意思', 'meaning'] }
+ *     ],
+ *     placeholder: '…',   // 可选，覆盖粘贴框提示
+ *     help: '…',          // 可选，覆盖说明文字
+ *     onConfirm: function (rows, meta) { … }  // rows: [{word, ipa, mean}]
+ *   });
+ *   未传 fields 时行为与旧版完全一致（name / id / weight 三列）。
  *
  * 也提供纯解析入口（不弹窗）：
  *   var result = ET.Import.parseText(text, { weight: true });
@@ -1946,6 +1961,157 @@ html[data-et-theme="dark"] {
         return rows;
     }
 
+    /* ============ 自定义字段模式（词表 / 题表等非名单数据） ============ */
+
+    function normKeyList(field) {
+        var keys = field.keys && field.keys.length ? field.keys.slice() : [];
+        if (field.label) { keys.push(field.label); }
+        return keys;
+    }
+
+    function matchAnyKey(cell, keys) {
+        for (var i = 0; i < keys.length; i++) {
+            if (matchKey(cell, [keys[i]])) { return true; }
+        }
+        return false;
+    }
+
+    function colTaken(map, idx) {
+        for (var k in map) {
+            if (map[k] === idx) { return true; }
+        }
+        return false;
+    }
+
+    /**
+     * 把二维表格规范化为「按 fields 定义的对象数组」。
+     * fields = [{key, label, keys?}]，行对象形如 {key1: '…', key2: '…'}。
+     * 与 tableToRows 并列存在：只有显式传 fields 时才走这里，名单路径行为不变。
+     */
+    function tableToFields(table, fields, stats) {
+        if (!table.length) { return []; }
+
+        var width = 0;
+        for (var w = 0; w < table.length; w++) {
+            width = Math.max(width, table[w].length);
+        }
+
+        var keyLists = [];
+        var flat = [];
+        for (var f = 0; f < fields.length; f++) {
+            var list = normKeyList(fields[f]);
+            keyLists.push(list);
+            for (var k = 0; k < list.length; k++) { flat.push(list[k]); }
+        }
+
+        /* --- 表头识别 --- */
+        var header = null;
+        var first = table[0];
+        var hasAny = false;
+        for (var c0 = 0; c0 < first.length; c0++) {
+            if (normCell(first[c0])) { hasAny = true; break; }
+        }
+        if (hasAny) {
+            for (var c = 0; c < first.length; c++) {
+                if (matchAnyKey(first[c], flat)) {
+                    header = first;
+                    table = table.slice(1);
+                    stats.blanks++; /* 表头行不算数据 */
+                    break;
+                }
+            }
+        }
+
+        /* --- 列映射：先按表头，缺的按出现顺序补空列 --- */
+        var map = {};
+        for (var fi = 0; fi < fields.length; fi++) { map[fields[fi].key] = -1; }
+
+        if (header) {
+            for (var hc = 0; hc < header.length; hc++) {
+                for (var fj = 0; fj < fields.length; fj++) {
+                    if (map[fields[fj].key] < 0 && matchAnyKey(header[hc], keyLists[fj])) {
+                        map[fields[fj].key] = hc;
+                        break;
+                    }
+                }
+            }
+        }
+
+        var next = 0;
+        for (var fp = 0; fp < fields.length; fp++) {
+            if (map[fields[fp].key] >= 0) { continue; }
+            while (next < width && colTaken(map, next)) { next++; }
+            if (next < width) {
+                map[fields[fp].key] = next;
+                next++;
+            }
+        }
+
+        /* --- 逐行处理 --- */
+        var rows = [];
+        var seen = {};
+        var firstKey = fields[0].key;
+
+        for (var i = 0; i < table.length; i++) {
+            var raw = table[i];
+            var lineNo = i + (header ? 2 : 1);
+            var row = {};
+            var allEmpty = true;
+
+            for (var rf = 0; rf < fields.length; rf++) {
+                var col = map[fields[rf].key];
+                var val = (col >= 0 && col < raw.length) ? normCell(raw[col]) : '';
+                row[fields[rf].key] = val;
+                if (val) { allEmpty = false; }
+            }
+
+            if (allEmpty) { stats.blanks++; continue; }
+
+            if (!row[firstKey]) {
+                stats.errors.push('第 ' + lineNo + ' 行：' + (fields[0].label || '首列') + '为空，已跳过');
+                continue;
+            }
+
+            if (seen[row[firstKey]]) { stats.dupes++; continue; }
+            seen[row[firstKey]] = true;
+
+            rows.push(row);
+        }
+        return rows;
+    }
+
+    /** 统一入口：有 fields 走自定义字段，否则沿用名单路径 */
+    function buildRows(table, opts, stats) {
+        return opts.fields ? tableToFields(table, opts.fields, stats) : tableToRows(table, opts, stats);
+    }
+
+    function jsonToTableFields(json, fields) {
+        if (!Array.isArray(json)) { return []; }
+        var labels = [];
+        for (var i = 0; i < fields.length; i++) { labels.push(fields[i].label || fields[i].key); }
+        var table = [labels];
+
+        for (var r = 0; r < json.length; r++) {
+            var item = json[r];
+            var out = [];
+            if (typeof item === 'string' || typeof item === 'number') {
+                for (var c = 0; c < fields.length; c++) {
+                    out.push(c === 0 ? String(item) : '');
+                }
+            } else if (item && typeof item === 'object') {
+                for (var c2 = 0; c2 < fields.length; c2++) {
+                    var v = item[fields[c2].key];
+                    if (v === undefined || v === null) { v = item[fields[c2].label] || ''; }
+                    out.push(String(v));
+                }
+            } else {
+                continue;
+            }
+            table.push(out);
+        }
+        return table;
+    }
+
     function jsonToTable(json) {
         if (Array.isArray(json)) {
             var table = [];
@@ -1985,7 +2151,8 @@ html[data-et-theme="dark"] {
         if (trimmed.charAt(0) === '[' || trimmed.charAt(0) === '{') {
             try {
                 var json = JSON.parse(trimmed);
-                rows = tableToRows(jsonToTable(json), opts, stats);
+                var jsonTable = opts.fields ? jsonToTableFields(json, opts.fields) : jsonToTable(json);
+                rows = buildRows(jsonTable, opts, stats);
             } catch (err) {
                 stats.errors.push('JSON 解析失败：' + err.message);
             }
@@ -2000,7 +2167,7 @@ html[data-et-theme="dark"] {
                 if (!lines[i].trim()) { continue; }
                 table.push(delim ? splitLine(lines[i], delim) : [lines[i]]);
             }
-            rows = tableToRows(table, opts, stats);
+            rows = buildRows(table, opts, stats);
         }
 
         stats.valid = rows.length;
@@ -2059,15 +2226,29 @@ html[data-et-theme="dark"] {
 
         if (rows.length) {
             html += '<div class="etimp-table-wrap"><table class="etimp-table"><thead><tr>';
-            html += '<th>#</th><th>姓名</th>';
-            if (opts.id) { html += '<th>学号</th>'; }
-            if (opts.weight) { html += '<th>权重</th>'; }
+            html += '<th>#</th>';
+            if (opts.fields) {
+                for (var lc = 0; lc < opts.fields.length; lc++) {
+                    html += '<th>' + esc(opts.fields[lc].label || opts.fields[lc].key) + '</th>';
+                }
+            } else {
+                html += '<th>姓名</th>';
+                if (opts.id) { html += '<th>学号</th>'; }
+                if (opts.weight) { html += '<th>权重</th>'; }
+            }
             html += '</tr></thead><tbody>';
             var previewMax = Math.min(rows.length, 10);
             for (var i = 0; i < previewMax; i++) {
-                html += '<tr><td class="etimp-dim">' + (i + 1) + '</td><td>' + esc(rows[i].name) + '</td>';
-                if (opts.id) { html += '<td class="etimp-dim">' + esc(rows[i].id || '—') + '</td>'; }
-                if (opts.weight) { html += '<td class="etimp-num">' + rows[i].weight + '</td>'; }
+                html += '<tr><td class="etimp-dim">' + (i + 1) + '</td>';
+                if (opts.fields) {
+                    for (var fc = 0; fc < opts.fields.length; fc++) {
+                        html += '<td>' + esc(rows[i][opts.fields[fc].key] || '—') + '</td>';
+                    }
+                } else {
+                    html += '<td>' + esc(rows[i].name) + '</td>';
+                    if (opts.id) { html += '<td class="etimp-dim">' + esc(rows[i].id || '—') + '</td>'; }
+                    if (opts.weight) { html += '<td class="etimp-num">' + rows[i].weight + '</td>'; }
+                }
                 html += '</tr>';
             }
             html += '</tbody></table></div>';
@@ -2090,9 +2271,11 @@ html[data-et-theme="dark"] {
     function open(options) {
         var opt = options || {};
         var toolId = opt.toolId || 'unknown-tool';
+        var customFields = (opt.fields && opt.fields.length) ? opt.fields : null;
         var opts = {
-            weight: (opt.columns || ['name', 'weight']).indexOf('weight') !== -1,
-            id: (opt.columns || []).indexOf('id') !== -1,
+            weight: customFields ? false : (opt.columns || ['name', 'weight']).indexOf('weight') !== -1,
+            id: customFields ? false : (opt.columns || []).indexOf('id') !== -1,
+            fields: customFields,
             dedupe: true
         };
 
@@ -2102,6 +2285,20 @@ html[data-et-theme="dark"] {
             return null;
         }
 
+        var defaultPlaceholder = customFields
+            ? ('一行一条，按列依次填写，例如：\n' + customFields.map(function (f) {
+                return '示例' + (f.label || f.key);
+            }).join(', '))
+            : '一行一个人，支持粘贴 Excel 表格、逗号/Tab 分隔文本，例如：\n张三\n李四,2\n1,王五,3';
+
+        var defaultHelp = customFields
+            ? ('每行一条，按列依次为 <b>' + customFields.map(function (f) {
+                return esc(f.label || f.key);
+            }).join(' / ') + '</b>；支持逗号 / Tab 分隔文本、带表头的 CSV 与 JSON 数组。首列重复的行会自动去重。')
+            : ('支持 <b>纯姓名</b>（一行一个）、<b>姓名,权重</b>、<b>学号,姓名,权重</b>，' +
+                '也支持带表头的 CSV（姓名 / 学号 / 权重 列自动识别）与 JSON 数组。' +
+                (opts.weight ? '权重越大被抽中概率越高，默认 1。' : ''));
+
         var root = document.createElement('div');
         root.innerHTML =
             '<div class="etimp-tabs">' +
@@ -2110,11 +2307,8 @@ html[data-et-theme="dark"] {
             '</div>' +
             '<div data-panel="paste">' +
             '<textarea class="etimp-textarea" id="etimp-text" placeholder="' +
-            '一行一个人，支持粘贴 Excel 表格、逗号/Tab 分隔文本，例如：\n张三\n李四,2\n1,王五,3">' +
-            '</textarea>' +
-            '<div class="etimp-help">支持 <b>纯姓名</b>（一行一个）、<b>姓名,权重</b>、<b>学号,姓名,权重</b>，' +
-            '也支持带表头的 CSV（姓名 / 学号 / 权重 列自动识别）与 JSON 数组。' +
-            (opts.weight ? '权重越大被抽中概率越高，默认 1。' : '') + '</div>' +
+            esc(opt.placeholder || defaultPlaceholder) + '"></textarea>' +
+            '<div class="etimp-help">' + (opt.help || defaultHelp) + '</div>' +
             '</div>' +
             '<div data-panel="file" hidden>' +
             '<div class="etimp-drop" id="etimp-drop" tabindex="0">' +

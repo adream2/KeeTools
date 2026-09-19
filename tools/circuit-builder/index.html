@@ -1,0 +1,3486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电路搭建模拟 — KeeTools 课工具</title>
+<!-- ET-META
+{"id":"circuit-builder","version":"1.2.0"}
+-->
+
+<!-- 共享外壳样式（由 sync_shared.py 注入） -->
+<!-- ET:INLINE name="et-chrome-css" src="ui/et-chrome.css" type="css" -->
+<style>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * et-chrome.css — 工具通用外壳样式（顶栏 / 页脚 / 弹窗 / 按钮 / 主题）
+ *
+ * 共享样式源。改这里，然后跑：python scripts/sync_shared.py
+ * 所有类名带 et- 前缀，避免与工具自身样式冲突。
+ * 依赖：无外部资源；颜色全部为令牌变量。
+ */
+
+/* ============ 设计令牌 ============ */
+:root {
+    --et-accent: #2563eb;
+    --et-accent-weak: rgba(37, 99, 235, .14);
+    --et-bg: #f4f6fb;
+    --et-surface: #ffffff;
+    --et-surface-2: #f8fafc;
+    --et-fg: #0b1220;
+    --et-muted: #64748b;
+    --et-line: rgba(15, 23, 42, .12);
+    --et-line-strong: rgba(15, 23, 42, .22);
+    --et-glass: rgba(255, 255, 255, .85);
+    --et-shadow-md: 0 10px 28px -18px rgba(15, 23, 42, .3);
+    --et-shadow-lg: 0 24px 60px -32px rgba(15, 23, 42, .4);
+    --et-ok: #059669;
+    --et-warn: #d97706;
+    --et-err: #dc2626;
+    --et-radius: 12px;
+    --et-radius-sm: 9px;
+    --et-font: -apple-system, BlinkMacSystemFont, "Segoe UI",
+               "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+               "Noto Sans SC", sans-serif;
+    --et-mono: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace;
+}
+
+html[data-et-theme="dark"] {
+    --et-bg: #0b1120;
+    --et-surface: #111a2e;
+    --et-surface-2: #0f1729;
+    --et-fg: #f1f5f9;
+    --et-muted: #94a3b8;
+    --et-line: rgba(148, 163, 184, .18);
+    --et-line-strong: rgba(148, 163, 184, .3);
+    --et-glass: rgba(17, 26, 46, .85);
+    --et-shadow-md: 0 10px 34px -18px rgba(0, 0, 0, .8);
+    --et-shadow-lg: 0 24px 70px -30px rgba(0, 0, 0, .9);
+    --et-ok: #34d399;
+    --et-warn: #fbbf24;
+    --et-err: #f87171;
+}
+
+/* ============ 基础 ============ */
+.et-app {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    background: var(--et-bg);
+    color: var(--et-fg);
+    font-family: var(--et-font);
+    -webkit-font-smoothing: antialiased;
+    transition: background .25s, color .25s;
+}
+
+/* 极光背景：径向渐变 + 呼吸动画（edupick 品质基线，老内核也不掉帧） */
+.et-app::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(46% 40% at 20% 18%, var(--et-accent-weak), transparent 65%),
+        radial-gradient(42% 38% at 82% 24%, var(--et-accent-weak), transparent 70%),
+        radial-gradient(50% 44% at 55% 95%, rgba(16, 185, 129, .10), transparent 65%);
+    animation: et-aurora 16s ease-in-out infinite alternate;
+}
+
+@keyframes et-aurora {
+    from { opacity: .55; transform: scale(1); }
+    to { opacity: 1; transform: scale(1.06); }
+}
+
+.et-app *,
+.et-app *::before,
+.et-app *::after { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+.et-icon {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex: none;
+}
+
+/* ============ 顶栏 ============ */
+.et-topbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 20px;
+    border-bottom: 1px solid var(--et-line);
+    background: var(--et-glass);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    z-index: 20;
+}
+
+.et-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.et-brand__dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--et-accent);
+    box-shadow: 0 0 0 4px var(--et-accent-weak);
+    flex: none;
+}
+
+.et-brand__name {
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: -.01em;
+    white-space: nowrap;
+}
+
+.et-brand__sub {
+    font-size: 12.5px;
+    color: var(--et-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.et-status {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    color: var(--et-muted);
+    background: var(--et-surface-2);
+    border: 1px solid var(--et-line);
+    white-space: nowrap;
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.et-status__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--et-ok);
+    flex: none;
+    transition: background .2s;
+}
+
+.et-status[data-tone="err"] .et-status__dot { background: var(--et-err); }
+.et-status[data-tone="warn"] .et-status__dot { background: var(--et-warn); }
+
+.et-actions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.et-icon-btn {
+    display: inline-grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
+    line-height: 1;
+    border-radius: 11px;
+    border: 1px solid var(--et-line);
+    background: var(--et-surface-2);
+    color: var(--et-fg);
+    cursor: pointer;
+    transition: transform .14s, border-color .14s, color .14s, opacity .14s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.et-icon-btn:hover {
+    border-color: var(--et-accent);
+    color: var(--et-accent);
+    transform: translateY(-1px);
+}
+
+.et-icon-btn:active { transform: translateY(0); }
+.et-icon-btn.is-off { opacity: .4; }
+.et-icon-btn:focus-visible { outline: 2px solid var(--et-accent); outline-offset: 2px; }
+
+/* ============ 主区默认 ============ */
+.et-main {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: auto;
+}
+
+/* ============ 页脚（品牌回流 L2） ============ */
+.et-footer {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 16px;
+    font-size: 12px;
+    color: var(--et-muted);
+    border-top: 1px solid var(--et-line);
+    background: var(--et-glass);
+    user-select: none;
+    z-index: 20;
+}
+
+.et-footer a {
+    color: inherit;
+    text-decoration: none;
+    transition: color .14s;
+}
+
+.et-footer a:hover { color: var(--et-accent); }
+
+/* ============ 按钮 ============ */
+.et-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 16px;
+    border-radius: 11px;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    border: 1px solid var(--et-line);
+    background: var(--et-surface-2);
+    color: var(--et-fg);
+    cursor: pointer;
+    transition: transform .14s, border-color .14s, color .14s, background .14s, box-shadow .14s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.et-btn:hover {
+    border-color: var(--et-accent);
+    color: var(--et-accent);
+    transform: translateY(-1px);
+}
+
+.et-btn:active { transform: translateY(0); }
+.et-btn:focus-visible { outline: 2px solid var(--et-accent); outline-offset: 2px; }
+.et-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+.et-btn--primary {
+    background: var(--et-accent);
+    border-color: var(--et-accent);
+    color: #fff;
+    box-shadow: 0 6px 18px -8px var(--et-accent);
+}
+
+.et-btn--primary:hover { color: #fff; filter: brightness(1.08); }
+.et-btn--primary:disabled { filter: none; }
+
+.et-btn--danger:hover {
+    border-color: var(--et-err);
+    color: var(--et-err);
+}
+
+.et-btn--lg {
+    padding: 13px 26px;
+    font-size: 16px;
+    border-radius: 14px;
+}
+
+/* ============ 弹窗 ============ */
+.et-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(2, 6, 23, .55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: et-fade .18s ease;
+}
+
+.et-modal__panel {
+    width: min(680px, 94vw);
+    max-height: 86vh;
+    max-height: 86dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--et-surface);
+    border: 1px solid var(--et-line);
+    border-radius: 16px;
+    box-shadow: var(--et-shadow-lg);
+    animation: et-pop .2s cubic-bezier(.34, 1.4, .64, 1);
+    overflow: hidden;
+}
+
+.et-modal__panel--narrow { width: min(460px, 92vw); }
+.et-modal__panel--wide { width: min(900px, 94vw); }
+
+.et-modal__head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--et-line);
+    font-weight: 800;
+    font-size: 15px;
+}
+
+.et-modal__head .et-icon-btn {
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+}
+
+.et-modal__body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 18px 20px;
+}
+
+.et-modal__foot {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--et-line);
+    background: var(--et-surface-2);
+}
+
+.et-modal__foot .spacer { flex: 1; }
+
+@keyframes et-fade {
+    from { opacity: 0; }
+}
+
+@keyframes et-pop {
+    from { opacity: 0; transform: translateY(14px) scale(.97); }
+}
+
+/* ============ 轻提示（toast） ============ */
+.et-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 56px;
+    transform: translateX(-50%) translateY(10px);
+    z-index: 120;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    max-width: min(520px, 88vw);
+    padding: 11px 18px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #fff;
+    background: rgba(15, 23, 42, .92);
+    border: 1px solid rgba(148, 163, 184, .25);
+    box-shadow: var(--et-shadow-lg);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .22s, transform .22s;
+}
+
+.et-toast.is-show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.et-toast[data-tone="ok"] { background: rgba(5, 150, 105, .95); }
+.et-toast[data-tone="err"] { background: rgba(220, 38, 38, .95); }
+.et-toast[data-tone="warn"] { background: rgba(217, 119, 6, .95); }
+
+/* ============ 设置抽屉（右上角入口，edupick 交互） ============ */
+.et-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: rgba(2, 6, 23, .45);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    opacity: 0;
+    transition: opacity .2s;
+}
+
+.et-drawer-backdrop.is-open { opacity: 1; }
+
+.et-drawer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: min(400px, 92vw);
+    display: flex;
+    flex-direction: column;
+    background: var(--et-surface);
+    border-left: 1px solid var(--et-line);
+    box-shadow: var(--et-shadow-lg);
+    transform: translateX(100%);
+    transition: transform .22s cubic-bezier(.32, .72, .35, 1);
+}
+
+.et-drawer-backdrop.is-open .et-drawer { transform: translateX(0); }
+
+.et-drawer__head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 18px;
+    border-bottom: 1px solid var(--et-line);
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--et-accent);
+}
+
+.et-drawer__head .et-icon-btn {
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+}
+
+.et-drawer__body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 16px 18px 24px;
+}
+
+/* 抽屉内容通用小节（工具复用） */
+.et-drawer__body h4 {
+    margin: 18px 0 8px;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--et-muted);
+}
+
+.et-drawer__body h4:first-child { margin-top: 0; }
+
+.et-drawer__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.et-drawer__tip {
+    margin: 8px 0 0;
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--et-muted);
+}
+
+.et-drawer__tip b { color: var(--et-fg); }
+
+.et-drawer__input {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 12px;
+    border: 1px solid var(--et-line-strong);
+    border-radius: 9px;
+    background: var(--et-surface-2);
+    color: var(--et-fg);
+    font: inherit;
+    font-size: 13.5px;
+    transition: border-color .14s, box-shadow .14s;
+}
+
+.et-drawer__input:focus {
+    outline: none;
+    border-color: var(--et-accent);
+    box-shadow: 0 0 0 3px var(--et-accent-weak);
+}
+
+.et-drawer__switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--et-line);
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--et-fg);
+    cursor: pointer;
+    user-select: none;
+}
+
+.et-drawer__switch input {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--et-accent);
+    cursor: pointer;
+}
+</style>
+<!-- /ET:INLINE -->
+
+<style>
+/* ── 电路搭建模拟：工具自身样式（自包含，不引用任何外部资源） ── */
+:root { --cb-accent: #4f46e5; }
+
+.cb-main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+/* ---------- 工具栏 ---------- */
+.cb-bar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px 16px;
+    flex-wrap: wrap;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--et-line);
+    background: var(--et-surface-2);
+}
+
+.cb-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+.cb-sep-v {
+    width: 1px;
+    align-self: stretch;
+    min-height: 34px;
+    background: var(--et-line);
+    margin: 0 3px;
+}
+
+.cb-group__label {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    color: var(--et-muted);
+}
+
+.cb-tool {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    width: 54px;
+    padding: 4px 3px 3px;
+    border: 1px solid var(--et-line);
+    border-radius: 10px;
+    background: var(--et-surface);
+    color: var(--et-muted);
+    font: inherit;
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 1.2;
+    cursor: grab;
+    transition: border-color .14s, color .14s, background .14s, transform .12s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+}
+
+.cb-tool:hover { border-color: var(--et-accent); color: var(--et-accent); transform: translateY(-1px); }
+.cb-tool.is-active { background: var(--et-accent); border-color: var(--et-accent); color: #fff; }
+.cb-tool .cb-ico { width: 38px; height: 22px; }
+
+.cb-ico {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.cb-seg {
+    display: flex;
+    gap: 3px;
+    padding: 3px;
+    border: 1px solid var(--et-line);
+    border-radius: 10px;
+    background: var(--et-surface);
+}
+
+.cb-seg button {
+    border: 0;
+    background: none;
+    color: var(--et-muted);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 5px 9px;
+    border-radius: 7px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .14s, color .14s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.cb-seg button:hover { color: var(--et-accent); }
+.cb-seg button.is-active { background: var(--et-accent); color: #fff; }
+.cb-spacer { flex: 1 1 auto; }
+
+/* ---------- 画布 ---------- */
+.cb-stage {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--et-surface);
+}
+
+.cb-stage canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+    cursor: crosshair;
+}
+
+.cb-ghost {
+    position: fixed;
+    z-index: 200;
+    padding: 5px 10px;
+    border-radius: 9px;
+    background: var(--et-accent);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 700;
+    pointer-events: none;
+    transform: translate(-50%, -160%);
+    box-shadow: var(--et-shadow-md);
+}
+
+/* ---------- 状态带 ---------- */
+.cb-foot {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px 22px;
+    flex-wrap: wrap;
+    min-height: 58px;
+    padding: 8px 16px 12px;
+    border-top: 1px solid var(--et-line);
+    background: var(--et-surface-2);
+}
+
+.cb-stat { font-size: 13px; font-weight: 700; color: var(--et-muted); }
+.cb-stat b { font-size: 15px; color: var(--et-fg); font-variant-numeric: tabular-nums; }
+.cb-verdict { font-size: clamp(14px, 2.1vh, 20px); font-weight: 900; color: var(--et-accent); }
+.cb-warn { font-size: 14.5px; font-weight: 800; color: var(--et-err); }
+.cb-ok { font-size: 14.5px; font-weight: 800; color: var(--et-ok); }
+.cb-hint { font-size: 13.5px; color: var(--et-muted); }
+
+/* ---------- 典型电路图库 ---------- */
+.cb-gal { display: flex; flex-direction: column; gap: 14px; }
+
+.cb-gal__legend {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--et-line);
+    border-radius: 12px;
+    background: var(--et-surface-2);
+}
+
+.cb-gal__lg {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px 2px 2px;
+    border: 1px solid var(--et-line);
+    border-radius: 9px;
+    background: var(--et-surface);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--et-muted);
+}
+
+.cb-gal__lg b { font-weight: 700; }
+.cb-gal__lg .cbs--s { width: 40px; height: 18px; flex: none; }
+
+.cb-gal__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(252px, 1fr));
+    gap: 12px;
+}
+
+.cb-gal__card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px 12px;
+    border: 1px solid var(--et-line);
+    border-radius: 14px;
+    background: var(--et-surface);
+    color: var(--et-fg);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .14s, box-shadow .14s, transform .12s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.cb-gal__card:hover { border-color: var(--et-accent); transform: translateY(-2px); box-shadow: var(--et-shadow-md); }
+.cb-gal__card:focus-visible { outline: 2px solid var(--et-accent); outline-offset: 2px; }
+.cb-gal__card.is-active { border-color: var(--et-accent); box-shadow: 0 0 0 3px var(--et-accent-weak); }
+
+.cb-gal__pic {
+    display: block;
+    padding: 4px 2px 2px;
+    border-radius: 10px;
+    background:
+        radial-gradient(circle at 50% 40%, var(--et-accent-weak), transparent 72%),
+        var(--et-surface-2);
+}
+
+.cb-gal__pic .cbs { width: 100%; height: auto; max-height: 132px; }
+
+.cb-gal__name { font-size: 14.5px; font-weight: 800; }
+.cb-gal__tip { font-size: 12.5px; line-height: 1.75; color: var(--et-muted); }
+
+.cb-gal__note {
+    margin: 0;
+    padding-top: 10px;
+    border-top: 1px dashed var(--et-line);
+    font-size: 12.5px;
+    line-height: 1.85;
+    color: var(--et-muted);
+}
+
+/* ---------- 电路示意图（SVG 符号） ---------- */
+.cbs { display: block; overflow: visible; }
+.cbs-w { fill: none; stroke: var(--et-fg); stroke-width: 2.2; stroke-linecap: round; }
+.cbs-s { fill: none; stroke: var(--et-accent); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.cbs-s--long { stroke-width: 3.4; }
+.cbs-f { fill: var(--et-surface); stroke: var(--et-accent); stroke-width: 2.4; stroke-linejoin: round; }
+.cbs-a { fill: var(--et-accent); stroke: none; }
+.cbs-d { fill: var(--et-fg); stroke: none; }
+.cbs-t {
+    fill: var(--et-accent);
+    font-family: var(--et-font);
+    font-size: 14px;
+    font-weight: 800;
+    text-anchor: middle;
+}
+
+@media (max-width: 1180px) {
+    .cb-tool { width: 48px; font-size: 10px; }
+    .cb-tool .cb-ico { width: 32px; height: 19px; }
+    .cb-gal__grid { grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); }
+}
+</style>
+</head>
+<body class="et-app">
+
+<header id="et-topbar"></header>
+
+<main id="et-main" class="cb-main">
+
+    <div class="cb-bar">
+        <div class="cb-group" id="palette">
+            <span class="cb-group__label">连线</span>
+
+            <button class="cb-tool is-active" type="button" data-tool="select" title="选择：点开关可通断，点元件看读数">
+                <svg viewBox="0 0 40 24" class="cb-ico"><path d="M13 3 L17 21 L20.5 14 L28 11.5 Z"/></svg>
+                <span>选择</span>
+            </button>
+
+            <button class="cb-tool" type="button" data-tool="wire" title="导线（也可拖到画布上）">
+                <svg viewBox="0 0 40 24" class="cb-ico"><path d="M4 12 H36"/><circle cx="4" cy="12" r="1.6"/><circle cx="36" cy="12" r="1.6"/></svg>
+                <span>导线</span>
+            </button>
+
+            <button class="cb-tool" type="button" data-tool="erase" title="擦除（也可右键元件直接删除）">
+                <svg viewBox="0 0 40 24" class="cb-ico"><path d="M8 17 H32"/><path d="M17 4 L27 4 L31 17 L13 17 Z"/><path d="M14.5 10 H27"/></svg>
+                <span>擦除</span>
+            </button>
+
+            <span class="cb-sep-v"></span>
+
+            <span class="cb-group__label">电源与用电器</span>
+
+            <button class="cb-tool" type="button" data-tool="battery" title="电源（电压在右侧选）">
+                <svg viewBox="0 0 40 24" class="cb-ico"><path d="M4 12 H15 M25 12 H36"/><path d="M17 5 V19"/><path d="M23 8.5 V15.5"/></svg>
+                <span>电源</span>
+            </button>
+
+            <button class="cb-tool" type="button" data-tool="bulb" title="小灯泡">
+                <svg viewBox="0 0 40 24" class="cb-ico"><path d="M4 12 H13 M27 12 H36"/><circle cx="20" cy="12" r="7"/><path d="M15.5 7.5 L24.5 16.5 M24.5 7.5 L15.5 16.5"/></svg>
+                <span>灯泡</span>
+            </button>
+
+            <button class="cb-tool" type="button" data-tool="motor" title="小电动机（转速随电流变化）">
+                <svg viewBox="0 0 40 24" class="cb-ico"><path d="M4 12 H12 M28 12 H36"/><circle cx="20" cy="12" r="8"/><text x="20" y="16" font-size="10" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">M</text></svg>
+                <span>电动机</span>
+            </button>
+
+            <button class="cb-tool" type="button" data-tool="resistor" title="定值电阻（阻值在设置里选）">
+                <svg viewBox="0 0 40 24" class="cb-ico"><path d="M4 12 H11"/><rect x="11" y="6.5" width="18" height="11" rx="2"/><path d="M29 12 H36"/></svg>
+                <span>电阻</span>
+            </button>
+
+            <button class="cb-tool" type="button" data-tool="rheostat" title="滑动变阻器（阻值可在设置里调）">
+                <svg viewBox="0 0 40 24" class="cb-ico"><path d="M4 16 H10 M30 16 H36"/><rect x="10" y="11" width="20" height="9" rx="2"/><path d="M20 20 V8 M16 8 H24"/></svg>
+                <span>变阻器</span>
+            </button>
+
+            <span class="cb-sep-v"></span>
+
+            <span class="cb-group__label">电表与开关</span>
+
+            <button class="cb-tool" type="button" data-tool="ammeter" title="电流表（串联接入，测该支路电流）">
+                <svg viewBox="0 0 40 24" class="cb-ico"><path d="M4 12 H12 M28 12 H36"/><circle cx="20" cy="12" r="8"/><text x="20" y="16" font-size="11" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">A</text></svg>
+                <span>电流表</span>
+            </button>
+
+            <button class="cb-tool" type="button" data-tool="voltmeter" title="电压表（并联在被测元件两端）">
+                <svg viewBox="0 0 40 24" class="cb-ico"><path d="M4 12 H12 M28 12 H36"/><circle cx="20" cy="12" r="8"/><text x="20" y="16" font-size="11" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">V</text></svg>
+                <span>电压表</span>
+            </button>
+
+            <button class="cb-tool" type="button" data-tool="switch" title="开关（点一下通断）">
+                <svg viewBox="0 0 40 24" class="cb-ico"><path d="M4 15 H11 M29 15 H36"/><circle cx="12.5" cy="15" r="1.8"/><circle cx="27.5" cy="15" r="1.8"/><path d="M12.5 15 L27 5.5"/></svg>
+                <span>开关</span>
+            </button>
+        </div>
+
+        <div class="cb-group">
+            <span class="cb-group__label">电源电压</span>
+            <div class="cb-seg" id="segVolt">
+                <button type="button" data-volt="1.5">1.5V</button>
+                <button type="button" data-volt="3">3V</button>
+                <button type="button" data-volt="4.5">4.5V</button>
+                <button type="button" data-volt="6">6V</button>
+            </div>
+        </div>
+
+        <button class="et-btn et-btn--primary" id="btnGallery" type="button" title="打开典型电路图库（G）">
+            <svg class="et-icon"><use href="#i-grid"></use></svg>
+            <span id="btnGalleryText">典型电路图</span>
+        </button>
+
+        <span class="cb-spacer"></span>
+
+        <button class="et-btn" id="btnClear" type="button" title="清空所有元件">
+            <svg class="et-icon"><use href="#i-trash"></use></svg>
+            <span>清空</span>
+        </button>
+    </div>
+
+    <div class="cb-stage" id="stage">
+        <canvas id="cv" aria-label="电路画布"></canvas>
+    </div>
+
+    <div class="cb-foot" id="foot" aria-live="polite"></div>
+
+</main>
+
+<footer id="et-footer"></footer>
+
+<!-- 图标集合（由 sync_shared.py 注入） -->
+<!-- ET:INLINE name="icons" src="icons/icons.svg" type="svg" -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <!--
+    工具用图标 symbol 集合（内联源，独立于网站 sprite）。
+
+    来源：Lucide (ISC License) 子集，手工挑选内联。
+    颜色统一 currentColor；描边样式由工具 CSS 的 .et-icon 控制：
+      .et-icon { fill:none; stroke:currentColor; stroke-width:2;
+                 stroke-linecap:round; stroke-linejoin:round; }
+
+    工具内用法：
+      <svg class="et-icon"><use href="#i-play"></use></svg>
+  -->
+
+  <symbol id="i-maximize" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
+  <symbol id="i-minimize" viewBox="0 0 24 24"><path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></symbol>
+  <symbol id="i-volume" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></symbol>
+  <symbol id="i-volume-off" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></symbol>
+  <symbol id="i-rotate" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></symbol>
+  <symbol id="i-dice" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none"/><circle cx="16" cy="8" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="8" cy="16" r="1.2" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.2" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+  <symbol id="i-timer" viewBox="0 0 24 24"><line x1="10" y1="2" x2="14" y2="2"/><line x1="12" y1="14" x2="15" y2="11"/><circle cx="12" cy="14" r="8"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z"/></symbol>
+  <symbol id="i-chevron-left" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><polyline points="12 7 12 12 15 15"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+  <symbol id="i-crown" viewBox="0 0 24 24"><path d="M2 18h20l-2-11-5 4-3-7-3 7-5-4-2 11z"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+  <symbol id="i-shuffle" viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-award" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
+  <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="10"/><line x1="10" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="14" y2="10"/><line x1="18" y1="10" x2="18" y2="10"/><line x1="7" y1="14" x2="17" y2="14"/></symbol>
+</svg>
+<!-- /ET:INLINE -->
+
+<!-- 共享逻辑（由 sync_shared.py 注入） -->
+<!-- ET:INLINE name="et-util" src="logic/et-util.js" -->
+<script>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * et-util.js — 工具通用小工具函数
+ *
+ * 共享逻辑源。改这里，然后跑：python scripts/sync_shared.py
+ * 禁止手工编辑工具 HTML 内 ET:INLINE 之间的内容。
+ *
+ * 兼容性：ES5，Win7 + 老版 Chrome / 360 可运行。
+ * 依赖：无。
+ * 全局：挂载 window.ET（单一命名空间，不污染其他全局）
+ */
+(function (global) {
+    'use strict';
+
+    var ET = global.ET || {};
+
+    /** 按 id 取元素 */
+    ET.el = function (id) {
+        return document.getElementById(id);
+    };
+
+    /** 按选择器取首个元素 */
+    ET.qs = function (selector, root) {
+        return (root || document).querySelector(selector);
+    };
+
+    /** 按选择器取全部元素，返回真数组 */
+    ET.qsa = function (selector, root) {
+        var list = (root || document).querySelectorAll(selector);
+        var out = [];
+        for (var i = 0; i < list.length; i++) {
+            out.push(list[i]);
+        }
+        return out;
+    };
+
+    /** 创建元素 */
+    ET.create = function (tag, className, text) {
+        var node = document.createElement(tag);
+        if (className) {
+            node.className = className;
+        }
+        if (text !== undefined && text !== null) {
+            node.textContent = String(text);
+        }
+        return node;
+    };
+
+    /** HTML 转义（用于把用户数据放进 HTML 字符串时） */
+    ET.escapeHtml = function (value) {
+        return String(value === undefined || value === null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    };
+
+    /** 触发自定义事件（老浏览器用 createEvent 降级） */
+    ET.emit = function (target, name, detail) {
+        var event;
+        if (typeof global.CustomEvent === 'function') {
+            event = new global.CustomEvent(name, { detail: detail });
+        } else {
+            event = document.createEvent('CustomEvent');
+            event.initCustomEvent(name, false, false, detail);
+        }
+        target.dispatchEvent(event);
+    };
+
+    /**
+     * localStorage 读写（带前缀与异常兜底）
+     * 前缀规范：et_{toolId}_
+     */
+    ET.store = function (toolId) {
+        var prefix = 'et_' + toolId + '_';
+
+        function available() {
+            try {
+                var probe = prefix + '__probe__';
+                global.localStorage.setItem(probe, '1');
+                global.localStorage.removeItem(probe);
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+
+        var ok = available();
+
+        return {
+            /** 读取，解析失败返回 fallback */
+            get: function (key, fallback) {
+                if (!ok) {
+                    return fallback;
+                }
+                try {
+                    var raw = global.localStorage.getItem(prefix + key);
+                    if (raw === null) {
+                        return fallback;
+                    }
+                    return JSON.parse(raw);
+                } catch (err) {
+                    return fallback;
+                }
+            },
+            /** 写入，失败静默（隐私模式 / 配额满） */
+            set: function (key, value) {
+                if (!ok) {
+                    return false;
+                }
+                try {
+                    global.localStorage.setItem(prefix + key, JSON.stringify(value));
+                    return true;
+                } catch (err) {
+                    return false;
+                }
+            },
+            /** 删除 */
+            remove: function (key) {
+                if (!ok) {
+                    return;
+                }
+                try {
+                    global.localStorage.removeItem(prefix + key);
+                } catch (err) {
+                    /* 静默 */
+                }
+            }
+        };
+    };
+
+    /** DOM 就绪回调（脚本在 head 内也能安全调用） */
+    ET.ready = function (callback) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', callback);
+        } else {
+            callback();
+        }
+    };
+
+    global.ET = ET;
+})(window);
+</script>
+<!-- /ET:INLINE -->
+
+<!-- ET:INLINE name="et-chrome" src="ui/et-chrome.js" -->
+<script>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * et-chrome.js — 工具通用外壳（顶栏 / 页脚 / 主题 / 全屏 / 音效 / 设置抽屉 / 帮助 / PWA）
+ *
+ * 共享逻辑源。改这里，然后跑：python scripts/sync_shared.py
+ * 依赖：et-util.js（ET.store）
+ * 兼容性：现代浏览器优先（Chrome 90+），无外部依赖。
+ * 全局：ET.Chrome
+ *
+ * 工具 HTML 约定的骨架：
+ *   <body class="et-app">
+ *     <header id="et-topbar"></header>
+ *     <main id="et-main">…工具内容…</main>
+ *     <footer id="et-footer"></footer>
+ *   </body>
+ *
+ * 用法：
+ *   var chrome = ET.Chrome.mount({
+ *     toolId: 'random-name-classic',
+ *     title: '随机点名器',
+ *     sub: '导入名单 · 课堂互动',
+ *     accent: '#e11d48',          // 可选，主题色
+ *     status: '就绪',              // 可选，初始状态
+ *     sound: true,                 // 可选，显示音效开关
+ *     help: '<div>…帮助内容…</div>', // 可选
+ *     settings: {                  // 可选，右上角「设置」抽屉（edupick 交互）
+ *       title: '名单 / 设置',
+ *       build: function (body, api) { … }  // 每次打开重建内容
+ *     },
+ *     actions: [{icon:'i-dice', label:'抽一个', onClick: fn}] // 可选
+ *   });
+ *
+ * iframe 全屏委托：工具在 iframe 内运行时，全屏按钮向父窗口发送
+ * {type:'et-fullscreen-toggle'}，由宿主页面统一 fullscreen（避免双层全屏）；
+ * 宿主应回传 {type:'et-fullscreen-change', value:bool} 同步按钮图标。
+ *
+ * 站点回流（postMessage 协议）：
+ *   工具加载后向父窗口发送 {type:'et-hello', toolId}；
+ *   宿主页面可回复 {type:'et-origin', origin:'https://…'}，
+ *   工具据此渲染页脚官网链接。也可直接提供 window.ET_SITE_ORIGIN。
+ *   收不到任何来源时页脚只显示纯文本（离线可用，必须有默认值）。
+ */
+(function (global) {
+    'use strict';
+
+    var NS_SVG = 'http://www.w3.org/2000/svg'; /* et-allow-external SVG 命名空间 */
+    var NS_XLINK = 'http://www.w3.org/1999/xlink'; /* et-allow-external SVG 命名空间 */
+
+    /* ---------- 内部工具 ---------- */
+
+    function makeIcon(id, cls) {
+        var svg = document.createElementNS(NS_SVG, 'svg');
+        svg.setAttribute('class', cls || 'et-icon');
+        var use = document.createElementNS(NS_SVG, 'use');
+        use.setAttribute('href', '#' + id);
+        use.setAttributeNS(NS_XLINK, 'xlink:href', '#' + id);
+        svg.appendChild(use);
+        return svg;
+    }
+
+    function makeBtn(icon, title, onClick) {
+        var b = document.createElement('button');
+        b.className = 'et-icon-btn';
+        b.type = 'button';
+        b.title = title;
+        b.setAttribute('aria-label', title);
+        b.appendChild(makeIcon(icon));
+        if (onClick) { b.addEventListener('click', onClick); }
+        return b;
+    }
+
+    function el(tag, cls, text) {
+        var node = document.createElement(tag);
+        if (cls) { node.className = cls; }
+        if (text !== undefined && text !== null) { node.textContent = text; }
+        return node;
+    }
+
+    /* ---------- 音效（WebAudio，无音频文件，音量按教室大屏调校） ---------- */
+
+    var audioCtx = null;
+
+    function ensureCtx() {
+        if (!audioCtx) {
+            var AC = global.AudioContext || global.webkitAudioContext;
+            if (!AC) { return null; }
+            try { audioCtx = new AC(); } catch (err) { return null; }
+        }
+        if (audioCtx.state === 'suspended') {
+            try { audioCtx.resume(); } catch (err) { /* 忽略 */ }
+        }
+        return audioCtx;
+    }
+
+    var MASTER_GAIN = 0.5; /* 整体音量层（教室设备音量 100% 也要听得清） */
+
+    function tone(ctx, freq, start, dur, gainPeak, type) {
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = type || 'triangle';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(gainPeak, start + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + dur + 0.05);
+    }
+
+    var BEEPS = {
+        tick: [[880, 0, 0.06, 0.42]],
+        ok: [[660, 0, 0.1, 0.46], [880, 0.1, 0.14, 0.46]],
+        win: [[523.25, 0, 0.16, 0.5], [659.25, 0.12, 0.16, 0.5], [783.99, 0.24, 0.16, 0.5], [1046.5, 0.36, 0.34, 0.52]],
+        err: [[220, 0, 0.22, 0.46, 'square']],
+        over: [[880, 0, 0.18, 0.5], [659.25, 0.2, 0.18, 0.5], [523.25, 0.4, 0.36, 0.5]]
+    };
+
+    function playBeep(kind) {
+        var ctx = ensureCtx();
+        if (!ctx || !BEEPS[kind]) { return; }
+        var seq = BEEPS[kind];
+        var t0 = ctx.currentTime + 0.01;
+        for (var i = 0; i < seq.length; i++) {
+            tone(ctx, seq[i][0], t0 + seq[i][1], seq[i][2], seq[i][3] * MASTER_GAIN, seq[i][4]);
+        }
+    }
+
+    /* ---------- 设置抽屉 ---------- */
+
+    function openDrawer(title, build) {
+        var backdrop = el('div', 'et-drawer-backdrop');
+        var drawer = el('aside', 'et-drawer');
+        drawer.setAttribute('role', 'dialog');
+        drawer.setAttribute('aria-label', title);
+
+        var head = el('div', 'et-drawer__head');
+        head.appendChild(makeIcon('i-sliders'));
+        head.appendChild(el('span', 'et-drawer__title', title));
+        head.appendChild(makeBtn('i-x', '关闭', close));
+        drawer.appendChild(head);
+
+        var body = el('div', 'et-drawer__body');
+        drawer.appendChild(body);
+
+        backdrop.appendChild(drawer);
+        document.body.appendChild(backdrop);
+        requestAnimationFrame(function () { backdrop.classList.add('is-open'); });
+
+        function close() {
+            backdrop.classList.remove('is-open');
+            document.removeEventListener('keydown', onKey);
+            setTimeout(function () {
+                if (backdrop.parentNode) { backdrop.parentNode.removeChild(backdrop); }
+            }, 220);
+        }
+        function onKey(ev) {
+            if (ev.key === 'Escape') { ev.stopPropagation(); close(); }
+        }
+        document.addEventListener('keydown', onKey);
+        backdrop.addEventListener('mousedown', function (ev) {
+            if (ev.target === backdrop) { close(); }
+        });
+
+        if (typeof build === 'function') { build(body, { close: close }); }
+        return { body: body, close: close };
+    }
+
+    /* ---------- 通用弹窗 / toast（同时挂模块级，供其他共享组件使用） ---------- */
+
+    function modal(mo) {
+        var backdrop = el('div', 'et-modal');
+        var panel = el('div', 'et-modal__panel' + (mo.size === 'narrow' ? ' et-modal__panel--narrow'
+            : mo.size === 'wide' ? ' et-modal__panel--wide' : ''));
+        var head = el('div', 'et-modal__head');
+        if (mo.icon) { head.appendChild(makeIcon(mo.icon)); }
+        head.appendChild(el('span', null, mo.title || ''));
+        head.appendChild(makeBtn('i-x', '关闭', close));
+        panel.appendChild(head);
+
+        var body = el('div', 'et-modal__body');
+        if (typeof mo.body === 'string') { body.innerHTML = mo.body; }
+        else if (mo.body) { body.appendChild(mo.body); }
+        panel.appendChild(body);
+
+        var foot = null;
+        if (mo.buttons && mo.buttons.length) {
+            foot = el('div', 'et-modal__foot');
+            foot.appendChild(el('span', 'spacer'));
+            mo.buttons.forEach(function (b) {
+                var btn = el('button', 'et-btn' + (b.primary ? ' et-btn--primary' : '') + (b.danger ? ' et-btn--danger' : ''), b.label);
+                btn.type = 'button';
+                btn.addEventListener('click', function () {
+                    if (b.onClick) { b.onClick(close); } else { close(); }
+                });
+                foot.appendChild(btn);
+            });
+            panel.appendChild(foot);
+        }
+
+        backdrop.appendChild(panel);
+        document.body.appendChild(backdrop);
+
+        function close() {
+            if (backdrop.parentNode) { backdrop.parentNode.removeChild(backdrop); }
+            document.removeEventListener('keydown', onKey);
+            if (mo.onClose) { mo.onClose(); }
+        }
+        function onKey(ev) {
+            if (ev.key === 'Escape') { ev.stopPropagation(); close(); }
+        }
+        document.addEventListener('keydown', onKey);
+        backdrop.addEventListener('mousedown', function (ev) {
+            if (ev.target === backdrop) { close(); }
+        });
+
+        return { panel: panel, body: body, foot: foot, close: close };
+    }
+
+    var toastEl = null;
+    var toastTimer = 0;
+
+    function toast(msg, tone) {
+        if (!toastEl) {
+            toastEl = el('div', 'et-toast');
+            document.body.appendChild(toastEl);
+        }
+        toastEl.textContent = msg;
+        toastEl.setAttribute('data-tone', tone || '');
+        void toastEl.offsetWidth;
+        toastEl.classList.add('is-show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toastEl.classList.remove('is-show'); }, 2200);
+    }
+
+    /* ---------- PWA 元数据（blob manifest，环境不支持时静默跳过） ---------- */
+
+    function installPwa(toolId, title, accent) {
+        try {
+            var theme = document.querySelector('meta[name="theme-color"]');
+            if (!theme) {
+                theme = document.createElement('meta');
+                theme.setAttribute('name', 'theme-color');
+                document.head.appendChild(theme);
+            }
+            theme.setAttribute('content', accent || '#2563eb');
+
+            var svg = '<svg xmlns="' + NS_SVG + '" viewBox="0 0 64 64">' +
+                '<rect width="64" height="64" rx="14" fill="' + (accent || '#2563eb') + '"/>' +
+                '<text x="32" y="43" font-size="32" font-weight="800" font-family="sans-serif" ' +
+                'fill="#fff" text-anchor="middle">' + (title || '课').charAt(0) + '</text></svg>';
+            var iconUri = 'data:image/svg+xml,' + encodeURIComponent(svg);
+
+            var mf = {
+                name: title || 'KeeTools 课工具',
+                short_name: title || '课工具',
+                start_url: '.',
+                display: 'standalone',
+                background_color: '#f4f6fb',
+                theme_color: accent || '#2563eb',
+                icons: [{ src: iconUri, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }]
+            };
+            var blob = new Blob([JSON.stringify(mf)], { type: 'application/manifest+json' });
+            var link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = URL.createObjectURL(blob);
+            document.head.appendChild(link);
+        } catch (err) { /* 不支持 PWA 元数据的环境静默跳过 */ }
+    }
+
+    /* ---------- 挂载 ---------- */
+
+    function mount(options) {
+        var opt = options || {};
+        var toolId = opt.toolId || 'unknown-tool';
+        var store = global.ET && global.ET.store
+            ? global.ET.store(toolId)
+            : (function () { return { get: function () { return null; }, set: function () {} }; })();
+
+        var api = { toolId: toolId, store: store };
+        var soundEnabled = store.get('sound', true) !== false;
+
+        /* 主题色 */
+        if (opt.accent) {
+            document.documentElement.style.setProperty('--et-accent', opt.accent);
+        }
+
+        installPwa(toolId, opt.title, opt.accent);
+
+        /* ---------- 主题 ---------- */
+        var theme = store.get('theme', null);
+        if (theme !== 'dark' && theme !== 'light') {
+            theme = (global.matchMedia && global.matchMedia('(prefers-color-scheme: dark)').matches)
+                ? 'dark' : 'light';
+        }
+        applyTheme(theme);
+
+        function applyTheme(t) {
+            theme = t;
+            document.documentElement.setAttribute('data-et-theme', t);
+            store.set('theme', t);
+            if (themeBtn) {
+                themeBtn.innerHTML = '';
+                themeBtn.appendChild(makeIcon(t === 'dark' ? 'i-sun' : 'i-moon'));
+                themeBtn.title = t === 'dark' ? '切换到浅色' : '切换到深色';
+            }
+        }
+
+        /* ---------- 顶栏 ---------- */
+        var topbar = document.getElementById('et-topbar');
+        var main = document.getElementById('et-main');
+        var footer = document.getElementById('et-footer');
+
+        if (!topbar) { topbar = el('header'); topbar.id = 'et-topbar'; document.body.insertBefore(topbar, document.body.firstChild); }
+        if (!main) { main = el('main'); main.id = 'et-main'; topbar.after(main); }
+        if (!footer) { footer = el('footer'); footer.id = 'et-footer'; document.body.appendChild(footer); }
+
+        topbar.className = 'et-topbar';
+        main.classList.add('et-main');
+        footer.className = 'et-footer';
+
+        /* 品牌 */
+        var brand = el('div', 'et-brand');
+        brand.appendChild(el('span', 'et-brand__dot'));
+        var nameWrap = el('div');
+        nameWrap.style.cssText = 'min-width:0;line-height:1.25';
+        nameWrap.appendChild(el('div', 'et-brand__name', opt.title || '课工具'));
+        if (opt.sub) { nameWrap.appendChild(el('div', 'et-brand__sub', opt.sub)); }
+        brand.appendChild(nameWrap);
+        topbar.appendChild(brand);
+
+        /* 状态胶囊 */
+        var statusPill = el('div', 'et-status');
+        statusPill.hidden = true;
+        statusPill.appendChild(el('span', 'et-status__dot'));
+        var statusText = el('span', null, '');
+        statusPill.appendChild(statusText);
+        topbar.appendChild(statusPill);
+
+        api.setStatus = function (text, tone) {
+            if (!text) { statusPill.hidden = true; return; }
+            statusText.textContent = text;
+            statusPill.setAttribute('data-tone', tone || 'ok');
+            statusPill.hidden = false;
+        };
+        if (opt.status) { api.setStatus(opt.status); }
+
+        /* 动作区（edupick 交互：右上角聚合设置入口） */
+        var actions = el('div', 'et-actions');
+
+        var settingsBtn = null;
+        if (opt.settings && typeof opt.settings.build === 'function') {
+            settingsBtn = makeBtn('i-sliders', opt.settings.title || '设置', function () {
+                openDrawer(opt.settings.title || '设置', function (body, drawerApi) {
+                    opt.settings.build(body, { api: api, close: drawerApi.close });
+                });
+            });
+            actions.appendChild(settingsBtn);
+        }
+
+        (opt.actions || []).forEach(function (a) {
+            var b = makeBtn(a.icon, a.label || '', a.onClick);
+            if (a.id) { b.id = a.id; }
+            actions.appendChild(b);
+        });
+
+        var soundBtn = null;
+        if (opt.sound) {
+            soundBtn = makeBtn(soundEnabled ? 'i-volume' : 'i-volume-off',
+                soundEnabled ? '关闭音效' : '开启音效', toggleSound);
+            if (!soundEnabled) { soundBtn.classList.add('is-off'); }
+            actions.appendChild(soundBtn);
+        }
+
+        if (opt.help) {
+            actions.appendChild(makeBtn('i-help', '使用说明', function () { openHelp(); }));
+        }
+
+        var themeBtn = makeBtn('', '切换主题', function () {
+            applyTheme(theme === 'dark' ? 'light' : 'dark');
+        });
+        applyTheme(theme); /* 填充图标 */
+        actions.appendChild(themeBtn);
+
+        /* 全屏按钮始终保留：iframe 内对本工具文档 requestFullscreen
+           （宿主 iframe 已声明 allow="fullscreen"），与宿主「全屏体验」等效同屏。 */
+        var fsBtn = makeBtn('i-maximize', '全屏', toggleFullscreen);
+        actions.appendChild(fsBtn);
+
+        topbar.appendChild(actions);
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            store.set('sound', soundEnabled);
+            soundBtn.innerHTML = '';
+            soundBtn.appendChild(makeIcon(soundEnabled ? 'i-volume' : 'i-volume-off'));
+            soundBtn.title = soundEnabled ? '关闭音效' : '开启音效';
+            soundBtn.classList.toggle('is-off', !soundEnabled);
+            if (soundEnabled) { api.beep('ok'); }
+        }
+
+        api.openSettings = function () {
+            if (settingsBtn) { settingsBtn.click(); }
+        };
+
+        /* ---------- 全屏（iframe 内委托宿主，避免双层全屏） ---------- */
+
+        function inIframe() {
+            try { return global.parent && global.parent !== global; } catch (err) { return true; }
+        }
+
+        function toggleFullscreen() {
+            var root = document.documentElement;
+            var fsEl = document.fullscreenElement || document.webkitFullscreenElement || null;
+            if (fsEl) {
+                (document.exitFullscreen || document.webkitExitFullscreen || function () {}).call(document);
+            } else {
+                var req = root.requestFullscreen || root.webkitRequestFullscreen;
+                if (req) { try { req.call(root); } catch (err) { /* 忽略 */ } }
+            }
+        }
+
+        function syncFsIcon(on) {
+            if (!fsBtn) { return; }
+            fsBtn.innerHTML = '';
+            fsBtn.appendChild(makeIcon(on ? 'i-minimize' : 'i-maximize'));
+            fsBtn.title = on ? '退出全屏' : '全屏';
+        }
+
+        document.addEventListener('fullscreenchange', function () {
+            syncFsIcon(!!(document.fullscreenElement || document.webkitFullscreenElement));
+        });
+        document.addEventListener('webkitfullscreenchange', function () {
+            syncFsIcon(!!(document.fullscreenElement || document.webkitFullscreenElement));
+        });
+        syncFsIcon(false);
+
+        api.toggleFullscreen = toggleFullscreen;
+
+        /* ---------- 音效 API ---------- */
+        api.beep = function (kind) {
+            if (!soundEnabled) { return; }
+            playBeep(kind);
+        };
+        api.soundOn = function () { return soundEnabled; };
+
+        api.modal = modal;
+
+        /* ---------- 帮助 ---------- */
+        function openHelp() {
+            modal({
+                title: '使用说明',
+                icon: 'i-help',
+                size: 'narrow',
+                body: opt.help,
+                buttons: [{ label: '知道了', primary: true }]
+            });
+        }
+        api.openHelp = openHelp;
+
+        /* ---------- toast ---------- */
+        api.toast = toast;
+
+        /* ---------- 页脚（L2 品牌回流，低调一行） ---------- */
+        var siteOrigin = typeof global.ET_SITE_ORIGIN === 'string' && /^https?:\/\//.test(global.ET_SITE_ORIGIN)
+            ? global.ET_SITE_ORIGIN
+            : null;
+
+        function renderFooter() {
+            footer.textContent = '';
+            footer.appendChild(el('span', null, 'KeeTools 课工具'));
+            footer.appendChild(el('span', null, '·'));
+            if (siteOrigin) {
+                var a = el('a', null, '更多课堂工具');
+                a.href = siteOrigin + '/?from=tool-footer&tool=' + encodeURIComponent(toolId);
+                a.target = '_blank';
+                a.rel = 'noopener';
+                footer.appendChild(a);
+            } else {
+                footer.appendChild(el('span', null, '更多课堂工具'));
+            }
+        }
+        renderFooter();
+
+        /* 站点来源发现：iframe 内向父窗口询问；也可由宿主直接注入 ET_SITE_ORIGIN */
+        try {
+            if (global.parent && global.parent !== global) {
+                global.parent.postMessage(JSON.stringify({ type: 'et-hello', toolId: toolId }), '*');
+            }
+        } catch (err) { /* 跨域异常忽略 */ }
+
+        global.addEventListener('message', function (ev) {
+            var data = ev.data;
+            if (typeof data === 'string') {
+                try { data = JSON.parse(data); } catch (err) { return; }
+            }
+            if (!data || typeof data !== 'object') { return; }
+
+            if (data.type === 'et-origin' && typeof data.origin === 'string' && /^https?:\/\//.test(data.origin)) {
+                siteOrigin = data.origin;
+                if (!global.ET_SITE_ORIGIN) { global.ET_SITE_ORIGIN = data.origin; }
+                renderFooter();
+            }
+            if (data.type === 'et-fullscreen-change' && typeof data.value === 'boolean') {
+                syncFsIcon(data.value);
+            }
+        });
+
+        api.el = { topbar: topbar, main: main, footer: footer, actions: actions };
+
+        /* ---------- 激光笔 / 翻页笔适配（HID 翻页键） ----------
+         * 翻页笔的上下页键在系统层等价于 PageDown / PageUp。
+         * 工具通过 opt.primary / opt.secondary 注册动作：
+         *   PageDown → primary（主操作，如开始点名 / 开始计时）
+         *   PageUp   → secondary（副操作，缺省时同 primary）
+         * 输入框聚焦或弹窗/抽屉打开时不响应，避免误触。 */
+        if (typeof opt.primary === 'function') {
+            document.addEventListener('keydown', function (ev) {
+                if (ev.key !== 'PageDown' && ev.key !== 'PageUp') { return; }
+                var tag = (document.activeElement && document.activeElement.tagName) || '';
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') { return; }
+                if (document.querySelector('.et-modal, .et-drawer-backdrop, .ws-winner')) { return; }
+                ev.preventDefault();
+                if (ev.key === 'PageDown') { opt.primary(); }
+                else if (typeof opt.secondary === 'function') { opt.secondary(); }
+                else { opt.primary(); }
+            });
+        }
+
+        return api;
+    }
+
+    global.ET = global.ET || {};
+    global.ET.Chrome = {
+        mount: mount,
+        modal: modal,
+        toast: toast,
+        beep: playBeep /* 挂载前的独立音效入口（不经过音效开关） */
+    };
+})(window);
+</script>
+<!-- /ET:INLINE -->
+
+<!-- ET:INLINE name="et-stats" src="ui/et-stats.js" -->
+<script>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * et-stats.js — 使用统计模块（模块化，可整体移除）
+ *
+ * 共享逻辑源。改这里，然后跑：python scripts/sync_shared.py
+ * 依赖：无（可脱离 et-util / et-chrome 独立运行）。
+ * 全局：ET.Stats
+ *
+ * ┌────────────────────────────────────────────────────────────────┐
+ * │ 说明：本模块只做一件事——工具被打开时向上报端点发一条匿名计数。 │
+ * │ · 在线（iframe 内）：宿主页面已服务端计数，本模块不重复上报。   │
+ * │ · 离线打开（file:// / 下载单文件 / 离线包）：联网条件具备时，   │
+ * │   以 sendBeacon 上报 use_offline 事件（text/plain 免预检）。    │
+ * │ · 上报端点 = window.ET_SITE_ORIGIN（由宿主注入或离线包配置）。  │
+ * │   未配置端点时本模块完全静默，不发任何请求。                    │
+ * │ · **整个 <script> 块可安全删除**：删除后工具其余功能完全正常，  │
+ * │   且完全不再发起任何网络请求。                                  │
+ * └────────────────────────────────────────────────────────────────┘
+ */
+(function (global) {
+    'use strict';
+
+    var ET = global.ET = global.ET || {};
+
+    var Stats = {
+        /** 上报端点来源（站点绝对地址，无协议尾斜杠） */
+        endpoint: (typeof global.ET_SITE_ORIGIN === 'string' && /^https?:\/\//.test(global.ET_SITE_ORIGIN))
+            ? global.ET_SITE_ORIGIN
+            : null,
+
+        _done: {},
+
+        /**
+         * 上报一次事件（同一事件同一工具每次页面加载只报一次）。
+         * event: 'use_offline' 等；toolId: 工具 id。
+         */
+        send: function (event, toolId) {
+            if (!event || this._done[event + ':' + (toolId || '')]) { return false; }
+            if (!this.endpoint) { return false; }
+            /* iframe 内由宿主统计，避免双计 */
+            try {
+                if (global.parent && global.parent !== global) { return false; }
+            } catch (err) { return false; }
+            /* 断网时挂起，网络恢复自动补报一次 */
+            if (global.navigator && global.navigator.onLine === false) {
+                var self = this;
+                global.addEventListener('online', function () { self.send(event, toolId); }, { once: true });
+                return false;
+            }
+
+            this._done[event + ':' + (toolId || '')] = true;
+            var payload = JSON.stringify({ event: event, tool: toolId || '' });
+
+            try {
+                if (global.navigator.sendBeacon) {
+                    return global.navigator.sendBeacon(
+                        this.endpoint + '/api/track',
+                        new Blob([payload], { type: 'text/plain;charset=UTF-8' })
+                    );
+                }
+                global.fetch(this.endpoint + '/api/track', {
+                    method: 'POST',
+                    body: payload,
+                    keepalive: true,
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=UTF-8' }
+                });
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+    };
+
+    ET.Stats = Stats;
+})(window);
+</script>
+<!-- /ET:INLINE -->
+
+<!-- 使用统计：删除上方 et-stats 块即可完全不联网（模块化设计） -->
+<script>
+try { ET.Stats.send('use_offline', 'circuit-builder'); } catch (e) { /* 静默 */ }
+</script>
+
+<script>
+(function () {
+    'use strict';
+
+    var TOOL_ID = 'circuit-builder';
+    var store = ET.store(TOOL_ID);
+
+    var FONT = 'system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif';
+    var COLS = 9;
+    var ROWS = 6;
+    var NODES = COLS * ROWS;
+    var R_WIRE = 0.05;      /* 导线电阻 */
+    var R_INT = 0.5;        /* 电源内阻 */
+    var R_AMMETER = 0.01;   /* 电流表内阻（近似理想，串联接入） */
+    var R_VOLTMETER = 1e6;  /* 电压表内阻（近似理想，并联接入） */
+    var R_MOTOR = 20;       /* 电动机线圈电阻 */
+    var G_SHUNT = 1e-9;     /* 每个节点对地微导纳（保证矩阵非奇异） */
+    var I_MIN = 0.01;       /* 判定灯泡点亮的最小电流 */
+    var TOOL_ORDER = ['select', 'wire', 'battery', 'switch', 'bulb',
+        'resistor', 'rheostat', 'ammeter', 'voltmeter', 'motor', 'erase'];
+    /* 键盘快捷键：1–0 + E */
+    var TOOL_KEYS = {
+        '1': 'select', '2': 'wire', '3': 'battery', '4': 'switch', '5': 'bulb',
+        '6': 'resistor', '7': 'rheostat', '8': 'ammeter', '9': 'voltmeter',
+        '0': 'motor', 'e': 'erase', 'E': 'erase'
+    };
+    var TOOL_NAME = {
+        select: '选择', wire: '导线', erase: '擦除',
+        battery: '电源', bulb: '小灯泡', motor: '电动机',
+        resistor: '定值电阻', rheostat: '滑动变阻器',
+        ammeter: '电流表', voltmeter: '电压表', switch: '开关'
+    };
+
+    /* 典型电路图库：[方向, 固定行/列, 起, 止, 类型]；后写覆盖先写
+       · 'h' → [行, 起始列, 结束列]；'v' → [列, 起始行, 结束行]
+       · 并联画法要点：两只灯泡各占一条竖分支，两端接在「同两条」导线上；
+         电源必须接在干路（本例放在底轨最左），不能串在某一条分支里
+       · 电表接法：电流表串联进被测支路；电压表并联在被测元件两端
+         （缩略图与画布上都用一段跨接支路表示「并联」）
+       · 每个示例都跑过求解器自证（判定结论 + 总电流见 tip） */
+    var PRESETS = [
+        {
+            name: '串联一灯',
+            tip: '最基本的电路：电源、开关、灯泡连成一圈，电流只有一条路径。',
+            runs: [
+                ['h', 1, 1, 6, 'wire'],
+                ['v', 1, 1, 3, 'wire'],
+                ['v', 7, 1, 3, 'wire'],
+                ['h', 4, 1, 6, 'wire'],
+                ['h', 1, 3, 3, 'bulb'],
+                ['h', 4, 3, 3, 'battery']
+            ]
+        },
+        {
+            name: '串联两灯带开关',
+            tip: '两只灯泡首尾相接；开关串在电路里，一断开两灯同时熄灭。',
+            runs: [
+                ['h', 1, 1, 6, 'wire'],
+                ['v', 1, 1, 3, 'wire'],
+                ['v', 7, 1, 3, 'wire'],
+                ['h', 4, 1, 6, 'wire'],
+                ['h', 1, 2, 2, 'bulb'],
+                ['h', 1, 4, 4, 'bulb'],
+                ['h', 4, 2, 2, 'switch'],
+                ['h', 4, 4, 4, 'battery']
+            ]
+        },
+        {
+            name: '两灯并联',
+            tip: '两只灯泡各占一条分支，接在同两条导线上；断掉一只，另一只照常发光。',
+            runs: [
+                ['h', 1, 1, 6, 'wire'],
+                ['v', 1, 1, 3, 'wire'],
+                ['h', 4, 1, 6, 'wire'],
+                ['v', 3, 1, 3, 'wire'],
+                ['v', 5, 1, 3, 'wire'],
+                ['v', 3, 2, 2, 'bulb'],
+                ['v', 5, 2, 2, 'bulb'],
+                ['h', 4, 1, 1, 'battery']
+            ]
+        },
+        {
+            name: '并联·支路开关',
+            tip: '开关装在其中一条支路上，只控制这条支路的灯泡，另一只不受影响。',
+            runs: [
+                ['h', 1, 1, 6, 'wire'],
+                ['v', 1, 1, 3, 'wire'],
+                ['h', 4, 1, 6, 'wire'],
+                ['v', 3, 1, 3, 'wire'],
+                ['v', 5, 1, 3, 'wire'],
+                ['v', 3, 2, 2, 'bulb'],
+                ['v', 5, 2, 2, 'bulb'],
+                ['v', 5, 1, 1, 'switch'],
+                ['h', 4, 1, 1, 'battery']
+            ]
+        },
+        {
+            name: '并联·干路开关',
+            tip: '开关装在干路上，一只开关就能同时控制两只并联的灯泡。',
+            runs: [
+                ['h', 1, 1, 6, 'wire'],
+                ['v', 1, 1, 3, 'wire'],
+                ['h', 4, 1, 6, 'wire'],
+                ['v', 3, 1, 3, 'wire'],
+                ['v', 5, 1, 3, 'wire'],
+                ['v', 3, 2, 2, 'bulb'],
+                ['v', 5, 2, 2, 'bulb'],
+                ['h', 4, 1, 1, 'battery'],
+                ['h', 4, 2, 2, 'switch']
+            ]
+        },
+        {
+            name: '电流表测电流',
+            tip: '电流表串联接入电路（内阻极小）；串联电路中各处电流相等。',
+            runs: [
+                ['h', 1, 1, 6, 'wire'],
+                ['v', 1, 1, 3, 'wire'],
+                ['v', 7, 1, 3, 'wire'],
+                ['h', 4, 1, 6, 'wire'],
+                ['h', 1, 3, 3, 'bulb'],
+                ['h', 1, 5, 5, 'ammeter'],
+                ['v', 7, 2, 2, 'switch'],
+                ['h', 4, 3, 3, 'battery']
+            ]
+        },
+        {
+            name: '电压表测灯泡电压',
+            tip: '电压表并联在灯泡两端（内阻极大，几乎不分流），读数即灯泡两端电压。',
+            runs: [
+                ['h', 1, 1, 6, 'wire'],
+                ['v', 1, 1, 3, 'wire'],
+                ['v', 7, 1, 3, 'wire'],
+                ['h', 4, 1, 6, 'wire'],
+                ['h', 1, 3, 3, 'bulb'],
+                ['h', 4, 3, 3, 'battery'],
+                ['v', 3, 1, 1, 'wire'],
+                ['v', 4, 1, 1, 'wire'],
+                ['h', 2, 3, 3, 'voltmeter']
+            ]
+        },
+        {
+            name: '串联两灯·测其中一灯',
+            tip: '两只灯泡串联，电压表并联在左边灯泡两端：两灯电压之和等于电源电压。',
+            runs: [
+                ['h', 1, 1, 6, 'wire'],
+                ['v', 1, 1, 3, 'wire'],
+                ['v', 7, 1, 3, 'wire'],
+                ['h', 4, 1, 6, 'wire'],
+                ['h', 1, 2, 2, 'bulb'],
+                ['h', 1, 4, 4, 'bulb'],
+                ['h', 4, 3, 3, 'battery'],
+                ['v', 2, 1, 1, 'wire'],
+                ['v', 3, 1, 1, 'wire'],
+                ['h', 2, 2, 2, 'voltmeter']
+            ]
+        },
+        {
+            name: '伏安法测电阻',
+            tip: '课本实验电路：电流表串联测电流、电压表并联测电压，用 R = U ÷ I 算出电阻。',
+            runs: [
+                ['h', 1, 1, 6, 'wire'],
+                ['v', 1, 1, 3, 'wire'],
+                ['v', 7, 1, 3, 'wire'],
+                ['h', 4, 1, 6, 'wire'],
+                ['h', 1, 3, 3, 'resistor'],
+                ['h', 4, 5, 5, 'ammeter'],
+                ['h', 4, 2, 2, 'battery'],
+                ['v', 7, 2, 2, 'switch'],
+                ['v', 3, 1, 1, 'wire'],
+                ['v', 4, 1, 1, 'wire'],
+                ['h', 2, 3, 3, 'voltmeter']
+            ]
+        },
+        {
+            name: '滑动变阻器调光',
+            tip: '滑动变阻器串联进电路，改变接入阻值就改变电流，灯泡亮度随之变化。',
+            runs: [
+                ['h', 1, 1, 6, 'wire'],
+                ['v', 1, 1, 3, 'wire'],
+                ['v', 7, 1, 3, 'wire'],
+                ['h', 4, 1, 6, 'wire'],
+                ['h', 1, 3, 3, 'bulb'],
+                ['h', 4, 5, 5, 'rheostat'],
+                ['h', 4, 2, 2, 'battery'],
+                ['v', 7, 2, 2, 'switch']
+            ]
+        },
+        {
+            name: '电动机电路',
+            tip: '把灯泡换成小电动机：通电就转，电流越大转得越快（电能→机械能）。',
+            runs: [
+                ['h', 1, 1, 6, 'wire'],
+                ['v', 1, 1, 3, 'wire'],
+                ['v', 7, 1, 3, 'wire'],
+                ['h', 4, 1, 6, 'wire'],
+                ['h', 1, 3, 3, 'motor'],
+                ['h', 4, 3, 3, 'battery'],
+                ['v', 7, 2, 2, 'switch']
+            ]
+        },
+        {
+            name: '短路演示（危险）',
+            tip: '用一根导线把灯泡两端直接连起来：电流走导线不经过灯泡——灯不亮，电源电流过大。',
+            runs: [
+                ['h', 1, 1, 6, 'wire'],
+                ['v', 1, 1, 3, 'wire'],
+                ['v', 7, 1, 3, 'wire'],
+                ['h', 4, 1, 6, 'wire'],
+                ['h', 1, 3, 3, 'bulb'],
+                ['h', 4, 3, 3, 'battery'],
+                ['v', 3, 1, 1, 'wire'],
+                ['v', 4, 1, 1, 'wire'],
+                ['h', 2, 3, 3, 'wire']
+            ]
+        }
+    ];
+
+    /* ============ 网格与边 ============ */
+
+    function ekey(dir, r, c) { return dir + ':' + r + ':' + c; }
+
+    function keyNodes(k) {
+        var p = k.split(':');
+        var r = Number(p[1]);
+        var c = Number(p[2]);
+        if (p[0] === 'h') { return [r * COLS + c, r * COLS + c + 1]; }
+        return [r * COLS + c, (r + 1) * COLS + c];
+    }
+
+    var ALL_KEYS = [];
+    (function () {
+        var r, c;
+        for (r = 0; r < ROWS; r++) {
+            for (c = 0; c < COLS - 1; c++) { ALL_KEYS.push(ekey('h', r, c)); }
+        }
+        for (r = 0; r < ROWS - 1; r++) {
+            for (c = 0; c < COLS; c++) { ALL_KEYS.push(ekey('v', r, c)); }
+        }
+    })();
+
+    function pick(list, value, fallback) {
+        return list.indexOf(value) !== -1 ? value : fallback;
+    }
+
+    function trimNum(v, digits) {
+        var s = Number(v).toFixed(digits === undefined ? 2 : digits);
+        s = s.replace(/0+$/, '').replace(/\.$/, '');
+        return (s === '-0' || s === '') ? '0' : s;
+    }
+
+    /* ============ 状态 ============ */
+
+    var state = {
+        tool: pick(TOOL_ORDER, store.get('tool', 'select'), 'select'),
+        volt: pick([1.5, 3, 4.5, 6], Number(store.get('volt', 3)), 3),
+        bulbR: pick([5, 10, 20], Number(store.get('bulbR', 10)), 10),
+        resR: pick([5, 10, 20], Number(store.get('resR', 10)), 10),
+        rheoR: pick([0, 5, 10, 20], Number(store.get('rheoR', 10)), 10),
+        values: store.get('values', true) !== false,
+        flow: store.get('flow', true) !== false,
+        speed: pick([0.6, 1, 1.6], Number(store.get('speed', 1)), 1),
+        edges: {},
+        hover: null,
+        sel: null,
+        res: null,
+        verdict: '',
+        warning: '',
+        preset: 0
+    };
+
+    function restoreEdges() {
+        var saved = store.get('edges', null);
+        if (!saved || typeof saved !== 'object' || Object.prototype.toString.call(saved) === '[object Array]') {
+            return false;
+        }
+        for (var k in saved) {
+            if (ALL_KEYS.indexOf(k) === -1) { continue; }
+            var e = saved[k];
+            if (!e || typeof e !== 'object' || !TOOL_NAME[e.type]) { continue; }
+            if (e.type === 'select' || e.type === 'erase') { continue; }
+            state.edges[k] = { type: e.type, closed: e.closed !== false };
+        }
+        /* 存过电路就以存档为准（即使空白电路也不再自动载入示例） */
+        return true;
+    }
+
+    var chrome = ET.Chrome.mount({
+        toolId: TOOL_ID,
+        title: '电路搭建模拟',
+        sub: '物理 · 拖拽元件实时求解',
+        accent: '#4f46e5',
+        status: '就绪',
+        sound: true,
+        primary: toggleAllSwitches,
+        secondary: function () { applyPreset(state.preset, true); },
+        settings: { title: '电路设置', build: buildSettings },
+        help: '<div style="font-size:13.5px;line-height:2">' +
+            '<p style="margin:0 0 8px"><b>搭电路</b>：把元件按钮<b>拖到画布的虚线格</b>上即可放置；也可以先点元件再点格子。右键任一元件可直接删除，「擦除」工具同样能删。</p>' +
+            '<p style="margin:0 0 8px"><b>元件</b>：导线、电源、开关、小灯泡、电动机、定值电阻、滑动变阻器、电流表、电压表。电源电压 / 电阻阻值 / 变阻器阻值在右上角 ⚙ 里调（也可点顶部快速切换电压）。</p>' +
+            '<p style="margin:0 0 8px"><b>接法要点</b>：电流表<b>串联</b>接入被测支路（内阻极小）；电压表<b>并联</b>在被测元件两端（内阻极大）；滑动变阻器应<b>串联</b>进电路调电流。</p>' +
+            '<p style="margin:0 0 8px"><b>典型电路图库</b>：点工具栏「典型电路图」按钮（或按 <b>G</b>）打开图库，里面有 <b>12 个课本常见电路</b>的示意图缩略图——串联一灯、串联两灯带开关、两灯并联（支路开关 / 干路开关）、电流表测电流、电压表测灯泡电压、串联两灯测其中一灯、伏安法测电阻、滑动变阻器调光、电动机电路、短路演示，每个都附一句要点，点图即载入画布。</p>' +
+            '<p style="margin:0 0 8px"><b>并联怎么接</b>：两只灯泡各占一条竖分支，两端接在<b>同两条</b>导线上；电源要接在<b>干路</b>（两分支汇合的那条线上），不能串在某一条分支里。载入图库里的「两灯并联」可直接对照正确画法。</p>' +
+            '<p style="margin:0 0 8px"><b>操作</b>：用「选择」工具点开关断开 / 闭合；点其它元件会读出电流、电压、功率；开关用绿（通）/ 红（断）加「通/断」字标注。</p>' +
+            '<p style="margin:0 0 8px"><b>实时求解</b>：程序按节点法（基尔霍夫定律）解出各支路电流，灯泡亮度按实际功率变化，电动机随电流转动，橙色虚线表示电流方向与大小（越快电流越大）。</p>' +
+            '<p style="margin:0 0 8px"><b>自动判定</b>：底部实时给出总电流、各灯泡电流与功率、电表读数，以及<b>串联 / 并联</b>结论（与课堂做法一致：断开一只灯泡看另一只是否还亮），短路或断路会立刻警告。</p>' +
+            '<p style="margin:0 0 8px"><b>快捷键</b>：1 选择 / 2 导线 / 3 电源 / 4 开关 / 5 灯泡 / 6 电阻 / 7 变阻器 / 8 电流表 / 9 电压表 / 0 电动机 / E 擦除；空格 = 同时断开 / 闭合全部开关；翻页笔下页键同效、上页键 = 重新载入当前示例。</p>' +
+            '<p style="margin:0"><b>物理说明</b>：电源含 0.5Ω 内阻，导线 0.05Ω，电流表 0.01Ω，电压表 1MΩ，电动机线圈 20Ω；短路时会看到异常大的电流与警告。</p></div>'
+    });
+
+    /* ============ 线性方程组（高斯消元，列主元） ============ */
+
+    function solveLinear(A, b, n) {
+        var col, r, c, i;
+        for (col = 0; col < n; col++) {
+            var piv = col;
+            for (r = col + 1; r < n; r++) {
+                if (Math.abs(A[r][col]) > Math.abs(A[piv][col])) { piv = r; }
+            }
+            if (Math.abs(A[piv][col]) < 1e-14) { return null; }
+            if (piv !== col) {
+                var t = A[piv]; A[piv] = A[col]; A[col] = t;
+                var tb = b[piv]; b[piv] = b[col]; b[col] = tb;
+            }
+            var d = A[col][col];
+            for (r = col + 1; r < n; r++) {
+                var f = A[r][col] / d;
+                if (!f) { continue; }
+                for (c = col; c < n; c++) { A[r][c] -= f * A[col][c]; }
+                b[r] -= f * b[col];
+            }
+        }
+        var x = [];
+        for (i = n - 1; i >= 0; i--) {
+            var s = b[i];
+            for (c = i + 1; c < n; c++) { s -= A[i][c] * x[c]; }
+            x[i] = s / A[i][i];
+            if (!isFinite(x[i])) { return null; }
+        }
+        return x;
+    }
+
+    function resistanceOf(e) {
+        if (e.type === 'bulb') { return state.bulbR; }
+        if (e.type === 'resistor') { return state.resR; }
+        if (e.type === 'motor') { return R_MOTOR; }
+        if (e.type === 'ammeter') { return R_AMMETER; }
+        if (e.type === 'voltmeter') { return R_VOLTMETER; }
+        if (e.type === 'rheostat') { return Math.max(0.05, state.rheoR); }
+        if (e.type === 'battery') { return R_INT; }
+        return R_WIRE;
+    }
+
+    /* 视为「导体」的元件（用于短路通路判定） */
+    function isConductor(e) {
+        if (e.type === 'wire' || e.type === 'ammeter') { return true; }
+        if (e.type === 'switch') { return e.closed !== false; }
+        if (e.type === 'rheostat') { return state.rheoR <= 0.1; }
+        return false;
+    }
+
+    /* openKey：把某条支路临时断开，用于判断串并联 */
+    function simulate(openKey) {
+        var A = [];
+        var rhs = [];
+        var i, j;
+        for (i = 0; i < NODES; i++) {
+            var row = [];
+            for (j = 0; j < NODES; j++) { row.push(0); }
+            row[i] = G_SHUNT;
+            A.push(row);
+            rhs.push(0);
+        }
+
+        var items = [];
+        for (var k in state.edges) {
+            var e = state.edges[k];
+            if (!e) { continue; }
+            if (e.type === 'switch' && e.closed === false) { continue; }
+            if (openKey && k === openKey) { continue; }
+            var nd = keyNodes(k);
+            var a = nd[0];
+            var b = nd[1];
+            var r = resistanceOf(e);
+            var G = 1 / r;
+            A[a][a] += G;
+            A[a][b] -= G;
+            A[b][a] -= G;
+            A[b][b] += G;
+            if (e.type === 'battery') {
+                rhs[a] += G * state.volt;
+                rhs[b] -= G * state.volt;
+            }
+            items.push({ key: k, a: a, b: b, r: r, e: e });
+        }
+
+        var V = solveLinear(A, rhs, NODES);
+        if (!V) { return null; }
+
+        var out = { items: {}, battery: 0, bulbs: [], resistors: [], batteries: [] };
+        for (i = 0; i < items.length; i++) {
+            var it = items[i];
+            var u = V[it.a] - V[it.b];
+            var emf = it.e.type === 'battery' ? state.volt : 0;
+            var cur = (u - emf) / it.r;
+            var rec = { current: cur, voltage: u, r: it.r, power: cur * cur * it.r };
+            out.items[it.key] = rec;
+            if (it.e.type === 'battery') {
+                out.battery += Math.abs(cur);
+                out.batteries.push(it.key);
+            } else if (it.e.type === 'bulb') {
+                out.bulbs.push(it.key);
+            } else if (it.e.type === 'resistor') {
+                out.resistors.push(it.key);
+            }
+        }
+        return out;
+    }
+
+    function countType(type) {
+        var n = 0;
+        for (var k in state.edges) {
+            if (state.edges[k].type === type) { n++; }
+        }
+        return n;
+    }
+
+    function reachable(adj, from, to) {
+        var seen = {};
+        var queue = [from];
+        seen[from] = true;
+        while (queue.length) {
+            var cur = queue.shift();
+            var nb = adj[cur] || [];
+            for (var i = 0; i < nb.length; i++) {
+                var n = nb[i];
+                if (n === to) { return true; }
+                if (!seen[n]) { seen[n] = true; queue.push(n); }
+            }
+        }
+        return false;
+    }
+
+    /* 短路：电源两端之间存在只由导线 / 闭合开关构成的通路 */
+    function isShorted() {
+        var batteries = [];
+        var k;
+        for (k in state.edges) {
+            if (state.edges[k].type === 'battery') { batteries.push(k); }
+        }
+        if (!batteries.length) { return false; }
+
+        var adj = {};
+        for (k in state.edges) {
+            var e = state.edges[k];
+            if (!isConductor(e)) { continue; }
+            var nd = keyNodes(k);
+            if (!adj[nd[0]]) { adj[nd[0]] = []; }
+            if (!adj[nd[1]]) { adj[nd[1]] = []; }
+            adj[nd[0]].push(nd[1]);
+            adj[nd[1]].push(nd[0]);
+        }
+
+        for (var i = 0; i < batteries.length; i++) {
+            var b = keyNodes(batteries[i]);
+            if (reachable(adj, b[0], b[1])) { return true; }
+        }
+        return false;
+    }
+
+    /* 判定方式与课堂一致：分别把一只灯泡断开，看另一只是否还亮；
+       两灯都在同一分支上（串联）时断开任意一只另一只必灭。 */
+    function relationOf(bulbKeys) {
+        var r0 = simulate(bulbKeys[0]);
+        var r1 = simulate(bulbKeys[1]);
+        var i0 = r0 && r0.items[bulbKeys[1]] ? Math.abs(r0.items[bulbKeys[1]].current) : 0;
+        var i1 = r1 && r1.items[bulbKeys[0]] ? Math.abs(r1.items[bulbKeys[0]].current) : 0;
+        var on0 = i0 > I_MIN;
+        var on1 = i1 > I_MIN;
+        if (on0 && on1) { return '两只灯泡并联（两条分支，电流在分支处分开）'; }
+        if (!on0 && !on1) { return '两只灯泡串联（只有一条路径，电流处处相等）'; }
+        return '混联（既有串联又有并联）';
+    }
+
+    function simulateAll() {
+        state.res = simulate(null);
+        state.verdict = '';
+        state.warning = '';
+
+        var batteries = countType('battery');
+        var bulbs = countType('bulb');
+        var resistors = countType('resistor');
+        var motors = countType('motor');
+        var live = state.res && state.res.battery > 0.002;
+
+        if (!batteries) {
+            state.verdict = '还没有电源，先放一个电源';
+        } else if (!bulbs && !resistors && !motors) {
+            state.verdict = '还没有接入用电器';
+        } else if (!live) {
+            state.warning = '断路：电路没有连通，检查开关是否闭合、回路是否成圈';
+        } else if (isShorted()) {
+            state.warning = '短路！电源两端被导线直接连通，电流过大（实际会烧坏电源）';
+        }
+
+        if (batteries && (bulbs || resistors || motors) && live) {
+            if (bulbs === 2 && state.res.bulbs.length === 2) {
+                state.verdict = relationOf([state.res.bulbs[0], state.res.bulbs[1]]);
+            } else if (bulbs === 1) {
+                state.verdict = '单个灯泡';
+            } else if (bulbs > 2) {
+                state.verdict = bulbs + ' 个灯泡（可逐个断开观察以判断串并联）';
+            } else if (motors && !resistors) {
+                state.verdict = '电动机电路：电流越大转子转得越快';
+            } else if (resistors) {
+                state.verdict = '定值电阻电路：读电流表与电压表即可算出 R = U ÷ I';
+            }
+        }
+
+        flowing = false;
+        if (state.res) {
+            for (var k in state.res.items) {
+                if (Math.abs(state.res.items[k].current) > 0.002) { flowing = true; }
+            }
+        }
+
+        renderFoot();
+        requestDraw();
+    }
+
+    /* ============ 画布 ============ */
+
+    var cv = document.getElementById('cv');
+    var ctx = cv.getContext('2d');
+    var W = 800;
+    var H = 500;
+    var geom = { ox: 40, oy: 40, s: 60 };
+    var phase = 0;
+    var raf = 0;
+    var flowing = false;
+
+    function layout() {
+        var pad = 38;
+        var s = Math.min((W - pad * 2) / (COLS - 1), (H - pad * 2) / (ROWS - 1));
+        geom.s = Math.max(26, s);
+        geom.ox = (W - geom.s * (COLS - 1)) / 2;
+        geom.oy = (H - geom.s * (ROWS - 1)) / 2;
+    }
+
+    function nodeXY(r, c) { return [geom.ox + c * geom.s, geom.oy + r * geom.s]; }
+    function nodeXYi(i) { return nodeXY(Math.floor(i / COLS), i % COLS); }
+
+    function edgeGeom(k) {
+        var nd = keyNodes(k);
+        var a = nodeXYi(nd[0]);
+        var b = nodeXYi(nd[1]);
+        return {
+            x1: a[0], y1: a[1], x2: b[0], y2: b[1],
+            mx: (a[0] + b[0]) / 2, my: (a[1] + b[1]) / 2,
+            ang: Math.atan2(b[1] - a[1], b[0] - a[0]),
+            len: Math.sqrt((b[0] - a[0]) * (b[0] - a[0]) + (b[1] - a[1]) * (b[1] - a[1]))
+        };
+    }
+
+    function distToSeg(px, py, g) {
+        var dx = g.x2 - g.x1;
+        var dy = g.y2 - g.y1;
+        var len2 = dx * dx + dy * dy;
+        var t = len2 ? ((px - g.x1) * dx + (py - g.y1) * dy) / len2 : 0;
+        t = Math.max(0, Math.min(1, t));
+        var x = g.x1 + t * dx;
+        var y = g.y1 + t * dy;
+        return Math.sqrt((px - x) * (px - x) + (py - y) * (py - y));
+    }
+
+    function edgeAt(clientX, clientY) {
+        var rect = cv.getBoundingClientRect();
+        var px = clientX - rect.left;
+        var py = clientY - rect.top;
+        var best = null;
+        var bestD = Math.min(geom.s * 0.34, 26);
+        for (var i = 0; i < ALL_KEYS.length; i++) {
+            var d = distToSeg(px, py, edgeGeom(ALL_KEYS[i]));
+            if (d < bestD) { bestD = d; best = ALL_KEYS[i]; }
+        }
+        return best;
+    }
+
+    function cssVar(name, fallback) {
+        try {
+            var v = window.getComputedStyle(document.documentElement).getPropertyValue(name);
+            v = String(v || '').replace(/^\s+|\s+$/g, '');
+            return v || fallback;
+        } catch (err) {
+            return fallback;
+        }
+    }
+
+    function highlight(k, color, solid) {
+        var g = edgeGeom(k);
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.globalAlpha = solid ? 0.42 : 0.22;
+        ctx.lineWidth = Math.min(18, geom.s * 0.46);
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(g.x1, g.y1);
+        ctx.lineTo(g.x2, g.y2);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawEdge(k, e, cFg, cMuted, cAccent, cWarn, cBg, cOk) {
+        var g = edgeGeom(k);
+        var rec = state.res && state.res.items[k] ? state.res.items[k] : null;
+        var cur = rec ? rec.current : 0;
+        var L = g.len;
+        var h = Math.min(13, geom.s * 0.26);
+
+        ctx.save();
+        ctx.translate(g.mx, g.my);
+        ctx.rotate(g.ang);
+        ctx.lineCap = 'round';
+
+        if (e.type === 'bulb') {
+            var bright = 0;
+            if (rec && Math.abs(cur) > I_MIN) {
+                var pnom = (state.volt * state.volt) / state.bulbR;
+                bright = Math.min(1.15, rec.power / pnom);
+            }
+            if (bright > 0.02) {
+                var rad = Math.min(L * 0.6, geom.s * 0.8);
+                var grd = ctx.createRadialGradient(0, 0, 1, 0, 0, rad);
+                grd.addColorStop(0, 'rgba(251,191,36,' + Math.min(0.85, 0.22 + bright * 0.6).toFixed(3) + ')');
+                grd.addColorStop(1, 'rgba(251,191,36,0)');
+                ctx.fillStyle = grd;
+                ctx.beginPath();
+                ctx.arc(0, 0, rad, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            var R = Math.min(h * 1.3, L * 0.3);
+            ctx.globalAlpha = 0.5;
+            ctx.strokeStyle = cFg;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(-L / 2, 0);
+            ctx.lineTo(-R, 0);
+            ctx.moveTo(R, 0);
+            ctx.lineTo(L / 2, 0);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = bright > 0.02 ? '#f59e0b' : cFg;
+            ctx.lineWidth = 2.6;
+            ctx.beginPath();
+            ctx.arc(0, 0, R, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(-R * 0.62, -R * 0.62);
+            ctx.lineTo(R * 0.62, R * 0.62);
+            ctx.moveTo(R * 0.62, -R * 0.62);
+            ctx.lineTo(-R * 0.62, R * 0.62);
+            ctx.stroke();
+            if (bright > 0.12) {
+                ctx.fillStyle = 'rgba(251,191,36,' + Math.min(0.55, bright * 0.5).toFixed(3) + ')';
+                ctx.beginPath();
+                ctx.arc(0, 0, R * 0.9, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        } else if (e.type === 'battery') {
+            ctx.globalAlpha = 0.5;
+            ctx.strokeStyle = cFg;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(-L / 2, 0);
+            ctx.lineTo(-L * 0.14, 0);
+            ctx.moveTo(L * 0.14, 0);
+            ctx.lineTo(L / 2, 0);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-L * 0.14, -h);
+            ctx.lineTo(-L * 0.14, h);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(L * 0.14, -h * 0.5);
+            ctx.lineTo(L * 0.14, h * 0.5);
+            ctx.stroke();
+        } else if (e.type === 'resistor') {
+            ctx.globalAlpha = 0.5;
+            ctx.strokeStyle = cFg;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(-L / 2, 0);
+            ctx.lineTo(-L * 0.22, 0);
+            ctx.moveTo(L * 0.22, 0);
+            ctx.lineTo(L / 2, 0);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = cAccent;
+            ctx.lineWidth = 2.4;
+            ctx.beginPath();
+            ctx.rect(-L * 0.22, -h * 0.85, L * 0.44, h * 1.7);
+            ctx.stroke();
+        } else if (e.type === 'switch') {
+            /* 开关：闭合=绿色水平杆，断开=红色抬起杆 + 断口，颜色与「通/断」标注都很醒目 */
+            var isOpen = e.closed === false;
+            var lead = L * 0.24;
+            ctx.globalAlpha = 0.5;
+            ctx.strokeStyle = cFg;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(-L / 2, 0);
+            ctx.lineTo(-lead, 0);
+            ctx.moveTo(lead, 0);
+            ctx.lineTo(L / 2, 0);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+
+            /* 触点 */
+            ctx.fillStyle = isOpen ? cWarn : cOk;
+            ctx.beginPath();
+            ctx.arc(-lead, 0, 3.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(lead, 0, 3.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            /* 刀杆 */
+            ctx.strokeStyle = isOpen ? cWarn : cOk;
+            ctx.lineWidth = 4.6;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(-lead, 0);
+            if (isOpen) { ctx.lineTo(lead * 0.82, -h * 1.6); } else { ctx.lineTo(lead, 0); }
+            ctx.stroke();
+
+            /* 断开时光口加一道虚线，远看也能看出「没接通」 */
+            if (isOpen) {
+                ctx.save();
+                ctx.setLineDash([3, 3]);
+                ctx.strokeStyle = cWarn;
+                ctx.lineWidth = 1.6;
+                ctx.globalAlpha = 0.85;
+                ctx.beginPath();
+                ctx.moveTo(-lead, 0);
+                ctx.lineTo(lead, 0);
+                ctx.stroke();
+                ctx.restore();
+            }
+        } else if (e.type === 'ammeter' || e.type === 'voltmeter') {
+            /* 电表：圆 + A / V 字样 */
+            var isA = e.type === 'ammeter';
+            var Rm = Math.min(h * 1.15, L * 0.3);
+            ctx.globalAlpha = 0.5;
+            ctx.strokeStyle = cFg;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(-L / 2, 0);
+            ctx.lineTo(-Rm, 0);
+            ctx.moveTo(Rm, 0);
+            ctx.lineTo(L / 2, 0);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+
+            ctx.beginPath();
+            ctx.arc(0, 0, Rm, 0, Math.PI * 2);
+            ctx.fillStyle = cBg;
+            ctx.fill();
+            ctx.lineWidth = 2.6;
+            ctx.strokeStyle = isA ? '#2563eb' : '#7c3aed';
+            ctx.stroke();
+
+            ctx.save();
+            ctx.font = 'bold ' + Math.round(Rm * 1.05) + 'px ' + FONT;
+            ctx.fillStyle = isA ? '#2563eb' : '#7c3aed';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(isA ? 'A' : 'V', 0, Rm * 0.06);
+            ctx.restore();
+        } else if (e.type === 'motor') {
+            /* 电动机：圆 + M + 三叶转子（转速随电流变化） */
+            var Rm2 = Math.min(h * 1.15, L * 0.3);
+            ctx.globalAlpha = 0.5;
+            ctx.strokeStyle = cFg;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(-L / 2, 0);
+            ctx.lineTo(-Rm2, 0);
+            ctx.moveTo(Rm2, 0);
+            ctx.lineTo(L / 2, 0);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+
+            ctx.beginPath();
+            ctx.arc(0, 0, Rm2, 0, Math.PI * 2);
+            ctx.fillStyle = cBg;
+            ctx.fill();
+            ctx.lineWidth = 2.6;
+            ctx.strokeStyle = cOk;
+            ctx.stroke();
+
+            var spin = Math.abs(cur) > 0.004 ? phase * (6 + Math.min(40, Math.abs(cur) * 90)) : 0;
+            ctx.save();
+            ctx.translate(0, 0);
+            ctx.rotate(spin);
+            ctx.strokeStyle = cOk;
+            ctx.lineWidth = 2.2;
+            for (var blade = 0; blade < 3; blade++) {
+                ctx.rotate(Math.PI * 2 / 3);
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(0, -Rm2 * 0.72);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            ctx.save();
+            ctx.font = 'bold ' + Math.round(Rm2 * 0.7) + 'px ' + FONT;
+            ctx.fillStyle = cOk;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('M', 0, Rm2 * 0.02);
+            ctx.restore();
+        } else if (e.type === 'rheostat') {
+            /* 滑动变阻器：矩形 + 上方滑片箭头 */
+            ctx.globalAlpha = 0.5;
+            ctx.strokeStyle = cFg;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(-L / 2, 0);
+            ctx.lineTo(-L * 0.26, 0);
+            ctx.moveTo(L * 0.26, 0);
+            ctx.lineTo(L / 2, 0);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+
+            ctx.strokeStyle = cAccent;
+            ctx.lineWidth = 2.4;
+            ctx.beginPath();
+            ctx.rect(-L * 0.26, -h * 0.6, L * 0.52, h * 1.2);
+            ctx.stroke();
+
+            /* 滑片 */
+            var ratio = Math.max(0, Math.min(1, state.rheoR / 20));
+            var slideX = -L * 0.24 + L * 0.48 * ratio;
+            ctx.beginPath();
+            ctx.moveTo(slideX, -h * 0.6);
+            ctx.lineTo(slideX, -h * 1.7);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(slideX - 4, -h * 1.7);
+            ctx.lineTo(slideX + 4, -h * 1.7);
+            ctx.lineTo(slideX, -h * 1.05);
+            ctx.closePath();
+            ctx.fillStyle = cAccent;
+            ctx.fill();
+        } else {
+            ctx.globalAlpha = 0.5;
+            ctx.strokeStyle = cFg;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(-L / 2, 0);
+            ctx.lineTo(L / 2, 0);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+        }
+
+        /* 电流方向与大小（流动虚线 + 箭头） */
+        if (state.flow && rec && Math.abs(cur) > 0.004) {
+            var dir = cur > 0 ? 1 : -1;
+            var mag = Math.min(1.8, Math.abs(cur) / 0.35);
+            ctx.save();
+            ctx.strokeStyle = '#f59e0b';
+            ctx.globalAlpha = 0.92;
+            ctx.lineWidth = 2.2;
+            ctx.setLineDash([7, 9]);
+            ctx.lineDashOffset = -dir * ((phase * 60 * mag * state.speed) % (16 * 1000));
+            ctx.beginPath();
+            ctx.moveTo(-L / 2 + 2, 0);
+            ctx.lineTo(L / 2 - 2, 0);
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.fillStyle = '#f59e0b';
+            var ax = dir * L * 0.3;
+            ctx.beginPath();
+            ctx.moveTo(ax + dir * 7, 0);
+            ctx.lineTo(ax - dir * 3.5, -5);
+            ctx.lineTo(ax - dir * 3.5, 5);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        ctx.restore();
+
+        /* ---------- 以下在屏幕坐标系绘制，保证文字始终水平 ---------- */
+        var nx = -Math.sin(g.ang);
+        var ny = Math.cos(g.ang);
+        var label = '';
+        if (state.values) {
+            if (e.type === 'battery') { label = state.volt + 'V'; }
+            else if (e.type === 'bulb') { label = Math.abs(cur) > I_MIN ? trimNum(Math.abs(cur), 2) + 'A' : '不亮'; }
+            else if (e.type === 'resistor') { label = state.resR + 'Ω'; }
+            else if (e.type === 'rheostat') { label = state.rheoR + 'Ω'; }
+            else if (e.type === 'motor') { label = Math.abs(cur) > 0.004 ? trimNum(Math.abs(cur), 2) + 'A' : '不转'; }
+            else if (e.type === 'ammeter') { label = trimNum(Math.abs(cur), 3) + 'A'; }
+            else if (e.type === 'voltmeter') { label = trimNum(Math.abs(rec ? rec.voltage : 0), 2) + 'V'; }
+        }
+
+        var tags = [];
+        if (label) { tags.push({ text: label, tone: cMuted }); }
+        if (e.type === 'switch') {
+            tags.push({ text: e.closed === false ? '断' : '通', tone: e.closed === false ? cWarn : cOk });
+        }
+        if (e.type === 'battery') {
+            tags.unshift({ text: '＋', tone: cMuted });
+        }
+
+        for (var ti = 0; ti < tags.length; ti++) {
+            var dist = h + 15 + ti * 19;
+            var tx = g.mx + nx * dist;
+            var ty = g.my + ny * dist;
+            ctx.save();
+            ctx.font = 'bold 11.5px ' + FONT;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            var tw = ctx.measureText(tags[ti].text).width;
+            ctx.globalAlpha = 0.88;
+            ctx.fillStyle = cBg;
+            ctx.fillRect(tx - tw / 2 - 5, ty - 9, tw + 10, 18);
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = tags[ti].tone;
+            ctx.fillText(tags[ti].text, tx, ty + 0.5);
+            ctx.restore();
+        }
+    }
+
+    function draw() {
+        var cBg = cssVar('--et-surface', '#ffffff');
+        var cFg = cssVar('--et-fg', '#0b1220');
+        var cMuted = cssVar('--et-muted', '#64748b');
+        var cAccent = cssVar('--et-accent', '#4f46e5');
+        var cWarn = cssVar('--et-err', '#dc2626');
+        var cOk = cssVar('--et-ok', '#059669');
+
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = cBg;
+        ctx.fillRect(0, 0, W, H);
+
+        /* 空槽（可放置位置） */
+        var i;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 7]);
+        ctx.strokeStyle = cMuted;
+        ctx.globalAlpha = 0.16;
+        ctx.beginPath();
+        for (i = 0; i < ALL_KEYS.length; i++) {
+            if (state.edges[ALL_KEYS[i]]) { continue; }
+            var g = edgeGeom(ALL_KEYS[i]);
+            ctx.moveTo(g.x1, g.y1);
+            ctx.lineTo(g.x2, g.y2);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+
+        /* 节点 */
+        ctx.fillStyle = cMuted;
+        ctx.globalAlpha = 0.32;
+        for (var r = 0; r < ROWS; r++) {
+            for (var c = 0; c < COLS; c++) {
+                var p = nodeXY(r, c);
+                ctx.beginPath();
+                ctx.arc(p[0], p[1], 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        ctx.globalAlpha = 1;
+
+        /* 高亮（画在元件下面） */
+        if (state.sel && state.sel !== state.hover) { highlight(state.sel, cAccent, true); }
+        if (state.hover) { highlight(state.hover, cAccent, false); }
+
+        /* 元件 */
+        for (var k in state.edges) {
+            drawEdge(k, state.edges[k], cFg, cMuted, cAccent, cWarn, cBg, cOk);
+        }
+    }
+
+    function tick() {
+        raf = 0;
+        phase += 0.016;
+        draw();
+        if (flowing) { raf = window.requestAnimationFrame(tick); }
+    }
+
+    function requestDraw() {
+        if (!raf) { raf = window.requestAnimationFrame(tick); }
+    }
+
+    /* ============ 状态带 ============ */
+
+    function el(tag, cls, text) {
+        var node = document.createElement(tag);
+        if (cls) { node.className = cls; }
+        if (text !== undefined && text !== null) { node.textContent = text; }
+        return node;
+    }
+
+    function stat(label, value) {
+        var s = el('span', 'cb-stat', label + ' ');
+        s.appendChild(el('b', null, value));
+        return s;
+    }
+
+    function renderFoot() {
+        var foot = document.getElementById('foot');
+        foot.textContent = '';
+
+        if (!countType('battery')) {
+            foot.appendChild(el('span', 'cb-hint',
+                '把左侧元件拖到画布的虚线格上即可搭电路，「现成电路」里有一键载入的演示电路'));
+            return;
+        }
+
+        foot.appendChild(stat('电源', state.volt + 'V'));
+        foot.appendChild(stat('总电流', state.res ? trimNum(state.res.battery, 3) + 'A' : '—'));
+
+        var n = 0;
+        for (var k in state.edges) {
+            if (state.edges[k].type !== 'bulb') { continue; }
+            n++;
+            var rec = state.res && state.res.items[k] ? state.res.items[k] : null;
+            var i = rec ? Math.abs(rec.current) : 0;
+            foot.appendChild(stat('灯泡' + n, i > I_MIN
+                ? (trimNum(i, 2) + 'A · ' + trimNum(rec.power, 2) + 'W')
+                : '不亮'));
+        }
+
+        /* 电表读数（最多各显示 2 个） */
+        var meters = { ammeter: [], voltmeter: [], motor: [] };
+        for (var mk in state.edges) {
+            var mt = state.edges[mk].type;
+            if (meters[mt] && meters[mt].length < 2) { meters[mt].push(mk); }
+        }
+        var mi;
+        for (mi = 0; mi < meters.ammeter.length; mi++) {
+            var arec = state.res && state.res.items[meters.ammeter[mi]];
+            foot.appendChild(stat('电流表' + (mi + 1), arec ? trimNum(Math.abs(arec.current), 3) + 'A' : '—'));
+        }
+        for (mi = 0; mi < meters.voltmeter.length; mi++) {
+            var vrec = state.res && state.res.items[meters.voltmeter[mi]];
+            foot.appendChild(stat('电压表' + (mi + 1), vrec ? trimNum(Math.abs(vrec.voltage), 2) + 'V' : '—'));
+        }
+        for (mi = 0; mi < meters.motor.length; mi++) {
+            var mrec = state.res && state.res.items[meters.motor[mi]];
+            var mc = mrec ? Math.abs(mrec.current) : 0;
+            foot.appendChild(stat('电动机' + (mi + 1), mc > 0.01 ? trimNum(mc, 2) + 'A · 转动' : '不转'));
+        }
+
+        if (state.verdict) { foot.appendChild(el('span', 'cb-verdict', state.verdict)); }
+        if (state.warning) {
+            foot.appendChild(el('span', 'cb-warn', state.warning));
+        } else if (state.res && state.res.battery > 0.002) {
+            foot.appendChild(el('span', 'cb-ok', '通路'));
+        }
+    }
+
+    /* ============ 视图与几何 ============ */
+
+    function resize() {
+        var stage = document.getElementById('stage');
+        var rect = stage.getBoundingClientRect();
+        var dpr = window.devicePixelRatio || 1;
+        W = Math.max(320, Math.floor(rect.width));
+        H = Math.max(220, Math.floor(rect.height));
+        cv.width = Math.round(W * dpr);
+        cv.height = Math.round(H * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        layout();
+        requestDraw();
+    }
+
+    /* ============ 交互 ============ */
+
+    function describe(key, e, rec) {
+        if (e.type === 'battery') {
+            return '电源：' + state.volt + 'V（内阻 ' + R_INT + 'Ω），输出电流 ' +
+                (rec ? trimNum(Math.abs(rec.current), 3) + 'A' : '—');
+        }
+        if (e.type === 'bulb') {
+            if (!rec || Math.abs(rec.current) < I_MIN) { return '灯泡：不亮（无电流通过）'; }
+            return '灯泡：电流 ' + trimNum(Math.abs(rec.current), 3) + 'A，电压 ' +
+                trimNum(Math.abs(rec.voltage), 2) + 'V，功率 ' + trimNum(rec.power, 3) + 'W';
+        }
+        if (e.type === 'motor') {
+            return '电动机：电流 ' + (rec ? trimNum(Math.abs(rec.current), 3) + 'A' : '—') +
+                '，转速随电流增大（线圈电阻 ' + R_MOTOR + 'Ω）';
+        }
+        if (e.type === 'resistor') {
+            return '定值电阻：阻值 ' + state.resR + 'Ω，电流 ' +
+                (rec ? trimNum(Math.abs(rec.current), 3) + 'A' : '—');
+        }
+        if (e.type === 'rheostat') {
+            return '滑动变阻器：当前接入阻值 ' + state.rheoR + 'Ω，电流 ' +
+                (rec ? trimNum(Math.abs(rec.current), 3) + 'A' : '—') + '（阻值在 ⚙ 里调）';
+        }
+        if (e.type === 'ammeter') {
+            return '电流表：读数 ' + (rec ? trimNum(Math.abs(rec.current), 3) + 'A' : '—') +
+                '（内阻约 ' + R_AMMETER + 'Ω，串联接入、电流从「+」接线柱流入）';
+        }
+        if (e.type === 'voltmeter') {
+            return '电压表：读数 ' + (rec ? trimNum(Math.abs(rec.voltage), 2) + 'V' : '—') +
+                '（内阻极大，并联在被测元件两端）';
+        }
+        if (e.type === 'switch') {
+            return '开关：' + (e.closed === false ? '断开（电路断开）' : '闭合（电流可以通过）');
+        }
+        return '导线：电阻约 ' + R_WIRE + 'Ω，可近似看作没有电阻';
+    }
+
+    function onCanvasTap(key) {
+        if (!key) { return; }
+        var e = state.edges[key];
+
+        if (state.tool === 'erase') {
+            if (e) {
+                delete state.edges[key];
+                if (state.sel === key) { state.sel = null; }
+                simulateAll();
+                save();
+                chrome.beep('tick');
+            }
+            return;
+        }
+
+        if (state.tool === 'select') {
+            if (e && e.type === 'switch') {
+                e.closed = e.closed === false;
+                state.sel = key;
+                simulateAll();
+                save();
+                chrome.toast(e.closed ? '开关已闭合' : '开关已断开');
+                return;
+            }
+            state.sel = key;
+            requestDraw();
+            if (e) {
+                chrome.toast(describe(key, e, state.res && state.res.items[key] ? state.res.items[key] : null));
+            }
+            return;
+        }
+
+        /* 放置元件 */
+        state.edges[key] = { type: state.tool, closed: true };
+        state.sel = key;
+        simulateAll();
+        save();
+        chrome.beep('tick');
+    }
+
+    function save() {
+        store.set('tool', state.tool);
+        store.set('volt', state.volt);
+        store.set('bulbR', state.bulbR);
+        store.set('resR', state.resR);
+        store.set('rheoR', state.rheoR);
+        store.set('values', state.values);
+        store.set('flow', state.flow);
+        store.set('speed', state.speed);
+        store.set('edges', state.edges);
+    }
+
+    /* ============ 典型电路图（示意图缩略图） ============ */
+
+    var GAL_S = 46;      /* 缩略图每格边长（viewBox 单位） */
+    var GAL_PAD = 30;
+
+    /* 把预设的 runs 展开成边表，供缩略图使用（与画布同一套坐标） */
+    function presetEdges(preset) {
+        var edges = {};
+        for (var i = 0; i < preset.runs.length; i++) {
+            var run = preset.runs[i];
+            for (var t = run[2]; t <= run[3]; t++) {
+                var key = run[0] === 'h' ? ekey('h', run[1], t) : ekey('v', t, run[1]);
+                edges[key] = { type: run[4] };
+            }
+        }
+        return edges;
+    }
+
+    function segAxes(x1, y1, x2, y2) {
+        var dx = x2 - x1;
+        var dy = y2 - y1;
+        var len = Math.sqrt(dx * dx + dy * dy) || 1;
+        return { ux: dx / len, uy: dy / len, px: -dy / len, py: dx / len, len: len };
+    }
+
+    function svgPt(x, y) { return x.toFixed(1) + ' ' + y.toFixed(1); }
+
+    function svgLine(x1, y1, x2, y2, cls) {
+        return '<line class="' + (cls || 'cbs-w') + '" x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) +
+            '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '"></line>';
+    }
+
+    function arrowHead(x, y, dx, dy, size) {
+        var len = Math.sqrt(dx * dx + dy * dy) || 1;
+        var ux = dx / len;
+        var uy = dy / len;
+        var px = -uy;
+        var py = ux;
+        var s = size || 5;
+        return '<polygon class="cbs-a" points="' + svgPt(x, y) + ' ' +
+            svgPt(x - ux * s + px * s * 0.62, y - uy * s + py * s * 0.62) + ' ' +
+            svgPt(x - ux * s - px * s * 0.62, y - uy * s - py * s * 0.62) + '"></polygon>';
+    }
+
+    /* 单个元件符号：画在 (x1,y1)-(x2,y2) 这一段上（含两侧引脚） */
+    function schematicSymbol(type, x1, y1, x2, y2) {
+        var ax = segAxes(x1, y1, x2, y2);
+        var ux = ax.ux;
+        var uy = ax.uy;
+        var px = ax.px;
+        var py = ax.py;
+        var len = ax.len;
+        var mx = (x1 + x2) / 2;
+        var my = (y1 + y2) / 2;
+        var out = '';
+
+        function at(dist, side) {
+            return [mx + ux * dist + px * side, my + uy * dist + py * side];
+        }
+        function lead(gap) {
+            var d = len * gap;
+            return svgLine(x1, y1, mx - ux * d, my - uy * d) +
+                svgLine(mx + ux * d, my + uy * d, x2, y2);
+        }
+        function bar(dist, half, cls) {
+            var a = at(dist, -half);
+            var b = at(dist, half);
+            return svgLine(a[0], a[1], b[0], b[1], cls || 'cbs-s');
+        }
+        function poly(points, cls) {
+            var s = '';
+            for (var i = 0; i < points.length; i++) { s += svgPt(points[i][0], points[i][1]) + ' '; }
+            return '<polygon class="' + (cls || 'cbs-f') + '" points="' + s.replace(/\s+$/, '') + '"></polygon>';
+        }
+        function dial(label) {
+            out += lead(0.24);
+            out += '<circle class="cbs-f" cx="' + mx.toFixed(1) + '" cy="' + my.toFixed(1) +
+                '" r="' + (len * 0.24).toFixed(1) + '"></circle>';
+            out += '<text class="cbs-t" x="' + mx.toFixed(1) + '" y="' + (my + 4.4).toFixed(1) + '">' + label + '</text>';
+            return out;
+        }
+
+        if (type === 'wire') {
+            return svgLine(x1, y1, x2, y2);
+        }
+        if (type === 'battery') {
+            out += lead(0.13);
+            out += bar(-len * 0.1, len * 0.22, 'cbs-s cbs-s--long');
+            out += bar(len * 0.1, len * 0.11, 'cbs-s');
+            return out;
+        }
+        if (type === 'bulb') {
+            out += lead(0.24);
+            out += '<circle class="cbs-f" cx="' + mx.toFixed(1) + '" cy="' + my.toFixed(1) +
+                '" r="' + (len * 0.24).toFixed(1) + '"></circle>';
+            var a1 = at(-len * 0.17, -len * 0.17);
+            var b1 = at(len * 0.17, len * 0.17);
+            var a2 = at(-len * 0.17, len * 0.17);
+            var b2 = at(len * 0.17, -len * 0.17);
+            out += svgLine(a1[0], a1[1], b1[0], b1[1], 'cbs-s') + svgLine(a2[0], a2[1], b2[0], b2[1], 'cbs-s');
+            return out;
+        }
+        if (type === 'switch') {
+            out += lead(0.3);
+            var p1 = at(-len * 0.3, 0);
+            var p2 = at(len * 0.3, 0);
+            out += svgLine(p1[0], p1[1], p2[0], p2[1], 'cbs-s');
+            var tip = at(len * 0.48, -len * 0.22);
+            out += svgLine(p2[0], p2[1], tip[0], tip[1], 'cbs-s');
+            out += '<circle class="cbs-d" cx="' + p1[0].toFixed(1) + '" cy="' + p1[1].toFixed(1) + '" r="2"></circle>';
+            out += '<circle class="cbs-d" cx="' + p2[0].toFixed(1) + '" cy="' + p2[1].toFixed(1) + '" r="2"></circle>';
+            return out;
+        }
+        if (type === 'resistor' || type === 'rheostat') {
+            var rw = len * 0.3;
+            var rh = len * 0.16;
+            out += lead(0.3);
+            out += poly([at(-rw, -rh), at(rw, -rh), at(rw, rh), at(-rw, rh)], 'cbs-f');
+            if (type === 'rheostat') {
+                var s1 = at(-rw, rh + len * 0.2);
+                var s2 = at(rw, -rh - len * 0.2);
+                out += svgLine(s1[0], s1[1], s2[0], s2[1], 'cbs-s');
+                out += arrowHead(s2[0], s2[1], s2[0] - s1[0], s2[1] - s1[1], 6);
+            }
+            return out;
+        }
+        return dial(type === 'ammeter' ? 'A' : (type === 'voltmeter' ? 'V' : 'M'));
+    }
+
+    /* 生成一个预设的整幅示意图（返回 viewBox 与图形片段） */
+    function schematic(preset) {
+        var edges = presetEdges(preset);
+        var keys = [];
+        var r0 = 99;
+        var c0 = 99;
+        var r1 = -1;
+        var c1 = -1;
+        var k;
+        var i;
+        for (k in edges) {
+            keys.push(k);
+            var nd = keyNodes(k);
+            for (i = 0; i < 2; i++) {
+                var rr = Math.floor(nd[i] / COLS);
+                var cc = nd[i] % COLS;
+                if (rr < r0) { r0 = rr; }
+                if (cc < c0) { c0 = cc; }
+                if (rr > r1) { r1 = rr; }
+                if (cc > c1) { c1 = cc; }
+            }
+        }
+
+        function nx(c) { return GAL_PAD + (c - c0) * GAL_S; }
+        function ny(r) { return GAL_PAD + (r - r0) * GAL_S; }
+
+        var deg = {};
+        for (i = 0; i < keys.length; i++) {
+            var nd2 = keyNodes(keys[i]);
+            deg[nd2[0]] = (deg[nd2[0]] || 0) + 1;
+            deg[nd2[1]] = (deg[nd2[1]] || 0) + 1;
+        }
+
+        var body = '';
+        for (i = 0; i < keys.length; i++) {
+            var kk = keys[i];
+            var nn = keyNodes(kk);
+            body += schematicSymbol(edges[kk].type,
+                nx(nn[0] % COLS), ny(Math.floor(nn[0] / COLS)),
+                nx(nn[1] % COLS), ny(Math.floor(nn[1] / COLS)));
+        }
+        for (k in deg) {
+            if (deg[k] < 3) { continue; }
+            var num = Number(k);
+            body += '<circle class="cbs-d" cx="' + nx(num % COLS).toFixed(1) + '" cy="' +
+                ny(Math.floor(num / COLS)).toFixed(1) + '" r="2.8"></circle>';
+        }
+
+        return { vw: (c1 - c0) * GAL_S + GAL_PAD * 2, vh: (r1 - r0) * GAL_S + GAL_PAD * 2, body: body };
+    }
+
+    var SYMBOLS = [
+        ['wire', '导线'], ['battery', '电源'], ['switch', '开关'], ['bulb', '小灯泡'],
+        ['resistor', '定值电阻'], ['rheostat', '滑动变阻器'], ['ammeter', '电流表'],
+        ['voltmeter', '电压表'], ['motor', '电动机']
+    ];
+
+    function openGallery() {
+        var box = document.createElement('div');
+        box.className = 'cb-gal';
+
+        var legend = document.createElement('div');
+        legend.className = 'cb-gal__legend';
+        for (var i = 0; i < SYMBOLS.length; i++) {
+            var chip = document.createElement('span');
+            chip.className = 'cb-gal__lg';
+            chip.innerHTML = '<svg class="cbs cbs--s" viewBox="0 0 92 40">' +
+                schematicSymbol(SYMBOLS[i][0], 10, 20, 82, 20) + '</svg><b>' + SYMBOLS[i][1] + '</b>';
+            legend.appendChild(chip);
+        }
+        box.appendChild(legend);
+
+        var grid = document.createElement('div');
+        grid.className = 'cb-gal__grid';
+        var modal = null;
+
+        for (i = 0; i < PRESETS.length; i++) {
+            (function (index) {
+                var p = PRESETS[index];
+                var s = schematic(p);
+                var card = document.createElement('button');
+                card.type = 'button';
+                card.className = 'cb-gal__card' + (index === state.preset ? ' is-active' : '');
+                card.title = '载入「' + p.name + '」';
+                card.innerHTML =
+                    '<span class="cb-gal__pic"><svg class="cbs" viewBox="0 0 ' + s.vw + ' ' + s.vh + '">' +
+                    s.body + '</svg></span>' +
+                    '<span class="cb-gal__name">' + p.name + '</span>' +
+                    '<span class="cb-gal__tip">' + p.tip + '</span>';
+                card.addEventListener('click', function () {
+                    applyPreset(index, true);
+                    renderChips();
+                    if (modal) { modal.close(); }
+                });
+                grid.appendChild(card);
+            })(i);
+        }
+        box.appendChild(grid);
+
+        var tip = document.createElement('p');
+        tip.className = 'cb-gal__note';
+        tip.textContent = '点任意电路图即可载入画布（可继续拖动改动、点开关通断）。电压表并联在被测元件两端，电流表串联接入被测支路；'
+            + '载入后底部会实时给出串并联结论与各元件电流。';
+        box.appendChild(tip);
+
+        modal = chrome.modal({
+            title: '典型电路图（' + PRESETS.length + ' 个）',
+            icon: 'i-grid',
+            size: 'wide',
+            body: box,
+            buttons: [{ label: '关闭', primary: true }]
+        });
+    }
+
+    function applyPreset(index, announce) {
+        var preset = PRESETS[index];
+        if (!preset) { return; }
+        state.edges = {};
+        for (var i = 0; i < preset.runs.length; i++) {
+            var run = preset.runs[i];
+            var dir = run[0];
+            var fixed = run[1];
+            for (var t = run[2]; t <= run[3]; t++) {
+                var key = dir === 'h' ? ekey('h', fixed, t) : ekey('v', t, fixed);
+                if (ALL_KEYS.indexOf(key) === -1) { continue; }
+                state.edges[key] = { type: run[4], closed: true };
+            }
+        }
+        state.preset = index;
+        state.sel = null;
+        store.set('preset', index);
+        simulateAll();
+        save();
+        if (announce) {
+            chrome.beep('ok');
+            chrome.toast('已载入示例：' + preset.name);
+        }
+    }
+
+    function toggleAllSwitches() {
+        var switches = [];
+        for (var k in state.edges) {
+            if (state.edges[k].type === 'switch') { switches.push(k); }
+        }
+        if (!switches.length) {
+            chrome.toast('还没有放开关，可在左侧选「开关」拖到电线上', 'warn');
+            return;
+        }
+        var anyOpen = false;
+        for (var i = 0; i < switches.length; i++) {
+            if (state.edges[switches[i]].closed === false) { anyOpen = true; }
+        }
+        for (i = 0; i < switches.length; i++) {
+            state.edges[switches[i]].closed = anyOpen;
+        }
+        simulateAll();
+        save();
+        chrome.beep(anyOpen ? 'ok' : 'tick');
+        chrome.toast(anyOpen ? '全部开关已闭合' : '全部开关已断开');
+    }
+
+    function setTool(tool) {
+        if (!TOOL_NAME[tool]) { return; }
+        state.tool = tool;
+        store.set('tool', tool);
+        var btns = document.getElementById('palette').querySelectorAll('button[data-tool]');
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].classList.toggle('is-active', btns[i].getAttribute('data-tool') === tool);
+        }
+    }
+
+    function renderChips() {
+        var list = document.getElementById('segVolt').querySelectorAll('button');
+        var i;
+        for (i = 0; i < list.length; i++) {
+            list[i].classList.toggle('is-active', Number(list[i].getAttribute('data-volt')) === state.volt);
+        }
+        var btnText = document.getElementById('btnGalleryText');
+        var cur = PRESETS[state.preset];
+        if (btnText) { btnText.textContent = '典型电路图 · ' + (cur ? cur.name : '自定义'); }
+        setTool(state.tool);
+    }
+
+    /* ============ 设置抽屉 ============ */
+
+    function buildSettings(body) {
+        function heading(text) {
+            var h = document.createElement('h4');
+            h.textContent = text;
+            body.appendChild(h);
+        }
+
+        function switchRow(label, checked, onChange) {
+            var row = document.createElement('label');
+            row.className = 'et-drawer__switch';
+            row.appendChild(document.createTextNode(label));
+            var cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.checked = checked;
+            cb.addEventListener('change', function () { onChange(cb.checked); });
+            row.appendChild(cb);
+            body.appendChild(row);
+        }
+
+        function segRow(labels, values, current, onPick) {
+            var row = document.createElement('div');
+            row.className = 'et-drawer__row';
+            for (var i = 0; i < values.length; i++) {
+                (function (value, label) {
+                    var b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'et-btn' + (value === current ? ' et-btn--primary' : '');
+                    b.style.flex = '1 1 28%';
+                    b.textContent = label;
+                    b.addEventListener('click', function () {
+                        onPick(value);
+                        refresh();
+                    });
+                    row.appendChild(b);
+                })(values[i], labels[i]);
+            }
+            body.appendChild(row);
+        }
+
+        heading('电源电压');
+        segRow(['1.5V', '3V', '4.5V', '6V'], [1.5, 3, 4.5, 6], state.volt, function (v) {
+            state.volt = v;
+            renderChips();
+            simulateAll();
+            save();
+        });
+
+        heading('灯泡电阻');
+        segRow(['5Ω', '10Ω', '20Ω'], [5, 10, 20], state.bulbR, function (v) {
+            state.bulbR = v;
+            simulateAll();
+            save();
+        });
+
+        heading('定值电阻');
+        segRow(['5Ω', '10Ω', '20Ω'], [5, 10, 20], state.resR, function (v) {
+            state.resR = v;
+            simulateAll();
+            save();
+        });
+
+        heading('滑动变阻器接入阻值');
+        segRow(['0Ω', '5Ω', '10Ω', '20Ω'], [0, 5, 10, 20], state.rheoR, function (v) {
+            state.rheoR = v;
+            simulateAll();
+            save();
+        });
+
+        heading('显示');
+        switchRow('显示元件数值', state.values, function (on) {
+            state.values = on;
+            save();
+            requestDraw();
+        });
+        switchRow('显示电流方向动画', state.flow, function (on) {
+            state.flow = on;
+            save();
+            simulateAll();
+        });
+
+        heading('动画速度');
+        segRow(['慢', '正常', '快'], [0.6, 1, 1.6], state.speed, function (v) {
+            state.speed = v;
+            save();
+            simulateAll();
+        });
+
+        var tip = document.createElement('p');
+        tip.className = 'et-drawer__tip';
+        tip.innerHTML = '求解方式：把每个节点看成未知电位，用<b>节点法</b>列线性方程组（基尔霍夫电流定律），'
+            + '再用列主元高斯消元求解，灯泡亮度按实际功率 P = I²R 与原功率的比值显示。'
+            + '<br>元件内阻：导线 0.05Ω、电源 0.5Ω、电流表 0.01Ω、电压表 1MΩ、电动机线圈 20Ω。'
+            + '<br>串联 / 并联判定采用与课堂一致的做法：分别把一只灯泡断开，看另一只是否还亮。'
+            + '<br><b>为什么我接的「并联」被判成串联？</b>常见原因：电源串在了某一条分支里（电流只有一条路径）。'
+            + '正确接法是把电源接在两分支「汇合后的干路」上，可点「两灯并联」载入对照。'
+            + '<br>电路与设置保存在本机浏览器，下次打开自动恢复。';
+        body.appendChild(tip);
+
+        function refresh() {
+            while (body.firstChild) { body.removeChild(body.firstChild); }
+            buildSettings(body);
+        }
+    }
+
+    /* ============ 事件绑定 ============ */
+
+    cv.addEventListener('pointerdown', function (ev) {
+        ev.preventDefault();
+        onCanvasTap(edgeAt(ev.clientX, ev.clientY));
+    });
+
+    cv.addEventListener('pointermove', function (ev) {
+        var key = edgeAt(ev.clientX, ev.clientY);
+        if (key !== state.hover) {
+            state.hover = key;
+            requestDraw();
+        }
+    });
+
+    cv.addEventListener('pointerleave', function () {
+        state.hover = null;
+        requestDraw();
+    });
+
+    cv.addEventListener('contextmenu', function (ev) {
+        ev.preventDefault();
+        var key = edgeAt(ev.clientX, ev.clientY);
+        if (key && state.edges[key]) {
+            delete state.edges[key];
+            if (state.sel === key) { state.sel = null; }
+            simulateAll();
+            save();
+            chrome.beep('tick');
+        }
+    });
+
+    var ghost = null;
+
+    function moveGhost(x, y) {
+        if (!ghost) { return; }
+        ghost.style.left = x + 'px';
+        ghost.style.top = y + 'px';
+    }
+
+    document.getElementById('palette').addEventListener('pointerdown', function (ev) {
+        var btn = ev.target && ev.target.closest ? ev.target.closest('button[data-tool]') : null;
+        if (!btn) { return; }
+        var tool = btn.getAttribute('data-tool');
+        setTool(tool);
+        if (tool === 'select' || tool === 'erase') { return; }
+        ghost = el('div', 'cb-ghost', TOOL_NAME[tool] + ' → 拖到格子上');
+        document.body.appendChild(ghost);
+        moveGhost(ev.clientX, ev.clientY);
+        ev.preventDefault();
+    });
+
+    document.addEventListener('pointermove', function (ev) {
+        if (!ghost) { return; }
+        moveGhost(ev.clientX, ev.clientY);
+        var key = edgeAt(ev.clientX, ev.clientY);
+        if (key !== state.hover) {
+            state.hover = key;
+            requestDraw();
+        }
+    });
+
+    document.addEventListener('pointerup', function (ev) {
+        if (!ghost) { return; }
+        document.body.removeChild(ghost);
+        ghost = null;
+        var key = edgeAt(ev.clientX, ev.clientY);
+        state.hover = null;
+        if (key) {
+            state.edges[key] = { type: state.tool, closed: true };
+            state.sel = key;
+            simulateAll();
+            save();
+            chrome.beep('tick');
+        } else {
+            requestDraw();
+        }
+    });
+
+    document.getElementById('segVolt').addEventListener('click', function (ev) {
+        var v = ev.target && ev.target.getAttribute ? ev.target.getAttribute('data-volt') : null;
+        if (!v) { return; }
+        state.volt = Number(v);
+        renderChips();
+        simulateAll();
+        save();
+        chrome.beep('tick');
+    });
+
+    document.getElementById('btnGallery').addEventListener('click', function () {
+        openGallery();
+        chrome.beep('tick');
+    });
+
+    document.getElementById('btnClear').addEventListener('click', function () {
+        state.edges = {};
+        state.sel = null;
+        simulateAll();
+        save();
+        chrome.beep('tick');
+        chrome.toast('已清空电路，可以自己重新搭一个');
+    });
+
+    document.addEventListener('keydown', function (ev) {
+        var node = document.activeElement;
+        var tag = node && node.tagName ? node.tagName.toUpperCase() : '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (node && node.isContentEditable)) { return; }
+        if (document.querySelector('.et-modal, .et-drawer-backdrop')) { return; }
+
+        if (TOOL_KEYS[ev.key]) {
+            setTool(TOOL_KEYS[ev.key]);
+            ev.preventDefault();
+            return;
+        }
+        if (ev.key === 'Escape') {
+            state.sel = null;
+            requestDraw();
+            return;
+        }
+        if (ev.code === 'Space' || ev.key === ' ') {
+            ev.preventDefault();
+            toggleAllSwitches();
+            return;
+        }
+        if (ev.key === 'g' || ev.key === 'G') {
+            ev.preventDefault();
+            openGallery();
+        }
+    });
+
+    window.addEventListener('resize', function () {
+        window.clearTimeout(window.__cbResize);
+        window.__cbResize = window.setTimeout(resize, 140);
+    });
+
+    try {
+        var observer = new MutationObserver(function () { requestDraw(); });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-et-theme'] });
+    } catch (err) { /* 老内核忽略 */ }
+
+    /* ============ 启动 ============ */
+
+    var savedPreset = Number(store.get('preset', 0));
+    if (!isFinite(savedPreset) || savedPreset < 0 || savedPreset > PRESETS.length - 1) { savedPreset = 0; }
+    state.preset = savedPreset;
+
+    if (!restoreEdges()) { applyPreset(savedPreset, false); }
+    renderChips();
+    resize();
+    simulateAll();
+})();
+</script>
+
+</body>
+</html>

@@ -17,6 +17,7 @@
 | [`build_css.py`](build_css.py) | 四层 CSS 拼合产出到 `public/assets/css/` | 改过 CSS 源后 / 提交前 `--check` |
 | [`new_tool.py`](new_tool.py) | 新工具脚手架（模板取 `tools/_template/`，自动登记共享片段 + 内联 + 自检） | 新建工具时 |
 | [`asset_report.py`](asset_report.py) | 静态资源体积审计（`public/` 汇总 + 各工具 HTML 体积排行，只读） | 每批工具完成后 / 发版前 |
+| [`check_tools_runtime.py`](check_tools_runtime.py) | 工具**运行时**抽检：抽 `<script>` 块跑 `node --check` + 无头 Chrome/Edge 打开 `file://` 抓 DOM / 截图 / 控制台报错（**非门禁**，无 Node 或浏览器时优雅跳过） | 每批工具交付前 |
 | [`icons/prepare_source.py`](icons/prepare_source.py) | 从 Iconify 提取图标离线源（**唯一联网脚本**） | 改过 `icons.txt` 后（低频） |
 | [`icons/build_sprite.py`](icons/build_sprite.py) | 网站图标 sprite 子集化（离线） | 改过 `icons.txt` 后 |
 
@@ -53,6 +54,11 @@ python scripts/icons/build_sprite.py
 
 # 体积审计（每批工具完成后）
 python scripts/asset_report.py
+
+# 工具运行时抽检（每批工具交付前；非门禁，缺 Node / 浏览器时自动跳过）
+python scripts/check_tools_runtime.py
+python scripts/check_tools_runtime.py --no-shot     # 只抓 DOM 与语法，不出截图
+python scripts/check_tools_runtime.py times-table   # 只抽检单个工具
 ```
 
 ---

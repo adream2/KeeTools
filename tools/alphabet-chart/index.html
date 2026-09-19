@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>英语字母表 — KeeTools 课工具</title>
 <!-- ET-META
-{"id":"alphabet-chart","version":"1.0.0"}
+{"id":"alphabet-chart","version":"1.1.0"}
 -->
 
 <!-- 共享外壳样式（由 sync_shared.py 注入） -->
@@ -1648,6 +1648,7 @@ window.ALPHABET = [
     { upper: 'D', lower: 'd', ipa: '/diː/', word: 'dog', cn: '狗', vowel: false },
     { upper: 'E', lower: 'e', ipa: '/iː/', word: 'egg', cn: '鸡蛋', vowel: true },
     { upper: 'F', lower: 'f', ipa: '/ef/', word: 'fish', cn: '鱼', vowel: false },
+    /* 英式与美式读音不一致的字母，另行标注（其余字母两种体系相同） */
     { upper: 'G', lower: 'g', ipa: '/dʒiː/', word: 'goat', cn: '山羊', vowel: false },
     { upper: 'H', lower: 'h', ipa: '/eɪtʃ/', word: 'hat', cn: '帽子', vowel: false },
     { upper: 'I', lower: 'i', ipa: '/aɪ/', word: 'ink', cn: '墨水', vowel: true },
@@ -1656,10 +1657,10 @@ window.ALPHABET = [
     { upper: 'L', lower: 'l', ipa: '/el/', word: 'lion', cn: '狮子', vowel: false },
     { upper: 'M', lower: 'm', ipa: '/em/', word: 'moon', cn: '月亮', vowel: false },
     { upper: 'N', lower: 'n', ipa: '/en/', word: 'nose', cn: '鼻子', vowel: false },
-    { upper: 'O', lower: 'o', ipa: '/əʊ/', word: 'orange', cn: '橙子', vowel: true },
+    { upper: 'O', lower: 'o', ipa: '/əʊ/', ipaUs: '/oʊ/', word: 'orange', cn: '橙子', vowel: true },
     { upper: 'P', lower: 'p', ipa: '/piː/', word: 'pen', cn: '钢笔', vowel: false },
     { upper: 'Q', lower: 'q', ipa: '/kjuː/', word: 'queen', cn: '女王', vowel: false },
-    { upper: 'R', lower: 'r', ipa: '/ɑː/', word: 'rabbit', cn: '兔子', vowel: false },
+    { upper: 'R', lower: 'r', ipa: '/ɑː/', ipaUs: '/ɑːr/', word: 'rabbit', cn: '兔子', vowel: false },
     { upper: 'S', lower: 's', ipa: '/es/', word: 'sun', cn: '太阳', vowel: false },
     { upper: 'T', lower: 't', ipa: '/tiː/', word: 'tiger', cn: '老虎', vowel: false },
     { upper: 'U', lower: 'u', ipa: '/juː/', word: 'umbrella', cn: '雨伞', vowel: true },
@@ -1667,7 +1668,7 @@ window.ALPHABET = [
     { upper: 'W', lower: 'w', ipa: '/ˈdʌbljuː/', word: 'water', cn: '水', vowel: false },
     { upper: 'X', lower: 'x', ipa: '/eks/', word: 'box', cn: '盒子', vowel: false },
     { upper: 'Y', lower: 'y', ipa: '/waɪ/', word: 'yellow', cn: '黄色', vowel: false },
-    { upper: 'Z', lower: 'z', ipa: '/zed/', word: 'zebra', cn: '斑马', vowel: false }
+    { upper: 'Z', lower: 'z', ipa: '/zed/', ipaUs: '/ziː/', word: 'zebra', cn: '斑马', vowel: false }
 ];
 
 /* 大小写书写提示（低年级最常问的几个） */
@@ -1699,7 +1700,11 @@ window.LETTER_TIPS = {
     var state = {
         view: store.get('view', 'card') === 'list' ? 'list' : 'card',
         vowelOnly: store.get('vowel_only', false) === true,
-        focus: Number(store.get('focus', 0)) || 0
+        focus: Number(store.get('focus', 0)) || 0,
+        accent: store.get('ipa_accent', 'us') === 'uk' ? 'uk' : 'us',
+        rate: Number(store.get('tts_rate', 0.85)) || 0.85,
+        sayMode: store.get('tts_mode', 'letter-word'),
+        voiceURI: String(store.get('tts_voice', '') || '')
     };
 
     var chrome = ET.Chrome.mount({
@@ -1711,12 +1716,14 @@ window.LETTER_TIPS = {
         sound: true,
         primary: function () { move(1); },      /* 翻页笔 PageDown：下一个字母 */
         secondary: function () { move(-1); },   /* 翻页笔 PageUp：上一个字母 */
+        settings: { title: '点读设置', build: buildSettings },
         help: '<div style="font-size:13.5px;line-height:2">' +
             '<p style="margin:0 0 8px"><b>查看</b>：卡片视图一屏看全 26 个字母；列表视图带音标与例词，方便板书对照。</p>' +
-            '<p style="margin:0 0 8px"><b>点读</b>：点卡片 / 列表右侧的「读」按钮，播放字母名；详情里还可以读例词。</p>' +
+            '<p style="margin:0 0 8px"><b>点读</b>：点卡片 / 列表右侧的「读」按钮，播放<b>字母名称</b>（先读字母、再读例词，和教材领读一致）；详情里也可以单独读字母或读例词。</p>' +
+            '<p style="margin:0 0 8px"><b>点读设置在右上角 ⚙</b>：可切换语速、朗读内容（字母 + 例词 / 只读字母 / 只读例词）与<b>具体语音</b>——播报音色不合适（例如用了中文语音引擎）时在这里换一个英语语音。</p>' +
+            '<p style="margin:0 0 8px"><b>音标体系</b>：o、r、z 三个字母英式与美式读音不同，可在 ⚙ 里切换（详情弹窗会同时列出两种）。</p>' +
             '<p style="margin:0 0 8px"><b>元音高亮</b>：a e i o u 五个元音字母会以主题色标出，可勾选「只显示元音字母」专门复习。</p>' +
-            '<p style="margin:0 0 8px"><b>翻页</b>：翻页笔下页键 = 下一个字母，上页键 = 上一个字母，并自动朗读。</p>' +
-            '<p style="margin:0"><b>朗读来源</b>：浏览器自带英语语音，不联网、不下载音频；不支持时会提示，但不影响查看与教学。</p></div>'
+            '<p style="margin:0"><b>翻页</b>：翻页笔下页键 = 下一个字母，上页键 = 上一个字母，并自动朗读。朗读依赖系统的英语语音包（Windows：设置 → 时间和语言 → 语音），不联网、不下载音频。</p></div>'
     });
 
     var els = {
@@ -1731,24 +1738,77 @@ window.LETTER_TIPS = {
         store.set('view', state.view);
         store.set('vowel_only', state.vowelOnly);
         store.set('focus', state.focus);
+        store.set('ipa_accent', state.accent);
+        store.set('tts_rate', state.rate);
+        store.set('tts_mode', state.sayMode);
+        store.set('tts_voice', state.voiceURI);
+    }
+
+    /* 音标按所选体系显示（o / r / z 两种体系不同，其余相同） */
+    function ipaOf(item) {
+        if (state.accent === 'us') { return item.ipaUs || item.ipa; }
+        return item.ipa;
+    }
+
+    function ipaBoth(item) {
+        if (!item.ipaUs || item.ipaUs === item.ipa) { return ''; }
+        return '美 ' + item.ipaUs + ' · 英 ' + item.ipa;
     }
 
     /* ============ 语音 ============ */
 
-    function pickVoice() {
+    var enVoices = [];
+
+    /* 音色优选：优先「自然/神经」等高音质英语音色，其次 en-US，避免选中机械音 */
+    function rankVoice(v) {
+        var name = String(v.name || '');
+        var lang = String(v.lang || '');
+        var score = 0;
+        if (/natural|neural|online/i.test(name)) { score += 60; }
+        if (/google/i.test(name)) { score += 50; }
+        if (/aria|jenny|guy|michelle|ana|zira|david|mark|libby|samantha|ava/i.test(name)) { score += 25; }
+        if (/^en[-_]US/i.test(lang)) { score += 20; }
+        else if (/^en[-_]GB/i.test(lang)) { score += 10; }
+        if (/espeak|robot|compact/i.test(name)) { score -= 40; }
+        return score;
+    }
+
+    function collectVoices() {
         if (!TTS_OK) { return; }
         var list = [];
         try { list = window.speechSynthesis.getVoices() || []; } catch (e) { list = []; }
-        var best = null;
+        enVoices = [];
         for (var i = 0; i < list.length; i++) {
-            var v = list[i];
-            var lang = String(v.lang || '');
-            if (/^en/i.test(lang)) {
-                if (!best) { best = v; }
-                if (/^en[-_]US/i.test(lang)) { best = v; break; }
+            if (/^en/i.test(String(list[i].lang || ''))) { enVoices.push(list[i]); }
+        }
+        enVoices.sort(function (a, b) { return rankVoice(b) - rankVoice(a); });
+
+        var chosen = null;
+        if (state.voiceURI) {
+            for (i = 0; i < enVoices.length; i++) {
+                if (enVoices[i].voiceURI === state.voiceURI || enVoices[i].name === state.voiceURI) {
+                    chosen = enVoices[i];
+                }
             }
         }
-        voice = best;
+        if (!chosen) { chosen = enVoices.length ? enVoices[0] : null; }
+        voice = chosen;
+        updateTtsState();
+    }
+
+    function updateTtsState() {
+        if (!els.ttsState) { return; }
+        if (!TTS_OK) {
+            els.ttsState.textContent = '本机不支持点读（只能查看）';
+            return;
+        }
+        if (!voice) {
+            els.ttsState.textContent = '未找到英语语音，请在系统里添加 English 语音包';
+            return;
+        }
+        var name = String(voice.name || '英语语音');
+        if (name.length > 18) { name = name.slice(0, 17) + '…'; }
+        els.ttsState.textContent = '点读已就绪 · ' + name;
     }
 
     function speak(text) {
@@ -1757,16 +1817,32 @@ window.LETTER_TIPS = {
         var u = new window.SpeechSynthesisUtterance(text);
         u.lang = voice ? String(voice.lang || 'en-US') : 'en-US';
         if (voice) { u.voice = voice; }
-        u.rate = 0.85;
+        u.rate = state.rate;
+        u.pitch = 1;
         try { window.speechSynthesis.speak(u); } catch (e) { /* 忽略 */ }
     }
 
-    function speakItem(item, withWord) {
+    /* 单个字母加句点，避免被语音引擎读成冠词 a / 弱读（读字母名称而非单词） */
+    function speakLetter(item) {
+        speak(item.upper + '.');
+    }
+
+    function speakContent(item) {
         if (!TTS_OK) {
             chrome.toast('本机浏览器不支持语音朗读', 'warn');
             return;
         }
-        speak(withWord ? (item.lower + ', ' + item.word) : item.upper);
+        if (!voice) {
+            chrome.toast('未检测到英语语音，请在 ⚙ 里换一个语音，或安装 English 语音包', 'warn');
+        }
+        if (state.sayMode === 'letter') { speakLetter(item); return; }
+        if (state.sayMode === 'word') { speak(item.word + '.'); return; }
+        /* 教材领读顺序：字母名 → 例词 */
+        speak(item.upper + '. ' + item.word + '.');
+    }
+
+    function speakItem(item) {
+        speakContent(item);
     }
 
     /* ============ 渲染 ============ */
@@ -1803,7 +1879,7 @@ window.LETTER_TIPS = {
 
                 var ipa = document.createElement('div');
                 ipa.className = 'ac-card__ipa';
-                ipa.textContent = item.ipa;
+                ipa.textContent = ipaOf(item);
 
                 var word = document.createElement('div');
                 word.className = 'ac-card__word';
@@ -1823,7 +1899,7 @@ window.LETTER_TIPS = {
                 card.addEventListener('click', function () {
                     state.focus = order;
                     save();
-                    speakItem(item, false);
+                    speakItem(item);
                     openDetail(item);
                 });
 
@@ -1850,7 +1926,7 @@ window.LETTER_TIPS = {
 
                 var ipa = document.createElement('div');
                 ipa.className = 'ac-row__ipa';
-                ipa.textContent = item.ipa;
+                ipa.textContent = ipaOf(item);
 
                 var word = document.createElement('div');
                 word.className = 'ac-row__word';
@@ -1864,7 +1940,7 @@ window.LETTER_TIPS = {
                 btn.addEventListener('click', function () {
                     state.focus = order;
                     save();
-                    speakItem(item, true);
+                    speakItem(item);
                 });
 
                 row.appendChild(pair);
@@ -1897,7 +1973,9 @@ window.LETTER_TIPS = {
 
         var ipa = document.createElement('div');
         ipa.className = 'ac-detail__ipa';
-        ipa.textContent = item.ipa;
+        ipa.textContent = ipaOf(item);
+
+        var bothText = ipaBoth(item);
 
         var word = document.createElement('div');
         word.className = 'ac-detail__word';
@@ -1910,19 +1988,25 @@ window.LETTER_TIPS = {
         readLetter.type = 'button';
         readLetter.className = 'et-btn et-btn--primary';
         readLetter.innerHTML = '<svg class="et-icon"><use href="#i-volume"></use></svg>读字母';
-        readLetter.addEventListener('click', function () { speakItem(item, false); });
+        readLetter.addEventListener('click', function () { speakLetter(item); });
 
         var readWord = document.createElement('button');
         readWord.type = 'button';
         readWord.className = 'et-btn';
         readWord.innerHTML = '<svg class="et-icon"><use href="#i-volume"></use></svg>读例词';
-        readWord.addEventListener('click', function () { speak(item.word); });
+        readWord.addEventListener('click', function () { speak(item.word + '.'); });
 
         btns.appendChild(readLetter);
         btns.appendChild(readWord);
 
         box.appendChild(pair);
         box.appendChild(ipa);
+        if (bothText) {
+            var bothEl = document.createElement('p');
+            bothEl.className = 'ac-detail__tip';
+            bothEl.textContent = '英式 / 美式读音不同：' + bothText;
+            box.appendChild(bothEl);
+        }
         box.appendChild(word);
 
         var tipText = TIPS[item.upper];
@@ -1936,14 +2020,14 @@ window.LETTER_TIPS = {
         box.appendChild(btns);
 
         chrome.modal({
-            title: item.upper + ' ' + item.lower + ' · ' + item.ipa,
+            title: item.upper + ' ' + item.lower + ' · ' + ipaOf(item),
             icon: 'i-info',
             size: 'narrow',
             body: box,
             buttons: [{ label: '知道了', primary: true }]
         });
 
-        speakItem(item, false);
+        speakLetter(item);
     }
 
     function render() {
@@ -1965,9 +2049,9 @@ window.LETTER_TIPS = {
         state.focus = (state.focus + step + items.length) % items.length;
         save();
         var item = items[state.focus];
-        speakItem(item, true);
+        speakItem(item);
         chrome.setStatus('第 ' + (state.focus + 1) + ' / ' + items.length + '：' + item.upper + item.lower);
-        chrome.toast(item.upper + ' ' + item.lower + ' · ' + item.ipa + ' · ' + item.word);
+        chrome.toast(item.upper + ' ' + item.lower + ' · ' + ipaOf(item) + ' · ' + item.word);
     }
 
     /* ============ 事件 ============ */
@@ -2001,8 +2085,107 @@ window.LETTER_TIPS = {
         if (document.querySelector('.et-modal, .et-drawer-backdrop')) { return; }
         ev.preventDefault();
         var items = visibleItems();
-        if (items.length) { speakItem(items[state.focus % items.length], true); }
+        if (items.length) { speakItem(items[state.focus % items.length]); }
     });
+
+    /* ============ 点读设置 ============ */
+
+    function buildSettings(body) {
+        function heading(text) {
+            var h = document.createElement('h4');
+            h.textContent = text;
+            body.appendChild(h);
+        }
+
+        function segRow(labels, values, current, onPick) {
+            var row = document.createElement('div');
+            row.className = 'et-drawer__row';
+            for (var i = 0; i < values.length; i++) {
+                (function (value, label) {
+                    var b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'et-btn' + (String(value) === String(current) ? ' et-btn--primary' : '');
+                    b.style.flex = '1 1 28%';
+                    b.textContent = label;
+                    b.addEventListener('click', function () {
+                        onPick(value);
+                        refresh();
+                    });
+                    row.appendChild(b);
+                })(values[i], labels[i]);
+            }
+            body.appendChild(row);
+        }
+
+        heading('语速');
+        segRow(['慢', '正常', '快'], [0.7, 0.85, 1.0], state.rate, function (v) {
+            state.rate = Number(v);
+            save();
+            speak('A. apple.');
+        });
+
+        heading('朗读内容');
+        segRow(['字母 + 例词', '只读字母', '只读例词'], ['letter-word', 'letter', 'word'], state.sayMode, function (v) {
+            state.sayMode = String(v);
+            save();
+            speakContent(DATA[0] || { upper: 'A', word: 'apple' });
+        });
+
+        heading('音标体系');
+        segRow(['美式(KK)', '英式(DJ)'], ['us', 'uk'], state.accent, function (v) {
+            state.accent = String(v);
+            save();
+            render();
+        });
+
+        heading('语音（本机英语音色）');
+        var row = document.createElement('div');
+        row.className = 'et-drawer__row';
+        if (!TTS_OK) {
+            var noTts = document.createElement('p');
+            noTts.className = 'et-drawer__tip';
+            noTts.textContent = '当前浏览器不支持语音朗读（speechSynthesis），点读功能已关闭。';
+            body.appendChild(noTts);
+        } else if (!enVoices.length) {
+            var noVoice = document.createElement('p');
+            noVoice.className = 'et-drawer__tip';
+            noVoice.textContent = '本机没有可用的英语语音，请在系统里添加 English 语音包后重开本工具。';
+            body.appendChild(noVoice);
+        } else {
+            for (var i = 0; i < enVoices.length && i < 12; i++) {
+                (function (v) {
+                    var b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'et-btn' + (voice && voice.voiceURI === v.voiceURI ? ' et-btn--primary' : '');
+                    b.style.flex = '1 1 100%';
+                    b.style.justifyContent = 'flex-start';
+                    b.textContent = v.name + '（' + v.lang + '）';
+                    b.addEventListener('click', function () {
+                        state.voiceURI = v.voiceURI;
+                        save();
+                        collectVoices();
+                        speak('A. apple.');
+                        refresh();
+                    });
+                    row.appendChild(b);
+                })(enVoices[i]);
+            }
+            body.appendChild(row);
+        }
+
+        var tip = document.createElement('p');
+        tip.className = 'et-drawer__tip';
+        tip.innerHTML = '朗读用的是<b>系统语音</b>（不联网）。若字母读音听起来不对，多半是选中了中文语音引擎或不合适的英语音色：'
+            + '在这里换一个英语语音，推荐带 <b>Natural / Neural / Google</b> 字样的音色。'
+            + '<br>读字母时会在字母后加一个句点，避免语音引擎把单个字母读成冠词 a 的弱读音。'
+            + '<br>o、r、z 三个字母的英式与美式读音不同，音标体系可切换；详情弹窗会同时列出两种。';
+        body.appendChild(tip);
+
+        function refresh() {
+            while (body.firstChild) { body.removeChild(body.firstChild); }
+            buildSettings(body);
+        }
+    }
 
     document.addEventListener('visibilitychange', function () {
         if (document.hidden && TTS_OK) {
@@ -2018,15 +2201,16 @@ window.LETTER_TIPS = {
     }
 
     if (TTS_OK) {
-        pickVoice();
+        collectVoices();
         if (typeof window.speechSynthesis.addEventListener === 'function') {
-            window.speechSynthesis.addEventListener('voiceschanged', pickVoice);
+            window.speechSynthesis.addEventListener('voiceschanged', collectVoices);
         } else {
-            window.speechSynthesis.onvoiceschanged = pickVoice;
+            window.speechSynthesis.onvoiceschanged = collectVoices;
         }
-        els.ttsState.textContent = '点读已就绪';
+        /* 部分浏览器首次 getVoices() 为空，稍后再取一次 */
+        window.setTimeout(collectVoices, 400);
     } else {
-        els.ttsState.textContent = '本机不支持点读（只能查看）';
+        updateTtsState();
     }
 
     render();

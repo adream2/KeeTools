@@ -1,16 +1,29 @@
 {
   "id": "tianzige-writer",
   "title": "田字格字帖",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "shell",
   "description": "输入汉字一键生成田字格或米字格字帖，描红加自写，可直接打印或另存为 PDF。",
   "author": "KeeTools Team",
   "entry": "index.html",
   "single_file": true,
   "offline": true,
-  "grade_range": ["1-2", "3-4", "5-6"],
-  "subjects": ["语文"],
-  "tags": ["字帖", "田字格", "米字格", "描红", "写字", "打印"],
+  "grade_range": [
+    "1-2",
+    "3-4",
+    "5-6"
+  ],
+  "subjects": [
+    "语文"
+  ],
+  "tags": [
+    "字帖",
+    "田字格",
+    "米字格",
+    "描红",
+    "写字",
+    "打印"
+  ],
   "family": "tianzige-writer",
   "license": "free",
   "dependencies": [],

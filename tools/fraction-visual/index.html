@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>课堂倒计时 — KeeTools 课工具</title>
+<title>分数可视化 — KeeTools 课工具</title>
 <!-- ET-META
-{"id":"countdown-timer","version":"1.4.0"}
+{"id":"fraction-visual","version":"1.1.0"}
 -->
 
 <!-- 共享外壳样式（由 sync_shared.py 注入） -->
@@ -537,255 +537,326 @@ html[data-et-theme="dark"] {
 <!-- /ET:INLINE -->
 
 <style>
-/* ============ 工具自身样式 ============ */
-body { overflow: hidden; }
+/* ── 分数可视化：工具自身样式（自包含，不引用任何外部资源） ── */
+:root { --fv-accent: #d97706; }
 
-.cd-main {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-evenly;
-    gap: 14px;
-    padding: clamp(12px, 2.5vh, 28px) 20px;
-    height: 100%;
-}
+.fv-main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 
-/* ---------- 模式切换：倒计时 / 正计时 ---------- */
-.cd-modes {
-    display: flex;
-    gap: 4px;
-    padding: 4px;
-    border: 1px solid var(--et-line);
-    border-radius: 12px;
-    background: var(--et-surface);
-}
-
-.cd-modes button {
-    border: 0;
-    background: none;
-    color: var(--et-muted);
-    font: inherit;
-    font-size: 14px;
-    font-weight: 700;
-    padding: 8px 22px;
-    border-radius: 9px;
-    cursor: pointer;
-    transition: background .14s, color .14s;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.cd-modes button:hover { color: var(--et-accent); }
-.cd-modes button.is-active { background: var(--et-accent); color: #fff; }
-.cd-hidden { display: none !important; }
-
-/* ---------- 表盘 ---------- */
-.cd-dial {
-    position: relative;
-    width: min(56vh, 84vw, 620px);
-    aspect-ratio: 1;
-    max-height: 62vh;
-}
-
-.cd-dial svg { width: 100%; height: 100%; display: block; transform: rotate(-90deg); }
-
-.cd-ring-track {
-    fill: none;
-    stroke: var(--et-line);
-    stroke-width: 10;
-}
-
-.cd-ring {
-    fill: none;
-    stroke: var(--et-accent);
-    stroke-width: 10;
-    stroke-linecap: round;
-    transition: stroke .3s;
-}
-
-.cd-ring.is-warning { stroke: var(--et-warn); }
-.cd-ring.is-danger { stroke: var(--et-err); }
-
-.cd-time {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    user-select: none;
-}
-
-.cd-time__text {
-    font-size: clamp(64px, 17vh, 170px);
-    font-weight: 900;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: .01em;
-    line-height: 1;
-    background: linear-gradient(180deg, var(--et-fg) 20%, var(--et-accent) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    filter: drop-shadow(0 6px 24px var(--et-accent-weak));
-    transition: filter .3s;
-}
-
-.cd-time__text.is-warning {
-    background: linear-gradient(180deg, var(--et-fg) 10%, var(--et-warn) 90%);
-    -webkit-background-clip: text;
-    background-clip: text;
-}
-
-.cd-time__text.is-danger {
-    background: linear-gradient(180deg, var(--et-fg) 5%, var(--et-err) 85%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    filter: drop-shadow(0 0 26px rgba(220, 38, 38, .35));
-}
-
-.cd-time__text.is-danger.cd-pulse { animation: cd-pulse 1s infinite; }
-
-@keyframes cd-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.035); }
-}
-
-.cd-time__label {
-    position: absolute;
-    bottom: 12%;
-    font-size: clamp(12px, 1.8vh, 15px);
-    font-weight: 700;
-    letter-spacing: .14em;
-    color: var(--et-muted);
-    text-transform: uppercase;
-}
-
-/* ---------- 预设 ---------- */
-.cd-presets {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.cd-preset {
-    padding: 9px 18px;
-    border-radius: 999px;
-    font: inherit;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--et-muted);
-    background: var(--et-surface);
-    border: 1px solid var(--et-line);
-    cursor: pointer;
-    transition: all .15s;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.cd-preset:hover { border-color: var(--et-accent); color: var(--et-accent); transform: translateY(-1px); }
-.cd-preset.is-active { color: #fff; background: var(--et-accent); border-color: var(--et-accent); }
-
-/* ---------- 控制条 ---------- */
-.cd-controls {
+/* ---------- 工具栏 ---------- */
+.fv-bar {
+    flex: none;
     display: flex;
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
-    justify-content: center;
+    padding: 9px 18px;
+    border-bottom: 1px solid var(--et-line);
+    background: var(--et-surface-2);
 }
 
-.cd-adjust {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 10px 14px;
-    border-radius: 11px;
-    font: inherit;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--et-fg);
-    background: var(--et-surface);
-    border: 1px solid var(--et-line);
-    cursor: pointer;
-    transition: all .14s;
-}
+.fv-group { display: flex; align-items: center; gap: 6px; }
 
-.cd-adjust:hover:not(:disabled) { border-color: var(--et-accent); color: var(--et-accent); }
-.cd-adjust:disabled { opacity: .4; cursor: not-allowed; }
-.cd-adjust .et-icon { width: 15px; height: 15px; }
-
-.cd-main-btn {
-    min-width: 200px;
-    gap: 9px;
-}
-
-.cd-main-btn .et-icon { width: 20px; height: 20px; }
-
-/* ---------- 自定义时长 ---------- */
-.cd-custom {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
+.fv-group__label {
+    font-size: 12.5px;
+    font-weight: 800;
+    letter-spacing: .04em;
     color: var(--et-muted);
-    font-weight: 600;
 }
 
-.cd-custom input {
-    width: 64px;
-    padding: 8px 10px;
-    border: 1px solid var(--et-line-strong);
-    border-radius: 9px;
-    background: var(--et-surface);
-    color: var(--et-fg);
-    font: inherit;
-    font-size: 15px;
-    font-weight: 700;
-    text-align: center;
-    -moz-appearance: textfield;
-    appearance: textfield;
-}
-
-.cd-custom input::-webkit-outer-spin-button,
-.cd-custom input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-
-.cd-custom input:focus {
-    outline: none;
-    border-color: var(--et-accent);
-    box-shadow: 0 0 0 3px var(--et-accent-weak);
-}
-
-/* ---------- 时间到 ---------- */
-.cd-over {
-    position: fixed;
-    inset: 0;
-    z-index: 200;
+.fv-step {
+    width: 34px;
+    height: 34px;
     display: grid;
     place-items: center;
-    background: rgba(127, 29, 29, .92);
-    animation: cd-over-in .4s ease;
+    border: 1px solid var(--et-line-strong);
+    border-radius: 10px;
+    background: var(--et-surface);
+    color: var(--et-fg);
+    font: inherit;
+    font-size: 19px;
+    font-weight: 800;
+    line-height: 1;
+    cursor: pointer;
+    transition: border-color .14s, color .14s, transform .12s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.fv-step:hover { border-color: var(--et-accent); color: var(--et-accent); transform: translateY(-1px); }
+.fv-step:focus-visible { outline: 2px solid var(--et-accent); outline-offset: 2px; }
+
+.fv-val {
+    min-width: 42px;
+    text-align: center;
+    font-size: 21px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    color: var(--et-accent);
+}
+
+.fv-sep { width: 1px; align-self: stretch; background: var(--et-line); }
+.fv-spacer { flex: 1 1 auto; }
+
+.fv-chips {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+    max-width: 52vw;
+    padding: 2px;
+}
+
+.fv-chip {
+    flex: none;
+    padding: 6px 10px;
+    border: 1px solid var(--et-line);
+    border-radius: 9px;
+    background: var(--et-surface);
+    color: var(--et-muted);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition: border-color .14s, color .14s, background .14s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.fv-chip:hover { border-color: var(--et-accent); color: var(--et-accent); }
+.fv-chip.is-active { background: var(--et-accent); border-color: var(--et-accent); color: #fff; }
+
+/* ---------- 卡片舞台 ---------- */
+.fv-stage {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 16px;
+    padding: 16px 18px;
+    overflow: auto;
+}
+
+.fv-card {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 760px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 18px 16px;
+    border: 1px solid var(--et-line);
+    border-radius: 16px;
+    background: var(--et-surface);
+    box-shadow: var(--et-shadow-md);
+}
+
+.fv-card__head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--et-line);
+}
+
+/* 分数 B 用蓝色区分，A 保持主题橙 */
+#cardB .fv-frac { color: #2563eb; }
+#cardB .fv-seg.is-on { background: #2563eb; }
+#cardB .fv-slice.is-on { fill: #2563eb; }
+
+.fv-card__name {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    color: var(--et-muted);
+    text-transform: uppercase;
+}
+
+.fv-card__memo {
+    margin-left: auto;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--et-muted);
+    text-align: right;
+}
+
+.fv-frac {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.08;
+    font-weight: 900;
+    color: var(--et-accent);
+    font-variant-numeric: tabular-nums;
+}
+
+.fv-frac b { font-size: clamp(19px, 3.2vh, 30px); padding: 0 8px; }
+
+.fv-frac i {
+    font-style: normal;
+    font-size: clamp(19px, 3.2vh, 30px);
+    padding: 0 8px;
+    border-top: 3px solid currentColor;
+}
+
+.fv-mini { display: flex; align-items: center; gap: 5px; margin-left: auto; }
+.fv-mini__label { font-size: 12px; font-weight: 800; color: var(--et-muted); }
+
+.fv-mini button {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--et-line);
+    border-radius: 8px;
+    background: var(--et-surface-2);
+    color: var(--et-fg);
+    font: inherit;
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1;
     cursor: pointer;
 }
 
-.cd-over__text {
-    font-size: clamp(64px, 16vw, 200px);
-    font-weight: 900;
-    color: #fff;
-    letter-spacing: .08em;
-    animation: cd-over-pop .6s cubic-bezier(.34, 1.56, .64, 1);
-    text-shadow: 0 10px 40px rgba(0, 0, 0, .4);
-}
-
-.cd-over__hint {
-    position: absolute;
-    bottom: 10%;
+.fv-mini button:hover { border-color: var(--et-accent); color: var(--et-accent); }
+.fv-mini__val {
+    min-width: 22px;
+    text-align: center;
     font-size: 15px;
-    color: rgba(255, 255, 255, .75);
-    letter-spacing: .2em;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
 }
 
-@keyframes cd-over-in { from { opacity: 0; } }
-@keyframes cd-over-pop {
-    0% { opacity: 0; transform: scale(.5); }
-    70% { transform: scale(1.06); }
-    100% { transform: scale(1); }
+.fv-vis { flex: 1; min-height: 0; display: flex; align-items: center; gap: 20px; }
+.fv-pie { width: min(30vh, 46%); height: auto; flex: none; }
+.fv-barwrap { flex: 1; min-width: 110px; display: flex; flex-direction: column; gap: 8px; }
+
+.fv-bar {
+    position: relative;
+    display: flex;
+    height: 68px;
+    border: 2px solid var(--et-line-strong);
+    border-radius: 12px;
+    overflow: visible;
+    cursor: ew-resize;
+    touch-action: none;
+    user-select: none;
+    transition: border-color .14s, box-shadow .14s;
+}
+
+.fv-bar.is-drag {
+    border-color: var(--et-accent);
+    box-shadow: 0 0 0 4px var(--et-accent-weak);
+}
+
+.fv-seg {
+    flex: 1 1 0;
+    min-width: 0;
+    border-right: 1px solid var(--et-line);
+    background: var(--et-surface-2);
+    transition: background .18s, filter .18s;
+}
+
+.fv-seg:first-child { border-radius: 9px 0 0 9px; }
+.fv-seg:last-child { border-right: 0; border-radius: 0 9px 9px 0; }
+.fv-seg.is-on { background: var(--et-accent); }
+
+/* 悬停提示：可拖到任意格 */
+.fv-bar:hover .fv-seg:not(.is-on) { background: var(--et-accent-weak); }
+
+#cardB .fv-bar:hover .fv-seg:not(.is-on) { background: rgba(37, 99, 235, .16); }
+
+/* 拖动把手：显示当前位置与分数 */
+.fv-knob {
+    position: absolute;
+    top: -5px;
+    bottom: -5px;
+    width: 4px;
+    margin-left: -2px;
+    border-radius: 3px;
+    background: var(--et-surface);
+    box-shadow: 0 0 0 2px var(--et-accent), 0 2px 10px rgba(15, 23, 42, .3);
+    pointer-events: none;
+    transition: left .18s cubic-bezier(.34, 1.2, .64, 1);
+}
+
+#cardB .fv-knob { box-shadow: 0 0 0 2px #2563eb, 0 2px 10px rgba(15, 23, 42, .3); }
+.fv-bar.is-drag .fv-knob { transition: none; }
+
+.fv-knob::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 50%;
+    top: -27px;
+    transform: translateX(-50%);
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--et-accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    box-shadow: var(--et-shadow-md);
+}
+
+#cardB .fv-knob::before { background: #2563eb; }
+
+.fv-caption { margin: 0; font-size: 12.5px; color: var(--et-muted); }
+
+/* ---------- 饼图 ---------- */
+.fv-slice {
+    fill: var(--et-surface-2);
+    stroke: var(--et-line-strong);
+    stroke-width: 1.5;
+    transition: fill .18s;
+}
+
+.fv-slice.is-on { fill: var(--et-accent); stroke: var(--et-surface); }
+.fv-pie-ring { fill: none; stroke: var(--et-line-strong); stroke-width: 2; }
+
+/* ---------- 数轴（对比模式） ---------- */
+.fv-nl {
+    flex: none;
+    padding: 0 18px 6px;
+}
+
+.fv-numline { width: 100%; max-width: 980px; margin: 0 auto; display: block; height: auto; }
+.fv-nl__axis { stroke: var(--et-line-strong); stroke-width: 2.5; }
+.fv-nl__tick { stroke: var(--et-line); stroke-width: 1.5; }
+.fv-nl__label { fill: var(--et-muted); font-size: 15px; font-weight: 700; }
+.fv-nl__mark-a { fill: var(--et-accent); }
+.fv-nl__mark-b { fill: #2563eb; }
+.fv-nl__tag { fill: var(--et-fg); font-size: 15px; font-weight: 800; }
+
+/* ---------- 信息带 ---------- */
+.fv-info {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px 22px;
+    flex-wrap: wrap;
+    padding: 10px 18px 14px;
+    border-top: 1px solid var(--et-line);
+    background: var(--et-surface-2);
+}
+
+.fv-info__item { font-size: 13.5px; font-weight: 700; color: var(--et-muted); }
+.fv-info__item b { font-size: 17px; color: var(--et-fg); font-variant-numeric: tabular-nums; }
+.fv-verdict {
+    font-size: clamp(19px, 3vh, 30px);
+    font-weight: 900;
+    color: var(--et-accent);
+    font-variant-numeric: tabular-nums;
+}
+
+.fv-verdict small { font-size: 13.5px; font-weight: 700; color: var(--et-muted); margin-left: 10px; }
+
+@media (max-width: 1180px) {
+    .fv-vis { flex-direction: column; gap: 12px; }
+    .fv-pie { width: min(24vh, 62%); }
+    .fv-bar { height: 54px; }
+    .fv-chips { max-width: 40vw; }
 }
 </style>
 </head>
@@ -793,63 +864,83 @@ body { overflow: hidden; }
 
 <header id="et-topbar"></header>
 
-<main id="et-main" class="cd-main">
+<main id="et-main" class="fv-main">
 
-    <!-- 模式：倒计时 / 正计时 -->
-    <div class="cd-modes" id="segMode" role="group" aria-label="计时模式">
-        <button type="button" data-mode="down" class="is-active">倒计时</button>
-        <button type="button" data-mode="up">正计时</button>
-    </div>
-
-    <!-- 表盘 -->
-    <div class="cd-dial">
-        <svg viewBox="0 0 200 200" aria-hidden="true">
-            <circle class="cd-ring-track" cx="100" cy="100" r="94"/>
-            <circle class="cd-ring" id="ring" cx="100" cy="100" r="94"/>
-        </svg>
-        <div class="cd-time">
-            <div class="cd-time__text" id="timeText">05:00</div>
-            <div class="cd-time__label" id="timeLabel">准备开始</div>
+    <div class="fv-bar">
+        <div class="fv-group">
+            <span class="fv-group__label">分数 A</span>
+            <button class="fv-step" id="numMinus" type="button" title="分子 −1">−</button>
+            <span class="fv-val" id="valNum">1</span>
+            <button class="fv-step" id="numPlus" type="button" title="分子 +1">+</button>
+            <span class="fv-group__label" style="margin-left:4px">/</span>
+            <button class="fv-step" id="denMinus" type="button" title="分母 −1">−</button>
+            <span class="fv-val" id="valDen">2</span>
+            <button class="fv-step" id="denPlus" type="button" title="分母 +1">+</button>
         </div>
-    </div>
 
-    <!-- 预设 -->
-    <div class="cd-presets" id="presets"></div>
+        <span class="fv-sep"></span>
 
-    <!-- 控制条 -->
-    <div class="cd-controls">
-        <button class="cd-adjust" id="btnMinus30" title="减 30 秒">
-            <svg class="et-icon"><use href="#i-minus"></use></svg>30秒
-        </button>
-        <button class="et-btn et-btn--lg et-btn--primary cd-main-btn" id="btnMain">
-            <svg class="et-icon"><use href="#i-play"></use></svg>
-            <span id="btnMainText">开始</span>
-        </button>
-        <button class="cd-adjust" id="btnPlus30" title="加 30 秒">
-            <svg class="et-icon"><use href="#i-plus"></use></svg>30秒
-        </button>
-        <button class="et-btn" id="btnReset" title="重置（快捷键 R）">
-            <svg class="et-icon"><use href="#i-rotate"></use></svg>重置
+        <div class="fv-chips" id="chips" aria-label="常用分数"></div>
+
+        <span class="fv-spacer"></span>
+
+        <button class="et-btn" id="btnCompare" type="button" title="开启对比模式">
+            <svg class="et-icon"><use href="#i-copy"></use></svg>
+            <span id="btnCompareText">对比模式</span>
         </button>
     </div>
 
-    <!-- 自定义 -->
-    <div class="cd-custom" id="customRow">
-        自定义
-        <input type="number" id="inHour" min="0" max="23" placeholder="时">
-        <input type="number" id="inMin" min="0" max="59" placeholder="分">
-        <input type="number" id="inSec" min="0" max="59" placeholder="秒">
-        <button class="et-btn" id="btnCustom" style="padding:8px 14px">设定</button>
+    <div class="fv-stage">
+        <section class="fv-card" id="cardA">
+            <header class="fv-card__head">
+                <span class="fv-card__name" id="nameA">分数 A</span>
+                <span class="fv-frac"><b id="fracNumA">1</b><i id="fracDenA">2</i></span>
+                <span class="fv-card__memo" id="memoA"></span>
+            </header>
+            <div class="fv-vis">
+                <svg class="fv-pie" id="pieA" viewBox="0 0 200 200" aria-hidden="true"></svg>
+                <div class="fv-barwrap">
+                    <div class="fv-bar" id="barA" title="在色条上左右拖动即可改变分子"></div>
+                    <p class="fv-caption" id="capA"></p>
+                </div>
+            </div>
+        </section>
+
+        <section class="fv-card" id="cardB" hidden>
+            <header class="fv-card__head">
+                <span class="fv-card__name" id="nameB">分数 B</span>
+                <span class="fv-frac"><b id="fracNumB">2</b><i id="fracDenB">3</i></span>
+                <div class="fv-mini">
+                    <span class="fv-mini__label">分子</span>
+                    <button type="button" id="numMinusB" title="分子 −1">−</button>
+                    <span class="fv-mini__val" id="valNumB">2</span>
+                    <button type="button" id="numPlusB" title="分子 +1">+</button>
+                    <span class="fv-mini__label" style="margin-left:6px">分母</span>
+                    <button type="button" id="denMinusB" title="分母 −1">−</button>
+                    <span class="fv-mini__val" id="valDenB">3</span>
+                    <button type="button" id="denPlusB" title="分母 +1">+</button>
+                </div>
+            </header>
+            <div class="fv-vis">
+                <svg class="fv-pie" id="pieB" viewBox="0 0 200 200" aria-hidden="true"></svg>
+                <div class="fv-barwrap">
+                    <div class="fv-bar" id="barB" title="在色条上左右拖动即可改变分子"></div>
+                    <p class="fv-caption" id="capB"></p>
+                </div>
+            </div>
+        </section>
     </div>
 
-    <!-- 正计时提醒（可选，到时响铃提示） -->
-    <div class="cd-custom cd-hidden" id="upRemindRow">
-        到点提醒
-        <input type="number" id="inRemindMin" min="0" max="180" placeholder="分">
-        <input type="number" id="inRemindSec" min="0" max="59" placeholder="秒">
-        <button class="et-btn" id="btnRemind" style="padding:8px 14px">设定</button>
-        <button class="et-btn" id="btnRemindClear" style="padding:8px 14px">取消</button>
-        <span id="remindState">未设提醒</span>
+    <div class="fv-nl" id="nlWrap" hidden>
+        <svg class="fv-numline" id="numline" viewBox="0 0 900 84" aria-hidden="true"></svg>
+    </div>
+
+    <div class="fv-info">
+        <span class="fv-info__item">分数 <b id="infoFrac">1/2</b></span>
+        <span class="fv-info__item">约分 <b id="infoReduced">1/2</b></span>
+        <span class="fv-info__item">小数 <b id="infoDec">0.5</b></span>
+        <span class="fv-info__item">百分数 <b id="infoPct">50%</b></span>
+        <span class="fv-verdict" id="verdict"></span>
     </div>
 
 </main>
@@ -1613,189 +1704,6 @@ body { overflow: hidden; }
 </script>
 <!-- /ET:INLINE -->
 
-<!-- ET:INLINE name="countdown" src="logic/countdown.js" -->
-<script>
-  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
-/*!
- * countdown.js — 倒计时引擎（漂移校正，基于 Date.now 绝对时间）
- *
- * 共享逻辑源。改这里，然后跑：python scripts/sync_shared.py
- * 依赖：无。
- * 全局：ET.Countdown
- *
- * 用法：
- *   var timer = ET.Countdown.create({
- *     onTick: function (remaining, total) { … },   // 毫秒，remaining ≤ 0 表示结束
- *     onFinish: function () { … },
- *     onState: function (state) { … }              // 'idle' | 'running' | 'paused' | 'done'
- *   });
- *   timer.set(5 * 60 * 1000);  // 设置总时长（idle 态下）
- *   timer.start(); timer.pause(); timer.resume(); timer.toggle(); timer.reset();
- *   timer.add(30 * 1000);      // 运行中 +30s（可为负，最低减到 0）
- *   timer.state; timer.remaining; timer.total;
- *
- * 特性：
- * - 用 endAt 绝对时间计算剩余，后台标签页休眠后回来不漂移
- * - 触发粒度 100ms，回调里的 remaining 为真实剩余毫秒
- */
-(function (global) {
-    'use strict';
-
-    var TICK_MS = 100;
-
-    function create(options) {
-        var opt = options || {};
-        var state = 'idle';          /* idle / running / paused / done */
-        var total = 0;               /* 总时长 ms */
-        var endAt = 0;               /* 结束绝对时间戳 */
-        var remainAtPause = 0;       /* 暂停时刻的剩余 */
-        var intervalId = 0;
-        var finished = false;
-
-        var api = {};
-
-        function callTick(remaining) {
-            if (opt.onTick) { opt.onTick(remaining, total); }
-        }
-
-        function callState(s) {
-            state = s;
-            api.state = s;
-            if (opt.onState) { opt.onState(s); }
-        }
-
-        function stopLoop() {
-            if (intervalId) {
-                clearInterval(intervalId);
-                intervalId = 0;
-            }
-        }
-
-        function finish() {
-            stopLoop();
-            remainAtPause = 0;
-            if (!finished) {
-                finished = true;
-                callState('done');
-                if (opt.onFinish) { opt.onFinish(); }
-            }
-            callTick(0);
-        }
-
-        function loop() {
-            var remaining = endAt - Date.now();
-            if (remaining <= 0) {
-                finish();
-            } else {
-                callTick(remaining);
-            }
-        }
-
-        /* ---------- 公开方法 ---------- */
-
-        /** 设置总时长（仅在非运行态有效） */
-        api.set = function (ms) {
-            if (state === 'running') { return; }
-            total = Math.max(0, Math.round(ms));
-            remainAtPause = total;
-            finished = false;
-            callState(state === 'done' ? 'idle' : state === 'idle' ? 'idle' : 'idle');
-            callTick(total);
-        };
-
-        api.start = function () {
-            if (state === 'running' || total <= 0) { return; }
-            finished = false;
-            endAt = Date.now() + (state === 'paused' ? remainAtPause : total);
-            callState('running');
-            loop();
-            stopLoop();
-            intervalId = setInterval(loop, TICK_MS);
-        };
-
-        api.resume = api.start;
-
-        api.pause = function () {
-            if (state !== 'running') { return; }
-            remainAtPause = Math.max(0, endAt - Date.now());
-            stopLoop();
-            callState('paused');
-            callTick(remainAtPause);
-        };
-
-        api.toggle = function () {
-            if (state === 'running') { api.pause(); } else { api.start(); }
-        };
-
-        api.reset = function () {
-            stopLoop();
-            remainAtPause = total;
-            finished = false;
-            callState('idle');
-            callTick(total);
-        };
-
-        /** 运行/暂停态增减时间；delta 毫秒（可负）。运行中直接推 endAt。 */
-        api.add = function (delta) {
-            delta = Math.round(delta || 0);
-            if (state === 'running') {
-                endAt += delta;
-                var remaining = endAt - Date.now();
-                if (remaining <= 0) { finish(); }
-                else { callTick(remaining); }
-            } else if (state === 'paused' || state === 'idle') {
-                var base = state === 'paused' ? remainAtPause : total;
-                var next = Math.max(0, base + delta);
-                if (state === 'paused') { remainAtPause = next; }
-                else { total = next; remainAtPause = next; }
-                callTick(next);
-            }
-            if (state === 'idle' && total === 0 && delta > 0) { total = delta; remainAtPause = delta; }
-        };
-
-        Object.defineProperty(api, 'remaining', {
-            get: function () {
-                if (state === 'running') { return Math.max(0, endAt - Date.now()); }
-                if (state === 'paused') { return remainAtPause; }
-                if (state === 'done') { return 0; }
-                return total;
-            }
-        });
-        Object.defineProperty(api, 'total', { get: function () { return total; } });
-
-        api.state = state;
-
-        return api;
-    }
-
-    /* ---------- 展示格式化（共享给各工具保持一致） ---------- */
-
-    /** 毫秒 → {h, m, s, cs}（cs 为百分秒） */
-    function breakdown(ms) {
-        var t = Math.max(0, Math.ceil(ms / 10) * 10); /* 向上取整到 0.1s，显示 0:00 前不会提前 */
-        var cs = Math.floor((t % 1000) / 10);
-        var sec = Math.floor(t / 1000);
-        var s = sec % 60;
-        var m = Math.floor(sec / 60) % 60;
-        var h = Math.floor(sec / 3600);
-        return { h: h, m: m, s: s, cs: cs };
-    }
-
-    /** 毫秒 → "MM:SS" 或 "H:MM:SS" */
-    function format(ms) {
-        var b = breakdown(ms);
-        var mm = (b.m < 10 ? '0' : '') + b.m;
-        var ss = (b.s < 10 ? '0' : '') + b.s;
-        if (b.h > 0) { return b.h + ':' + mm + ':' + ss; }
-        return mm + ':' + ss;
-    }
-
-    global.ET = global.ET || {};
-    global.ET.Countdown = { create: create, breakdown: breakdown, format: format };
-})(window);
-</script>
-<!-- /ET:INLINE -->
-
 <!-- ET:INLINE name="et-stats" src="ui/et-stats.js" -->
 <script>
   /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
@@ -1877,417 +1785,505 @@ body { overflow: hidden; }
 </script>
 <!-- /ET:INLINE -->
 
-<!-- 使用统计（模块化：删除上方 et-stats 注入块即可完全不联网，见 README） -->
+<!-- 使用统计：删除上方 et-stats 块即可完全不联网（模块化设计） -->
 <script>
-try { ET.Stats.send('use_offline', 'countdown-timer'); } catch (e) { /* 静默 */ }
+try { ET.Stats.send('use_offline', 'fraction-visual'); } catch (e) { /* 静默 */ }
 </script>
 
 <script>
 (function () {
     'use strict';
 
-    var TOOL_ID = 'countdown-timer';
+    var TOOL_ID = 'fraction-visual';
     var store = ET.store(TOOL_ID);
 
-    var PRESETS = [1, 2, 3, 5, 10, 15, 20, 30]; /* 分钟 */
-    var RING_LEN = 2 * Math.PI * 94;
-    var WARN_MS = 30 * 1000;   /* <30s 变橙 */
-    var DANGER_MS = 10 * 1000; /* <10s 变红 + 滴答 */
+    var CHIPS = [
+        [1, 2], [1, 3], [2, 3], [1, 4], [3, 4], [1, 5], [2, 5],
+        [3, 5], [1, 6], [5, 6], [1, 8], [3, 8], [1, 10], [3, 10]
+    ];
+    var MAX_DENS = [12, 20];
+
+    /* ============ 数字工具 ============ */
+
+    function clampInt(value, lo, hi, fallback) {
+        var n = Math.round(Number(value));
+        if (!isFinite(n)) { return fallback; }
+        return Math.max(lo, Math.min(hi, n));
+    }
+
+    function gcd(x, y) {
+        x = Math.abs(x);
+        y = Math.abs(y);
+        while (y) {
+            var t = x % y;
+            x = y;
+            y = t;
+        }
+        return x || 1;
+    }
+
+    function lcm(x, y) {
+        return x / gcd(x, y) * y;
+    }
+
+    function trimNum(n) {
+        var s = Number(n).toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+        return s === '-0' || s === '' ? '0' : s;
+    }
+
+    function validMaxDen(v) {
+        return MAX_DENS.indexOf(Number(v)) !== -1 ? Number(v) : 12;
+    }
+
+    function validFrac(raw, fallback, maxDen) {
+        var o = raw && typeof raw === 'object' ? raw : {};
+        var den = clampInt(o.den, 1, maxDen, fallback.den);
+        return { num: clampInt(o.num, 0, den, fallback.num), den: den };
+    }
+
+    var maxDen = validMaxDen(store.get('maxDen', 12));
+
+    var state = {
+        a: validFrac(store.get('a', null), { num: 1, den: 2 }, maxDen),
+        b: validFrac(store.get('b', null), { num: 2, den: 3 }, maxDen),
+        maxDen: maxDen,
+        compare: store.get('compare', false) === true,
+        numeric: store.get('numeric', true) !== false
+    };
 
     var chrome = ET.Chrome.mount({
         toolId: TOOL_ID,
-        title: '课堂倒计时',
-        sub: '练习 · 讨论 · 考试',
-        accent: '#6366f1',
+        title: '分数可视化',
+        sub: '数学 · 饼图 / 色条 / 约分对比',
+        accent: '#d97706',
         status: '就绪',
         sound: true,
-        primary: function () { els.btnMain.click(); },   /* 翻页笔 PageDown：开始/暂停 */
-        secondary: function () { els.btnReset.click(); }, /* 翻页笔 PageUp：重置 */
+        primary: function () { step('a', 'num', 1); },          /* 翻页笔下页键：分子 +1 */
+        secondary: toggleCompare,                              /* 翻页笔上页键：开关对比模式 */
+        settings: { title: '可视化设置', build: buildSettings },
         help: '<div style="font-size:13.5px;line-height:2">' +
-            '<p style="margin:0 0 8px"><b>两种模式</b>：顶部可切换「倒计时」与「正计时」。倒计时用于限时练习 / 讨论 / 考试；正计时是秒表，用于记录学生完成任务用了多久（朗读、默写、小组汇报等）。</p>' +
-            '<p style="margin:0 0 8px"><b>正计时</b>：空格开始 / 暂停，R 清零；可选「到点提醒」——设一个时长，到点响铃 + 变红，适合「超过 3 分钟就提醒」这类场景（↑↓ 可 ±30 秒调整提醒时长）。</p>' +
-            '<p style="margin:0 0 8px"><b>快捷键</b>：空格 开始/暂停 · R 重置 · ↑↓ 倒计时 ±30 秒 / 正计时调整提醒。</p>' +
-            '<p style="margin:0 0 8px"><b>翻页笔</b>：下页键 开始/暂停 · 上页键 重置（两种模式通用）。</p>' +
-            '<p style="margin:0 0 8px"><b>运行中可调</b>：倒计时的 ±30 秒按钮在计时进行中也能用。</p>' +
-            '<p style="margin:0 0 8px"><b>警示</b>：倒计时剩 30 秒数字变橙，剩 10 秒变红并每秒滴答，结束时全屏提醒。</p>' +
-            '<p style="margin:0"><b>精度</b>：基于系统时钟计算，休眠 / 切页回来不会走快走慢；正计时切到别的标签页也会继续走。</p></div>'
+            '<p style="margin:0 0 8px"><b>看什么</b>：左边饼图把整个圆平均分成「分母」份，涂色的是「分子」份；右边色条是同一件事的另一种画法。</p>' +
+            '<p style="margin:0 0 8px"><b>改分数</b>：分子 / 分母各有 − + 按钮；也可以直接在色条上左右拖动，涂色格数就是分子。底部常用分数可一键切换。</p>' +
+            '<p style="margin:0 0 8px"><b>约分</b>：底部自动给出最简分数，并说明分子分母同除了几。</p>' +
+            '<p style="margin:0 0 8px"><b>比大小</b>：点右上「对比模式」出现分数 B，可拖动它的色条；数轴上的 A / B 圆点位置一眼看出谁更靠近 1，底部还会给出通分过程。</p>' +
+            '<p style="margin:0"><b>快捷键</b>：空格 / 右键 = 分子 +1；←→ = 分子 ∓1；↑↓ = 分母 ±1。</p></div>'
     });
 
-    var els = {
-        ring: document.getElementById('ring'),
-        timeText: document.getElementById('timeText'),
-        timeLabel: document.getElementById('timeLabel'),
-        presets: document.getElementById('presets'),
-        btnMain: document.getElementById('btnMain'),
-        btnMainText: document.getElementById('btnMainText'),
-        btnReset: document.getElementById('btnReset'),
-        btnPlus30: document.getElementById('btnPlus30'),
-        btnMinus30: document.getElementById('btnMinus30'),
-        inHour: document.getElementById('inHour'),
-        inMin: document.getElementById('inMin'),
-        inSec: document.getElementById('inSec'),
-        btnCustom: document.getElementById('btnCustom'),
-        segMode: document.getElementById('segMode'),
-        customRow: document.getElementById('customRow'),
-        upRemindRow: document.getElementById('upRemindRow'),
-        inRemindMin: document.getElementById('inRemindMin'),
-        inRemindSec: document.getElementById('inRemindSec'),
-        btnRemind: document.getElementById('btnRemind'),
-        btnRemindClear: document.getElementById('btnRemindClear'),
-        remindState: document.getElementById('remindState')
-    };
+    /* ============ 绘制 ============ */
 
-    var lastMinutes = store.get('last_minutes', 5);
-    var mode = store.get('mode', 'down') === 'up' ? 'up' : 'down';
-
-    var timer = ET.Countdown.create({
-        onTick: onTick,
-        onFinish: onFinish,
-        onState: onState
-    });
-
-    var lastWholeSecond = -1;
-    var overShown = false;
-
-    /* ============ 正计时（秒表） ============ */
-
-    var up = {
-        running: false,
-        startedAt: 0,
-        acc: 0,
-        timerId: 0,
-        target: Math.max(0, Number(store.get('up_target', 0)) || 0),
-        fired: false
-    };
-
-    function upElapsed() {
-        return up.acc + (up.running ? Date.now() - up.startedAt : 0);
+    function polar(cx, cy, r, deg) {
+        var rad = (deg - 90) * Math.PI / 180;
+        return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
     }
 
-    function swapMainIcon(playing) {
-        var icon = els.btnMain.querySelector('use');
-        if (!icon) { return; }
-        var iconId = playing ? '#i-pause' : '#i-play';
-        icon.setAttribute('href', iconId);
-        icon.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', iconId); /* et-allow-external SVG 命名空间 */
+    function slicePath(cx, cy, r, from, to) {
+        var p1 = polar(cx, cy, r, from);
+        var p2 = polar(cx, cy, r, to);
+        var large = (to - from) > 180 ? 1 : 0;
+        return 'M ' + cx + ' ' + cy +
+            ' L ' + p1[0].toFixed(2) + ' ' + p1[1].toFixed(2) +
+            ' A ' + r + ' ' + r + ' 0 ' + large + ' 1 ' + p2[0].toFixed(2) + ' ' + p2[1].toFixed(2) + ' Z';
     }
 
-    function upSyncButton() {
-        els.btnMainText.textContent = up.running ? '暂停' : (upElapsed() > 0 ? '继续' : '开始');
-        swapMainIcon(up.running);
-    }
-
-    function renderRemindState() {
-        els.remindState.textContent = up.target > 0
-            ? '当前提醒：' + ET.Countdown.format(up.target)
-            : '未设提醒';
-    }
-
-    function upRender() {
-        var el = upElapsed();
-        els.timeText.textContent = ET.Countdown.format(el);
-
-        var over = up.target > 0 && el >= up.target;
-        var near = up.target > 0 && !over && el >= up.target * 0.8;
-
-        var cls = 'cd-time__text';
-        if (over) { cls += ' is-danger cd-pulse'; }
-        else if (near) { cls += ' is-warning'; }
-        if (els.timeText.className !== cls) { els.timeText.className = cls; }
-
-        var ratio = up.target > 0
-            ? Math.max(0, Math.min(1, el / up.target))
-            : (el % 60000) / 60000;
-        els.ring.style.strokeDasharray = RING_LEN.toFixed(1);
-        els.ring.style.strokeDashoffset = (RING_LEN * (1 - ratio)).toFixed(1);
-        els.ring.setAttribute('class', 'cd-ring' + (over ? ' is-danger' : (near ? ' is-warning' : '')));
-
-        els.timeLabel.textContent = over ? '已超过提醒时长'
-            : (up.running ? '计时中' : (el > 0 ? '已暂停' : '准备开始'));
-
-        if (over && !up.fired) {
-            up.fired = true;
-            chrome.beep('over');
-            chrome.toast('正计时已到 ' + ET.Countdown.format(up.target) + '，注意控制时间', 'warn');
-        }
-        chrome.setStatus('正计时 · ' + ET.Countdown.format(el), over ? 'warn' : undefined);
-
-        upSyncButton();
-        if (up.running) { up.timerId = window.setTimeout(upRender, 200); }
-    }
-
-    function upToggle() {
-        if (up.running) {
-            up.acc = upElapsed();
-            up.running = false;
-            window.clearTimeout(up.timerId);
-            upRender();
-            return;
-        }
-        up.running = true;
-        up.startedAt = Date.now();
-        upRender();
-    }
-
-    function upReset() {
-        up.running = false;
-        window.clearTimeout(up.timerId);
-        up.acc = 0;
-        up.fired = false;
-        upRender();
-    }
-
-    function upSetTarget(ms) {
-        up.target = Math.max(0, Math.round(ms));
-        up.fired = up.target > 0 && upElapsed() >= up.target;
-        store.set('up_target', up.target);
-        renderRemindState();
-        upRender();
-    }
-
-    function applyModeUi() {
-        var btns = els.segMode.querySelectorAll('button');
-        for (var i = 0; i < btns.length; i++) {
-            btns[i].classList.toggle('is-active', btns[i].getAttribute('data-mode') === mode);
-        }
-        var upOnly = mode === 'up';
-        els.presets.classList.toggle('cd-hidden', upOnly);
-        els.customRow.classList.toggle('cd-hidden', upOnly);
-        els.upRemindRow.classList.toggle('cd-hidden', !upOnly);
-        els.btnPlus30.classList.toggle('cd-hidden', upOnly);
-        els.btnMinus30.classList.toggle('cd-hidden', upOnly);
-    }
-
-    function setMode(next, announce) {
-        next = next === 'up' ? 'up' : 'down';
-        if (next === mode) { return; }
-        /* 切换时把另一侧计时停下，避免两个表同时跑 */
-        if (mode === 'up') {
-            up.running = false;
-            window.clearTimeout(up.timerId);
-            up.acc = 0;
-        } else if (timer.state === 'running') {
-            timer.pause();
-        }
-        mode = next;
-        store.set('mode', mode);
-        applyModeUi();
-
-        if (mode === 'up') {
-            upReset();
-            chrome.setStatus('正计时 · 准备开始');
+    function renderPie(svg, frac) {
+        var out = '';
+        if (frac.den <= 1) {
+            out = '<circle class="fv-slice' + (frac.num >= 1 ? ' is-on' : '') + '" cx="100" cy="100" r="92"></circle>';
         } else {
-            timer.reset();
-            renderPresets();
+            for (var i = 0; i < frac.den; i++) {
+                var from = i * 360 / frac.den;
+                var to = (i + 1) * 360 / frac.den;
+                out += '<path class="fv-slice' + (i < frac.num ? ' is-on' : '') + '" d="' +
+                    slicePath(100, 100, 92, from, to) + '"></path>';
+            }
         }
-        if (announce) {
-            chrome.beep('ok');
-            chrome.toast(mode === 'up' ? '已切到正计时：空格开始，可设到点提醒' : '已切到倒计时');
+        svg.innerHTML = out;
+    }
+
+    function renderBar(bar, frac) {
+        var out = '';
+        for (var i = 0; i < frac.den; i++) {
+            out += '<span class="fv-seg' + (i < frac.num ? ' is-on' : '') + '"></span>';
+        }
+        bar.innerHTML = out;
+
+        /* 拖动把手（显示当前分数），让色条也有明确的交互反馈 */
+        var knob = document.createElement('span');
+        knob.className = 'fv-knob';
+        knob.setAttribute('data-label', frac.num + '/' + frac.den);
+        knob.style.left = (frac.den ? frac.num / frac.den * 100 : 0) + '%';
+        bar.appendChild(knob);
+    }
+
+    function memoOf(frac) {
+        if (frac.den <= 1) { return '整个圆看作 1，取 ' + frac.num; }
+        return '把 1 平均分成 ' + frac.den + ' 份，取其中 ' + frac.num + ' 份';
+    }
+
+    function capOf(frac) {
+        if (frac.den <= 1) { return '整体 1 · 拖动色条改变份数'; }
+        return '每格 = 1/' + frac.den + ' · 拖动色条改变分子';
+    }
+
+    function renderNumline() {
+        var svg = document.getElementById('numline');
+        var x0 = 46;
+        var x1 = 854;
+        var y = 46;
+        var out = '<line class="fv-nl__axis" x1="' + x0 + '" y1="' + y + '" x2="' + x1 + '" y2="' + y + '"></line>';
+        for (var i = 0; i <= 10; i++) {
+            var x = x0 + (x1 - x0) * i / 10;
+            out += '<line class="fv-nl__tick" x1="' + x.toFixed(1) + '" y1="' + (y - 6) +
+                '" x2="' + x.toFixed(1) + '" y2="' + (y + 6) + '"></line>';
+        }
+        out += '<text class="fv-nl__label" x="' + x0 + '" y="' + (y + 26) + '" text-anchor="middle">0</text>';
+        out += '<text class="fv-nl__label" x="' + x1 + '" y="' + (y + 26) + '" text-anchor="middle">1</text>';
+        out += numlineMarker(x0, x1, y, state.a, 'A', 'fv-nl__mark-a');
+        if (state.compare) {
+            out += numlineMarker(x0, x1, y, state.b, 'B', 'fv-nl__mark-b');
+        }
+        svg.innerHTML = out;
+    }
+
+    function numlineMarker(x0, x1, y, frac, label, cls) {
+        var ratio = frac.den ? frac.num / frac.den : 0;
+        var x = (x0 + (x1 - x0) * ratio).toFixed(1);
+        return '<circle class="' + cls + '" cx="' + x + '" cy="' + y + '" r="7"></circle>' +
+            '<text class="fv-nl__tag" x="' + x + '" y="' + (y - 15) + '" text-anchor="middle">' +
+            label + ' ' + frac.num + '/' + frac.den + '</text>';
+    }
+
+    /* ============ 信息带 ============ */
+
+    function renderInfo() {
+        var a = state.a;
+        var value = a.num / a.den;
+        var g = gcd(a.num, a.den);
+        var rn = a.num / g;
+        var rd = a.den / g;
+
+        document.getElementById('infoFrac').textContent = a.num + '/' + a.den;
+
+        var reduced = rn + '/' + rd;
+        if (rd === 1) { reduced += '（整数 ' + rn + '）'; }
+        reduced += (g > 1 && a.num > 0) ? '，同除以 ' + g : '，已是最简';
+        document.getElementById('infoReduced').textContent = reduced;
+
+        document.getElementById('infoDec').textContent = trimNum(value);
+        document.getElementById('infoPct').textContent = trimNum(value * 100) + '%';
+
+        var dec = document.getElementById('infoDec').parentElement;
+        var pct = document.getElementById('infoPct').parentElement;
+        dec.hidden = !state.numeric;
+        pct.hidden = !state.numeric;
+    }
+
+    function renderVerdict() {
+        var el = document.getElementById('verdict');
+        el.textContent = '';
+        if (!state.compare) { return; }
+
+        var a = state.a;
+        var b = state.b;
+        var left = a.num * b.den;
+        var right = b.num * a.den;
+        var sign = left > right ? '>' : (left < right ? '<' : '=');
+        var common = lcm(a.den, b.den);
+        var an = a.num * (common / a.den);
+        var bn = b.num * (common / b.den);
+
+        el.appendChild(document.createTextNode(a.num + '/' + a.den + ' ' + sign + ' ' + b.num + '/' + b.den));
+
+        var small = document.createElement('small');
+        small.textContent = sign === '='
+            ? '等值分数，通分后都等于 ' + an + '/' + common
+            : '通分：' + an + '/' + common + ' ' + sign + ' ' + bn + '/' + common;
+        el.appendChild(small);
+    }
+
+    function renderChips() {
+        var box = document.getElementById('chips');
+        box.textContent = '';
+        for (var i = 0; i < CHIPS.length; i++) {
+            (function (pair) {
+                var b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'fv-chip' + (state.a.num === pair[0] && state.a.den === pair[1] ? ' is-active' : '');
+                b.textContent = pair[0] + '/' + pair[1];
+                b.title = '把分数 A 设为 ' + pair[0] + '/' + pair[1];
+                b.addEventListener('click', function () {
+                    setFrac('a', pair[0], pair[1]);
+                    chrome.beep('ok');
+                });
+                box.appendChild(b);
+            })(CHIPS[i]);
         }
     }
 
-    /* ============ 渲染 ============ */
-
-    function renderPresets() {
-        els.presets.textContent = '';
-        PRESETS.forEach(function (min) {
-            var b = document.createElement('button');
-            b.className = 'cd-preset' + (timer.total === min * 60000 ? ' is-active' : '');
-            b.type = 'button';
-            b.textContent = min + ' 分钟';
-            b.addEventListener('click', function () {
-                if (timer.state === 'running') { return; }
-                lastMinutes = min;
-                store.set('last_minutes', min);
-                timer.set(min * 60000);
-                renderPresets();
-                chrome.toast('已设定 ' + min + ' 分钟');
-            });
-            els.presets.appendChild(b);
-        });
+    function updateStatus() {
+        var a = state.a;
+        var text = a.num + '/' + a.den;
+        if (state.numeric) { text += ' = ' + trimNum(a.num / a.den) + ' · ' + trimNum(a.num * 100 / a.den) + '%'; }
+        if (state.compare) {
+            var left = a.num * state.b.den;
+            var right = state.b.num * a.den;
+            text += ' · 与 ' + state.b.num + '/' + state.b.den + ' 相比 ' +
+                (left > right ? '更大' : (left < right ? '更小' : '相等'));
+        }
+        chrome.setStatus(text);
     }
 
-    function onTick(remaining, total) {
-        var fmt = ET.Countdown.format(remaining);
-        var b = ET.Countdown.breakdown(remaining);
+    function render() {
+        document.getElementById('valNum').textContent = String(state.a.num);
+        document.getElementById('valDen').textContent = String(state.a.den);
+        document.getElementById('fracNumA').textContent = String(state.a.num);
+        document.getElementById('fracDenA').textContent = String(state.a.den);
+        document.getElementById('memoA').textContent = memoOf(state.a);
+        document.getElementById('capA').textContent = capOf(state.a);
+        renderPie(document.getElementById('pieA'), state.a);
+        renderBar(document.getElementById('barA'), state.a);
 
-        var cls = 'cd-time__text';
-        if (remaining > 0 && remaining <= DANGER_MS) { cls += ' is-danger cd-pulse'; }
-        else if (remaining > 0 && remaining <= WARN_MS) { cls += ' is-warning'; }
-        if (els.timeText.className !== cls) { els.timeText.className = cls; }
-        els.timeText.textContent = fmt;
-
-        /* 进度环 */
-        var ratio = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0;
-        els.ring.style.strokeDasharray = RING_LEN.toFixed(1);
-        els.ring.style.strokeDashoffset = (RING_LEN * (1 - ratio)).toFixed(1);
-        /* SVG 元素 className 只读，必须用 setAttribute */
-        els.ring.setAttribute('class', 'cd-ring' +
-            (remaining > 0 && remaining <= DANGER_MS ? ' is-danger'
-                : remaining > 0 && remaining <= WARN_MS ? ' is-warning' : ''));
-
-        /* 最后 10 秒每秒滴答 */
-        var whole = Math.ceil(remaining / 1000);
-        if (remaining > 0 && remaining <= DANGER_MS && whole !== lastWholeSecond) {
-            lastWholeSecond = whole;
-            chrome.beep('tick');
+        document.getElementById('cardB').hidden = !state.compare;
+        document.getElementById('nlWrap').hidden = !state.compare;
+        document.getElementById('valNumB').textContent = String(state.b.num);
+        document.getElementById('valDenB').textContent = String(state.b.den);
+        document.getElementById('fracNumB').textContent = String(state.b.num);
+        document.getElementById('fracDenB').textContent = String(state.b.den);
+        if (state.compare) {
+            renderPie(document.getElementById('pieB'), state.b);
+            renderBar(document.getElementById('barB'), state.b);
         }
 
-        if (timer.state === 'running') {
-            chrome.setStatus('剩余 ' + fmt);
-        }
+        var btn = document.getElementById('btnCompare');
+        btn.classList.toggle('et-btn--primary', state.compare);
+        btn.title = state.compare ? '关闭对比模式' : '开启对比模式';
+        document.getElementById('btnCompareText').textContent = state.compare ? '关闭对比' : '对比模式';
+
+        renderChips();
+        renderInfo();
+        renderVerdict();
+        if (state.compare) { renderNumline(); }
+        updateStatus();
     }
 
-    function onState(s) {
-        var playing = s === 'running';
-        els.btnMainText.textContent = s === 'paused' ? '继续'
-            : playing ? '暂停'
-            : (s === 'done' ? '再 来' : '开始');
-        var icon = els.btnMain.querySelector('use');
-        var iconId = playing ? '#i-pause' : '#i-play';
-        icon.setAttribute('href', iconId);
-        icon.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', iconId); /* et-allow-external SVG 命名空间 */
+    /* ============ 状态变更 ============ */
 
-        els.timeLabel.textContent = s === 'running' ? '计时中'
-            : s === 'paused' ? '已暂停'
-            : s === 'done' ? '时间到'
-            : '准备开始';
-
-        renderPresets();
-
-        if (s === 'done') {
-            chrome.setStatus('时间到', 'err');
-        } else if (s === 'idle') {
-            chrome.setStatus('就绪 · ' + ET.Countdown.format(timer.total));
-            lastWholeSecond = -1;
-        }
+    function save() {
+        store.set('a', state.a);
+        store.set('b', state.b);
+        store.set('maxDen', state.maxDen);
+        store.set('compare', state.compare);
+        store.set('numeric', state.numeric);
     }
 
-    function onFinish() {
-        chrome.beep('over');
-        if (!overShown) {
-            overShown = true;
-            var overlay = document.createElement('div');
-            overlay.className = 'cd-over';
-            overlay.innerHTML = '<div style="text-align:center"><div class="cd-over__text">时间到</div></div>' +
-                '<div class="cd-over__hint">点击任意处关闭</div>';
-            overlay.addEventListener('click', function () {
-                if (overlay.parentNode) { overlay.parentNode.removeChild(overlay); }
-                overShown = false;
-            });
-            document.body.appendChild(overlay);
-        }
+    function setFrac(which, num, den) {
+        var cur = state[which];
+        var d = clampInt(den, 1, state.maxDen, cur.den);
+        var n = clampInt(num, 0, d, cur.num);
+        state[which] = { num: n, den: d };
+        render();
+        save();
     }
 
-    /* ============ 事件 ============ */
-
-    els.btnMain.addEventListener('click', function () {
-        if (mode === 'up') {
-            upToggle();
-            chrome.beep('ok');
-            return;
+    function step(which, field, delta) {
+        var f = state[which];
+        if (field === 'den') {
+            var d = f.den + delta;
+            if (d < 1) { d = state.maxDen; }
+            if (d > state.maxDen) { d = 1; }
+            setFrac(which, Math.min(f.num, d), d);
+        } else {
+            var n = f.num + delta;
+            if (n < 0) { n = f.den; }
+            if (n > f.den) { n = 0; }
+            setFrac(which, n, f.den);
         }
-        if (timer.state === 'idle' && timer.total <= 0) {
-            timer.set(lastMinutes * 60000);
-        }
-        if (timer.state === 'done') {
-            timer.reset();
-            overShown = false;
-            var overlay = document.querySelector('.cd-over');
-            if (overlay && overlay.parentNode) { overlay.parentNode.removeChild(overlay); }
-        }
-        timer.toggle();
-        chrome.beep('ok');
-    });
-
-    els.btnReset.addEventListener('click', function () {
-        if (mode === 'up') {
-            upReset();
-            chrome.beep('ok');
-            chrome.toast('已清零，可重新开始计时');
-            return;
-        }
-        overShown = false;
-        var overlay = document.querySelector('.cd-over');
-        if (overlay && overlay.parentNode) { overlay.parentNode.removeChild(overlay); }
-        timer.reset();
-        chrome.beep('ok');
-    });
-
-    els.btnPlus30.addEventListener('click', function () { timer.add(30000); });
-    els.btnMinus30.addEventListener('click', function () { timer.add(-30000); });
-
-    els.segMode.addEventListener('click', function (ev) {
-        var v = ev.target && ev.target.getAttribute ? ev.target.getAttribute('data-mode') : null;
-        if (v) { setMode(v, true); }
-    });
-
-    els.btnRemind.addEventListener('click', function () {
-        var m = Math.max(0, Math.min(180, Number(els.inRemindMin.value) || 0));
-        var s = Math.max(0, Math.min(59, Number(els.inRemindSec.value) || 0));
-        var ms = (m * 60 + s) * 1000;
-        if (ms <= 0) {
-            chrome.toast('请输入大于 0 的提醒时长，或点「取消」关闭提醒', 'warn');
-            return;
-        }
-        upSetTarget(ms);
-        chrome.beep('ok');
-        chrome.toast('已设到点提醒：' + ET.Countdown.format(ms));
-    });
-
-    els.btnRemindClear.addEventListener('click', function () {
-        upSetTarget(0);
-        els.inRemindMin.value = '';
-        els.inRemindSec.value = '';
         chrome.beep('tick');
-        chrome.toast('已取消到点提醒');
-    });
+    }
 
-    els.btnCustom.addEventListener('click', function () {
-        if (timer.state === 'running') { chrome.toast('请先暂停再调整时长', 'warn'); return; }
-        var h = Math.max(0, Math.min(23, Number(els.inHour.value) || 0));
-        var m = Math.max(0, Math.min(59, Number(els.inMin.value) || 0));
-        var s = Math.max(0, Math.min(59, Number(els.inSec.value) || 0));
-        var ms = (h * 3600 + m * 60 + s) * 1000;
-        if (ms <= 0) { chrome.toast('请输入大于 0 的时长', 'warn'); return; }
-        timer.set(ms);
-        renderPresets();
-        chrome.beep('ok');
-        chrome.setStatus('就绪 · ' + ET.Countdown.format(ms));
-    });
+    function toggleCompare() {
+        state.compare = !state.compare;
+        render();
+        save();
+        chrome.beep(state.compare ? 'ok' : 'tick');
+        chrome.toast(state.compare ? '已开启对比模式：拖动 B 的色条比大小' : '已关闭对比模式');
+    }
+
+    /* ============ 色条拖动 ============ */
+
+    function bindBarDrag(bar, which) {
+        var dragging = false;
+
+        function setDrag(on) {
+            dragging = on;
+            bar.classList.toggle('is-drag', on);
+        }
+
+        function apply(clientX) {
+            var f = state[which];
+            var rect = bar.getBoundingClientRect();
+            if (!rect.width) { return; }
+            var ratio = (clientX - rect.left) / rect.width;
+            var idx = Math.ceil(ratio * f.den);
+            if (idx < 1) { idx = 1; }
+            if (idx > f.den) { idx = f.den; }
+            if (idx === f.num) { return; }
+            setFrac(which, idx, f.den);
+        }
+
+        if (window.PointerEvent) {
+            bar.addEventListener('pointerdown', function (ev) {
+                setDrag(true);
+                if (bar.setPointerCapture) {
+                    try { bar.setPointerCapture(ev.pointerId); } catch (err) { /* 忽略 */ }
+                }
+                apply(ev.clientX);
+                ev.preventDefault();
+            });
+            bar.addEventListener('pointermove', function (ev) {
+                if (dragging) { apply(ev.clientX); }
+            });
+            bar.addEventListener('pointerup', function () { setDrag(false); });
+            bar.addEventListener('pointercancel', function () { setDrag(false); });
+        } else {
+            bar.addEventListener('touchstart', function (ev) {
+                setDrag(true);
+                apply(ev.touches[0].clientX);
+                ev.preventDefault();
+            }, { passive: false });
+            bar.addEventListener('touchmove', function (ev) {
+                if (dragging) { apply(ev.touches[0].clientX); }
+            }, { passive: false });
+            bar.addEventListener('touchend', function () { setDrag(false); });
+            bar.addEventListener('mousedown', function (ev) {
+                setDrag(true);
+                apply(ev.clientX);
+                ev.preventDefault();
+            });
+            bar.addEventListener('mousemove', function (ev) {
+                if (dragging) { apply(ev.clientX); }
+            });
+            bar.addEventListener('mouseup', function () { setDrag(false); });
+        }
+    }
+
+    /* ============ 设置抽屉 ============ */
+
+    function buildSettings(body) {
+        function heading(text) {
+            var h = document.createElement('h4');
+            h.textContent = text;
+            body.appendChild(h);
+        }
+
+        function switchRow(label, checked, onChange, disabled) {
+            var row = document.createElement('label');
+            row.className = 'et-drawer__switch';
+            row.appendChild(document.createTextNode(label));
+            var cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.checked = checked;
+            cb.disabled = !!disabled;
+            cb.addEventListener('change', function () { onChange(cb.checked); });
+            row.appendChild(cb);
+            body.appendChild(row);
+        }
+
+        heading('分母上限');
+        var row = document.createElement('div');
+        row.className = 'et-drawer__row';
+        for (var i = 0; i < MAX_DENS.length; i++) {
+            (function (value) {
+                var b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'et-btn' + (value === state.maxDen ? ' et-btn--primary' : '');
+                b.style.flex = '1 1 40%';
+                b.textContent = '最多 ' + value + ' 等分';
+                b.addEventListener('click', function () {
+                    state.maxDen = value;
+                    if (state.a.den > value) { state.a = { num: Math.min(state.a.num, value), den: value }; }
+                    if (state.b.den > value) { state.b = { num: Math.min(state.b.num, value), den: value }; }
+                    save();
+                    render();
+                    refresh();
+                });
+                row.appendChild(b);
+            })(MAX_DENS[i]);
+        }
+        body.appendChild(row);
+
+        heading('显示选项');
+        switchRow('对比模式（分数 B + 数轴）', state.compare, function (on) {
+            state.compare = on;
+            save();
+            render();
+            refresh();
+        });
+        switchRow('显示小数与百分数', state.numeric, function (on) {
+            state.numeric = on;
+            save();
+            render();
+        });
+
+        var tip = document.createElement('p');
+        tip.className = 'et-drawer__tip';
+        tip.innerHTML = '饼图与色条表示同一件事：把 1 平均分成<b>分母</b>份，取其中<b>分子</b>份。'
+            + '<br>对比模式下 A 用橙色、B 用蓝色，数轴圆点越靠右表示值越大。'
+            + '<br>拖动色条即可改变分子，触屏一体机可直接手指拖动。'
+            + '<br>分数与设置保存在本机浏览器，下次打开自动恢复。';
+        body.appendChild(tip);
+
+        function refresh() {
+            while (body.firstChild) { body.removeChild(body.firstChild); }
+            buildSettings(body);
+        }
+    }
+
+    /* ============ 事件绑定 ============ */
+
+    document.getElementById('numMinus').addEventListener('click', function () { step('a', 'num', -1); });
+    document.getElementById('numPlus').addEventListener('click', function () { step('a', 'num', 1); });
+    document.getElementById('denMinus').addEventListener('click', function () { step('a', 'den', -1); });
+    document.getElementById('denPlus').addEventListener('click', function () { step('a', 'den', 1); });
+    document.getElementById('numMinusB').addEventListener('click', function () { step('b', 'num', -1); });
+    document.getElementById('numPlusB').addEventListener('click', function () { step('b', 'num', 1); });
+    document.getElementById('denMinusB').addEventListener('click', function () { step('b', 'den', -1); });
+    document.getElementById('denPlusB').addEventListener('click', function () { step('b', 'den', 1); });
+    document.getElementById('btnCompare').addEventListener('click', toggleCompare);
+
+    bindBarDrag(document.getElementById('barA'), 'a');
+    bindBarDrag(document.getElementById('barB'), 'b');
 
     document.addEventListener('keydown', function (ev) {
-        var tag = (document.activeElement && document.activeElement.tagName) || '';
-        var inInput = tag === 'INPUT' || tag === 'TEXTAREA';
-        if (document.querySelector('.et-modal')) { return; }
+        var node = document.activeElement;
+        var tag = node && node.tagName ? node.tagName.toUpperCase() : '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (node && node.isContentEditable)) { return; }
+        if (document.querySelector('.et-modal, .et-drawer-backdrop')) { return; }
 
-        if (ev.key === ' ' && !inInput) {
+        if (ev.code === 'Space' || ev.key === ' ') {
             ev.preventDefault();
-            els.btnMain.click();
-        } else if ((ev.key === 'r' || ev.key === 'R') && !inInput) {
+            step('a', 'num', 1);
+        } else if (ev.key === 'ArrowRight') {
             ev.preventDefault();
-            els.btnReset.click();
-        } else if (ev.key === 'ArrowUp' && !inInput) {
+            step('a', 'num', 1);
+        } else if (ev.key === 'ArrowLeft') {
             ev.preventDefault();
-            if (mode === 'up') { upSetTarget(up.target + 30000); } else { timer.add(30000); }
-        } else if (ev.key === 'ArrowDown' && !inInput) {
+            step('a', 'num', -1);
+        } else if (ev.key === 'ArrowUp') {
             ev.preventDefault();
-            if (mode === 'up') { upSetTarget(Math.max(0, up.target - 30000)); } else { timer.add(-30000); }
+            step('a', 'den', 1);
+        } else if (ev.key === 'ArrowDown') {
+            ev.preventDefault();
+            step('a', 'den', -1);
+        } else if (ev.key === 'c' || ev.key === 'C') {
+            ev.preventDefault();
+            toggleCompare();
         }
     });
 
     /* ============ 启动 ============ */
-    els.ring.style.strokeDasharray = RING_LEN.toFixed(1);
-    els.ring.style.strokeDashoffset = '0';
-    timer.set(lastMinutes * 60000);
-    renderPresets();
-    renderRemindState();
-    applyModeUi();
-    if (mode === 'up') {
-        upRender();
-    } else {
-        timer.set(lastMinutes * 60000);
-    }
+
+    render();
 })();
 </script>
 

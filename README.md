@@ -112,6 +112,9 @@ python scripts/check_css_tokens.py             # CSS 是否用了字面量
 python scripts/build_css.py --check            # CSS 产物是否最新
 python scripts/icons/build_sprite.py --check   # sprite 产物是否最新
 
+# 工具运行时抽检（非门禁；每批工具交付前必跑，缺 Node / 浏览器自动跳过）
+python scripts/check_tools_runtime.py          # JS 语法（node --check）+ 无头渲染（DOM / 截图 / 报错）
+
 # 构建
 python scripts/build_css.py                    # 生成 public/assets/css/
 python scripts/icons/build_sprite.py           # 生成图标 sprite

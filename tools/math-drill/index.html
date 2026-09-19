@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>口算题生成器 — KeeTools 课工具</title>
 <!-- ET-META
-{"id":"math-drill","version":"1.0.0"}
+{"id":"math-drill","version":"1.1.0"}
 -->
 
 <!-- 共享外壳样式（由 sync_shared.py 注入） -->
@@ -647,16 +647,17 @@ html[data-et-theme="dark"] {
 .md-item {
     display: flex;
     align-items: baseline;
-    gap: 10px;
-    font-size: clamp(17px, 1.6vw, 24px);
+    gap: 8px;
+    font-size: var(--md-fs, clamp(17px, 1.6vw, 24px));
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
+    min-width: 0;
 }
 
 .md-item__no {
     flex: none;
-    min-width: 2.4em;
+    min-width: 2.2em;
     color: var(--et-muted);
     font-size: .82em;
     font-weight: 700;
@@ -666,7 +667,7 @@ html[data-et-theme="dark"] {
 
 .md-item__ans {
     display: inline-block;
-    min-width: 4.2em;
+    min-width: calc(var(--md-fs, 20px) * 2.3);
     color: transparent;
 }
 
@@ -674,11 +675,86 @@ html[data-et-theme="dark"] {
 
 .md-item__blank {
     display: inline-block;
-    min-width: 4.2em;
+    min-width: calc(var(--md-fs, 20px) * 2.3);
     border-bottom: 1.5px solid var(--et-line-strong);
 }
 
 .md-item.is-revealed .md-item__blank { border-bottom-color: transparent; }
+
+/* ---------- 在线答题 ---------- */
+.md-seg {
+    display: flex;
+    gap: 3px;
+    padding: 3px;
+    border: 1px solid var(--et-line);
+    border-radius: 10px;
+    background: var(--et-surface);
+}
+
+.md-seg button {
+    border: 0;
+    background: none;
+    color: var(--et-muted);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .14s, color .14s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.md-seg button:hover { color: var(--et-accent); }
+.md-seg button.is-active { background: var(--et-accent); color: #fff; }
+
+.md-quizinfo {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--et-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.md-quizinfo b { color: var(--et-accent); font-size: 15px; }
+
+.md-item__input {
+    width: calc(var(--md-fs, 20px) * 2.7);
+    min-width: 54px;
+    padding: 2px 6px;
+    border: 0;
+    border-bottom: 2px solid var(--et-line-strong);
+    border-radius: 4px 4px 0 0;
+    background: var(--et-surface-2);
+    color: var(--et-fg);
+    font: inherit;
+    font-size: 1em;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    outline: none;
+    transition: border-color .14s, background .14s, box-shadow .14s;
+}
+
+.md-item__input:focus {
+    border-bottom-color: var(--et-accent);
+    background: var(--et-surface);
+    box-shadow: 0 2px 0 0 var(--et-accent-weak);
+}
+
+.md-item.is-right .md-item__input { border-bottom-color: var(--et-ok); color: var(--et-ok); }
+.md-item.is-wrong .md-item__input { border-bottom-color: var(--et-err); color: var(--et-err); }
+
+.md-item__mark {
+    flex: none;
+    font-size: .8em;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.md-item__mark.is-right { color: var(--et-ok); }
+.md-item__mark.is-wrong { color: var(--et-err); }
+.md-item__fix { font-size: .78em; font-weight: 700; color: var(--et-err); }
 
 .md-foot {
     margin-top: 22px;
@@ -728,7 +804,20 @@ html[data-et-theme="dark"] {
 
     .md-item, .md-item.is-revealed .md-item__ans { color: #000 !important; }
     .md-item__blank { border-bottom-color: #000 !important; }
-    .md-grid { break-inside: avoid; }
+    .md-grid { break-inside: avoid; --md-fs: 15px !important; }
+
+    /* 打印时输入框还原为空白横线，批改标记不打印 */
+    .md-item__input {
+        background: transparent !important;
+        border-bottom-color: #000 !important;
+        color: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .md-item.is-right .md-item__input,
+    .md-item.is-wrong .md-item__input { border-bottom-color: #000 !important; }
+
+    .md-item__mark, .md-item__fix { display: none !important; }
 
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
@@ -741,10 +830,29 @@ html[data-et-theme="dark"] {
 <main id="et-main" class="md-main">
 
     <div class="md-toolbar">
+        <div class="md-seg" id="segMode" role="group" aria-label="使用模式">
+            <button type="button" data-mode="paper">题卷模式</button>
+            <button type="button" data-mode="quiz">在线答题</button>
+        </div>
+
         <span class="md-label">题量</span>
         <div class="md-chips" id="chips"></div>
-        <label class="md-check"><input type="checkbox" id="chkReveal"> 显示答案</label>
+
+        <label class="md-check" id="revealWrap"><input type="checkbox" id="chkReveal"> 显示答案</label>
+
         <span class="md-spacer"></span>
+
+        <span class="md-quizinfo" id="quizInfo" hidden></span>
+        <button class="et-btn" id="btnGrade" type="button" hidden>
+            <svg class="et-icon"><use href="#i-check"></use></svg><span>批改</span>
+        </button>
+        <button class="et-btn" id="btnRetry" type="button" hidden>
+            <svg class="et-icon"><use href="#i-rotate"></use></svg><span>重做</span>
+        </button>
+        <button class="et-btn" id="btnWrong" type="button" hidden>
+            <svg class="et-icon"><use href="#i-target"></use></svg><span>只练错题</span>
+        </button>
+
         <button class="et-btn" id="btnPrint" type="button">
             <svg class="et-icon"><use href="#i-printer"></use></svg><span>打印题卷</span>
         </button>
@@ -1645,8 +1753,21 @@ try { ET.Stats.send('use_offline', 'math-drill'); } catch (e) { /* 静默 */ }
         cols: clampInt(store.get('cols', 4), 2, 4, 4),
         carry: store.get('carry', true) === true,
         exact: store.get('exact', true) === true,
-        reveal: store.get('reveal', false) === true
+        reveal: store.get('reveal', false) === true,
+        mode: store.get('mode', 'paper') === 'quiz' ? 'quiz' : 'paper'
     };
+
+    /* 在线答题状态（不持久化答案，换一份题即清空） */
+    var quiz = {
+        questions: [],
+        graded: null,        /* null | { right: n, wrong: n, empty: n, wrongIdx: [], total: n } */
+        startAt: 0,
+        elapsed: 0,
+        timerId: 0,
+        wrongMode: false     /* 当前题卷是否为「只练错题」生成 */
+    };
+
+    var GRID_GAP = 26;       /* 与 .md-grid 的 gap 保持一致 */
 
     var chrome = ET.Chrome.mount({
         toolId: TOOL_ID,
@@ -1655,14 +1776,18 @@ try { ET.Stats.send('use_offline', 'math-drill'); } catch (e) { /* 静默 */ }
         accent: '#0891b2',
         status: '就绪',
         sound: true,
-        primary: function () { generate(true); },   /* 翻页笔 PageDown：再来一份 */
+        primary: function () {                       /* 翻页笔 PageDown：答题模式=批改，题卷模式=再来一份 */
+            if (state.mode === 'quiz') { gradeQuiz(); } else { generate(true); }
+        },
         settings: { title: '出题设置', build: buildSettings },
         help: '<div style="font-size:13.5px;line-height:2">' +
-            '<p style="margin:0 0 8px"><b>做什么</b>：按你选的运算类型和数值范围，一键生成一页口算题，直接投屏或打印。</p>' +
+            '<p style="margin:0 0 8px"><b>两种模式</b>：顶部可切换「题卷模式」（打印纸质题卷）与「在线答题」（学生直接在屏幕上作答、自动判分）。</p>' +
+            '<p style="margin:0 0 8px"><b>在线答题</b>：每题横线上填答案，回车跳到下一题，写完点「批改」——自动标出对错（✓ / ✗）、显示错题正确答案、给出正确题数与得分、以及做题用时；点「重做」清空，点「只练错题」用这次的错题重新组一份卷子。</p>' +
+            '<p style="margin:0 0 8px"><b>除法余数</b>写成 7……3 或 7余3 都算对（自动识别全角数字与空格）。</p>' +
             '<p style="margin:0 0 8px"><b>减法不出现负数</b>、<b>除数永远不为 0</b>；除法可选是否必须整除。</p>' +
-            '<p style="margin:0 0 8px"><b>答案</b>：勾选「显示答案」即把答案以红色显示在同一行；打印时按需勾选即可印出答案页。</p>' +
-            '<p style="margin:0 0 8px"><b>打印</b>：点「打印题卷」只打印题卷区，工具栏自动隐藏；在打印对话框选「另存为 PDF」即可发到班级群。</p>' +
-            '<p style="margin:0 0 8px"><b>快捷键</b>：空格 = 再来一份；翻页笔下页键同效。</p>' +
+            '<p style="margin:0 0 8px"><b>题卷模式</b>：勾选「显示答案」把答案以红色显示在同一行；打印时按需勾选即可印出答案页。</p>' +
+            '<p style="margin:0 0 8px"><b>打印</b>：点「打印题卷」只打印题卷区，工具栏自动隐藏；算式字号会自动缩到格子内，不会溢出；在打印对话框选「另存为 PDF」即可发到班级群。</p>' +
+            '<p style="margin:0 0 8px"><b>快捷键</b>：空格 = 答题模式批改 / 题卷模式再来一份；回车 = 下一题；翻页笔下页键同效。</p>' +
             '<p style="margin:0"><b>设置</b>：右上角 ⚙ 可调运算类型、数值范围、每行题数与进退位规则。</p></div>'
     });
 
@@ -1672,7 +1797,13 @@ try { ET.Stats.send('use_offline', 'math-drill'); } catch (e) { /* 静默 */ }
         btnPrint: document.getElementById('btnPrint'),
         btnNew: document.getElementById('btnNew'),
         btnNewText: document.getElementById('btnNewText'),
-        sheet: document.getElementById('sheet')
+        sheet: document.getElementById('sheet'),
+        segMode: document.getElementById('segMode'),
+        revealWrap: document.getElementById('revealWrap'),
+        quizInfo: document.getElementById('quizInfo'),
+        btnGrade: document.getElementById('btnGrade'),
+        btnRetry: document.getElementById('btnRetry'),
+        btnWrong: document.getElementById('btnWrong')
     };
 
     function save() {
@@ -1683,6 +1814,7 @@ try { ET.Stats.send('use_offline', 'math-drill'); } catch (e) { /* 静默 */ }
         store.set('carry', state.carry);
         store.set('exact', state.exact);
         store.set('reveal', state.reveal);
+        store.set('mode', state.mode);
     }
 
     /* ============ 出题 ============ */
@@ -1776,20 +1908,26 @@ try { ET.Stats.send('use_offline', 'math-drill'); } catch (e) { /* 静默 */ }
             ('0' + (today.getMonth() + 1)).slice(-2) + '-' +
             ('0' + today.getDate()).slice(-2);
 
+        stopQuizTimer();
+        quiz.questions = questions;
+        quiz.graded = null;
+        quiz.elapsed = 0;
+
         els.sheet.textContent = '';
 
         var head = document.createElement('div');
         head.className = 'md-head';
         var title = document.createElement('div');
         title.className = 'md-head__title';
-        title.textContent = '口算练习';
+        title.textContent = quiz.wrongMode ? '错题重练' : '口算练习';
         var meta = document.createElement('div');
         meta.className = 'md-head__meta';
         var opText = [];
         for (var i = 0; i < state.ops.length; i++) { opText.push(OP_LABEL[state.ops[i]]); }
         meta.innerHTML = '姓名：________________<br>日期：________________<br>' +
             '范围 <b>' + state.max + ' 以内</b> · <b>' + opText.join(' / ') + '</b> · 共 <b>' +
-            questions.length + '</b> 题 · ' + stamp;
+            questions.length + '</b> 题 · ' + stamp +
+            (state.mode === 'quiz' ? ' · <b>在线答题</b>' : '');
         head.appendChild(title);
         head.appendChild(meta);
 
@@ -1801,7 +1939,7 @@ try { ET.Stats.send('use_offline', 'math-drill'); } catch (e) { /* 静默 */ }
             var q = questions[k];
 
             var item = document.createElement('div');
-            item.className = 'md-item' + (state.reveal ? ' is-revealed' : '');
+            item.className = 'md-item' + (state.mode === 'paper' && state.reveal ? ' is-revealed' : '');
 
             var no = document.createElement('span');
             no.className = 'md-item__no';
@@ -1811,29 +1949,289 @@ try { ET.Stats.send('use_offline', 'math-drill'); } catch (e) { /* 静默 */ }
             expr.className = 'md-item__expr';
             expr.textContent = q.expr;
 
-            var blank = document.createElement('span');
-            blank.className = 'md-item__blank';
-            blank.textContent = ' ';
-
-            var ans = document.createElement('span');
-            ans.className = 'md-item__ans';
-            ans.textContent = String(q.ans);
-
             item.appendChild(no);
             item.appendChild(expr);
-            item.appendChild(state.reveal ? ans : blank);
+
+            if (state.mode === 'quiz') {
+                item.appendChild(buildAnswerInput(k));
+                var mark = document.createElement('span');
+                mark.className = 'md-item__mark';
+                item.appendChild(mark);
+            } else {
+                var blank = document.createElement('span');
+                blank.className = 'md-item__blank';
+                blank.textContent = ' ';
+
+                var ans = document.createElement('span');
+                ans.className = 'md-item__ans';
+                ans.textContent = String(q.ans);
+
+                item.appendChild(state.reveal ? ans : blank);
+            }
+
             grid.appendChild(item);
         }
 
         var foot = document.createElement('div');
         foot.className = 'md-foot';
-        foot.textContent = state.reveal
-            ? '答案已显示（红色）。如需空白题卷，请取消勾选「显示答案」后再打印。'
-            : '计时：______ 分 ______ 秒　　正确：______ 题　　错题：______ 题';
+        if (state.mode === 'quiz') {
+            foot.textContent = '在横线上填写答案，回车跳到下一题，全部写完点「批改」自动判分（商带余数写成 7……3 或 7余3 都算对）。';
+        } else {
+            foot.textContent = state.reveal
+                ? '答案已显示（红色）。如需空白题卷，请取消勾选「显示答案」后再打印。'
+                : '计时：______ 分 ______ 秒　　正确：______ 题　　错题：______ 题';
+        }
 
         els.sheet.appendChild(head);
         els.sheet.appendChild(grid);
         els.sheet.appendChild(foot);
+
+        fitFont();
+        renderQuizBar();
+    }
+
+    /* ============ 在线答题 ============ */
+
+    function buildAnswerInput(index) {
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'md-item__input';
+        input.setAttribute('inputmode', 'text');
+        input.setAttribute('autocomplete', 'off');
+        input.setAttribute('spellcheck', 'false');
+        input.setAttribute('aria-label', '第 ' + (index + 1) + ' 题答案');
+        input.addEventListener('input', function () {
+            var item = input.parentNode;
+            item.classList.remove('is-right', 'is-wrong');
+            var mark = item.querySelector('.md-item__mark');
+            if (mark) { mark.className = 'md-item__mark'; mark.textContent = ''; }
+            var fix = item.querySelector('.md-item__fix');
+            if (fix && fix.parentNode) { fix.parentNode.removeChild(fix); }
+            if (quiz.graded) {
+                quiz.graded = null;
+                els.btnWrong.hidden = true;
+            }
+            startQuizTimer();
+            updateQuizInfo();
+        });
+        input.addEventListener('keydown', function (ev) {
+            if (ev.key !== 'Enter') { return; }
+            ev.preventDefault();
+            var inputs = ET.qsa('.md-item__input');
+            var idx = inputs.indexOf(ev.target);
+            if (idx >= 0 && idx + 1 < inputs.length) {
+                inputs[idx + 1].focus();
+                inputs[idx + 1].select();
+            } else {
+                gradeQuiz();
+            }
+        });
+        return input;
+    }
+
+    function normalizeAnswer(raw) {
+        var s = String(raw === undefined || raw === null ? '' : raw);
+        s = s.replace(/[０-９]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); });
+        s = s.replace(/[\s，。．、,]/g, '');
+        s = s.replace(/余数/g, '……').replace(/余/g, '……');
+        s = s.replace(/[.．]{2,}/g, '……');
+        s = s.replace(/…+/g, '……');
+        return s;
+    }
+
+    function fmtClock(ms) {
+        var total = Math.max(0, Math.floor(ms / 1000));
+        var m = Math.floor(total / 60);
+        var s = total % 60;
+        return m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    function startQuizTimer() {
+        if (state.mode !== 'quiz' || quiz.timerId) { return; }
+        quiz.startAt = Date.now() - quiz.elapsed;
+        quiz.timerId = window.setInterval(updateQuizInfo, 500);
+    }
+
+    function stopQuizTimer() {
+        if (quiz.timerId) {
+            window.clearInterval(quiz.timerId);
+            quiz.timerId = 0;
+        }
+        if (quiz.startAt) {
+            quiz.elapsed = Date.now() - quiz.startAt;
+            quiz.startAt = 0;
+        }
+    }
+
+    function updateQuizInfo() {
+        if (state.mode !== 'quiz') {
+            els.quizInfo.hidden = true;
+            return;
+        }
+        els.quizInfo.hidden = false;
+        var inputs = ET.qsa('.md-item__input');
+        var filled = 0;
+        for (var i = 0; i < inputs.length; i++) {
+            if (String(inputs[i].value || '').replace(/\s/g, '')) { filled++; }
+        }
+        var elapsed = quiz.elapsed + (quiz.startAt ? Date.now() - quiz.startAt : 0);
+        if (quiz.graded) {
+            els.quizInfo.innerHTML = '正确 <b>' + quiz.graded.right + '/' + quiz.graded.total +
+                '</b> · 得分 <b>' + Math.round(quiz.graded.right / quiz.graded.total * 100) +
+                '</b> · 用时 ' + fmtClock(quiz.elapsed);
+        } else {
+            els.quizInfo.innerHTML = '已作答 <b>' + filled + '/' + inputs.length +
+                '</b> · 用时 ' + fmtClock(elapsed);
+        }
+    }
+
+    function gradeQuiz() {
+        if (state.mode !== 'quiz') { return; }
+        var inputs = ET.qsa('.md-item__input');
+        if (!inputs.length) { return; }
+
+        stopQuizTimer();
+
+        var right = 0;
+        var wrongIdx = [];
+        var empty = 0;
+
+        for (var i = 0; i < inputs.length; i++) {
+            var item = inputs[i].parentNode;
+            var mark = item.querySelector('.md-item__mark');
+            var q = quiz.questions[i] || {};
+            var given = normalizeAnswer(inputs[i].value);
+            var expect = normalizeAnswer(q.ans);
+
+            var oldFix = item.querySelector('.md-item__fix');
+            if (oldFix && oldFix.parentNode) { oldFix.parentNode.removeChild(oldFix); }
+
+            if (!given) { empty++; }
+
+            if (given && given === expect) {
+                right++;
+                item.classList.remove('is-wrong');
+                item.classList.add('is-right');
+                if (mark) { mark.className = 'md-item__mark is-right'; mark.textContent = '✓'; }
+            } else {
+                wrongIdx.push(i);
+                item.classList.remove('is-right');
+                item.classList.add('is-wrong');
+                if (mark) { mark.className = 'md-item__mark is-wrong'; mark.textContent = '✗'; }
+                var fix = document.createElement('span');
+                fix.className = 'md-item__fix';
+                fix.textContent = String(q.ans);
+                item.appendChild(fix);
+            }
+        }
+
+        var total = inputs.length;
+        var score = Math.round(right / total * 100);
+        quiz.graded = { right: right, wrong: total - right, empty: empty, wrongIdx: wrongIdx, total: total };
+
+        chrome.beep(score >= 80 ? 'win' : (score >= 60 ? 'ok' : 'err'));
+        chrome.toast('正确 ' + right + '/' + total + ' · 得分 ' + score +
+            (empty ? '（其中 ' + empty + ' 题未作答）' : '') + ' · 用时 ' + fmtClock(quiz.elapsed),
+            score >= 60 ? 'ok' : 'err');
+
+        updateQuizInfo();
+        renderQuizBar();
+    }
+
+    function retryQuiz() {
+        var inputs = ET.qsa('.md-item__input');
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].value = '';
+            var item = inputs[i].parentNode;
+            item.classList.remove('is-right', 'is-wrong');
+            var mark = item.querySelector('.md-item__mark');
+            if (mark) { mark.className = 'md-item__mark'; mark.textContent = ''; }
+            var fix = item.querySelector('.md-item__fix');
+            if (fix && fix.parentNode) { fix.parentNode.removeChild(fix); }
+        }
+        quiz.graded = null;
+        quiz.elapsed = 0;
+        quiz.startAt = 0;
+        stopQuizTimer();
+        updateQuizInfo();
+        renderQuizBar();
+        chrome.beep('tick');
+        chrome.toast('已清空答案，重新作答');
+    }
+
+    function wrongOnly() {
+        if (!quiz.graded || !quiz.graded.wrongIdx.length) {
+            chrome.toast('这次没有错题，很棒！', 'ok');
+            return;
+        }
+        var list = [];
+        for (var i = 0; i < quiz.graded.wrongIdx.length; i++) {
+            list.push(quiz.questions[quiz.graded.wrongIdx[i]]);
+        }
+        quiz.wrongMode = true;
+        render(list);
+        chrome.beep('ok');
+        chrome.toast('已生成 ' + list.length + ' 道错题重练卷');
+    }
+
+    function renderQuizBar() {
+        var isQuiz = state.mode === 'quiz';
+        els.segModeButtons = els.segMode.querySelectorAll('button');
+        for (var i = 0; i < els.segModeButtons.length; i++) {
+            els.segModeButtons[i].classList.toggle('is-active',
+                els.segModeButtons[i].getAttribute('data-mode') === state.mode);
+        }
+        els.revealWrap.hidden = isQuiz;
+        els.btnGrade.hidden = !isQuiz;
+        els.btnRetry.hidden = !isQuiz;
+        els.btnWrong.hidden = !isQuiz || !(quiz.graded && quiz.graded.wrongIdx.length);
+        els.quizInfo.hidden = !isQuiz;
+        if (isQuiz) { updateQuizInfo(); }
+
+        chrome.setStatus(isQuiz
+            ? (quiz.graded ? '已批改：正确 ' + quiz.graded.right + '/' + quiz.graded.total
+                : '在线答题 · 共 ' + quiz.questions.length + ' 题')
+            : '共 ' + quiz.questions.length + ' 题 · ' + state.max + ' 以内 · ' + state.cols + ' 列');
+    }
+
+    function setMode(mode, announce) {
+        mode = mode === 'quiz' ? 'quiz' : 'paper';
+        if (mode === state.mode) { return; }
+        state.mode = mode;
+        store.set('mode', mode);
+        quiz.wrongMode = false;
+        render(quiz.questions.length ? quiz.questions : buildQuestions());
+        if (announce) {
+            chrome.beep('ok');
+            chrome.toast(mode === 'quiz' ? '已切到在线答题：填答案后点「批改」自动判分' : '已切回题卷模式：可打印纸质题卷');
+        }
+    }
+
+    /* 依据实际列宽把字号缩到刚好放得下，避免算式溢出格子 */
+    function fitFont() {
+        var grid = document.querySelector('.md-grid');
+        if (!grid) { return; }
+        grid.style.removeProperty('--md-fs');
+
+        var items = grid.querySelectorAll('.md-item');
+        if (!items.length) { return; }
+
+        var colWidth = (grid.clientWidth - GRID_GAP * (state.cols - 1)) / state.cols;
+        if (!(colWidth > 0)) { return; }
+
+        for (var pass = 0; pass < 4; pass++) {
+            var widest = 0;
+            var widestEl = null;
+            for (var i = 0; i < items.length; i++) {
+                var w = items[i].scrollWidth;
+                if (w > widest) { widest = w; widestEl = items[i]; }
+            }
+            if (!widestEl || widest <= colWidth) { return; }
+            var current = parseFloat(window.getComputedStyle(widestEl).fontSize) || 20;
+            var next = Math.max(12, Math.floor(current * colWidth / widest * 10) / 10);
+            if (next >= current) { return; }
+            grid.style.setProperty('--md-fs', next + 'px');
+        }
     }
 
     function generate(announce) {
@@ -1843,13 +2241,14 @@ try { ET.Stats.send('use_offline', 'math-drill'); } catch (e) { /* 静默 */ }
             chrome.beep('err');
             return;
         }
+        quiz.wrongMode = false;
         render(questions);
         els.btnNewText.textContent = '再来一份';
         if (announce) {
             chrome.beep('win');
-            chrome.toast('已生成 ' + questions.length + ' 道题');
+            chrome.toast('已生成 ' + questions.length + ' 道题' +
+                (state.mode === 'quiz' ? ' · 可直接在线作答' : ''));
         }
-        chrome.setStatus('共 ' + questions.length + ' 题 · ' + state.max + ' 以内 · ' + state.cols + ' 列');
     }
 
     function renderChips() {
@@ -1881,6 +2280,23 @@ try { ET.Stats.send('use_offline', 'math-drill'); } catch (e) { /* 静默 */ }
             h.textContent = text;
             body.appendChild(h);
         }
+
+        heading('使用模式');
+        var modeBox = document.createElement('div');
+        modeBox.className = 'et-drawer__row';
+        [['paper', '题卷模式（打印）'], ['quiz', '在线答题（自动判分）']].forEach(function (pair) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'et-btn' + (state.mode === pair[0] ? ' et-btn--primary' : '');
+            b.style.flex = '1 1 40%';
+            b.textContent = pair[1];
+            b.addEventListener('click', function () {
+                setMode(pair[0], true);
+                buildRefresh();
+            });
+            modeBox.appendChild(b);
+        });
+        body.appendChild(modeBox);
 
         heading('运算类型（可多选）');
         var opBox = document.createElement('div');
@@ -2027,6 +2443,15 @@ try { ET.Stats.send('use_offline', 'math-drill'); } catch (e) { /* 静默 */ }
         setTimeout(function () { window.print(); }, 120);
     });
 
+    els.segMode.addEventListener('click', function (ev) {
+        var v = ev.target && ev.target.getAttribute ? ev.target.getAttribute('data-mode') : null;
+        if (v) { setMode(v, true); }
+    });
+
+    els.btnGrade.addEventListener('click', gradeQuiz);
+    els.btnRetry.addEventListener('click', retryQuiz);
+    els.btnWrong.addEventListener('click', wrongOnly);
+
     document.addEventListener('keydown', function (ev) {
         if (ev.code !== 'Space' && ev.key !== ' ') { return; }
         var node = document.activeElement;
@@ -2034,7 +2459,12 @@ try { ET.Stats.send('use_offline', 'math-drill'); } catch (e) { /* 静默 */ }
         if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (node && node.isContentEditable)) { return; }
         if (document.querySelector('.et-modal, .et-drawer-backdrop')) { return; }
         ev.preventDefault();
-        generate(true);
+        if (state.mode === 'quiz') { gradeQuiz(); } else { generate(true); }
+    });
+
+    window.addEventListener('resize', function () {
+        window.clearTimeout(window.__mdResize);
+        window.__mdResize = window.setTimeout(fitFont, 160);
     });
 
     /* ============ 启动 ============ */

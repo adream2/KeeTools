@@ -1,0 +1,35 @@
+{
+  "id": "periodic-table",
+  "title": "元素周期表",
+  "version": "1.1.0",
+  "type": "fixed",
+  "description": "118 种元素标准周期表布局，点击查看原子量、周期、族与电子层排布，支持类别筛选与族周期高亮。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "7-9",
+    "10-12"
+  ],
+  "subjects": [
+    "化学"
+  ],
+  "tags": [
+    "元素周期表",
+    "元素",
+    "原子序数",
+    "电子层排布",
+    "族",
+    "周期",
+    "化学用语",
+    "大屏"
+  ],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-18",
+  "updated_at": "2026-09-18"
+}

@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>课堂倒计时 — KeeTools 课工具</title>
+<title>凸透镜成像模拟 — KeeTools 课工具</title>
 <!-- ET-META
-{"id":"countdown-timer","version":"1.4.0"}
+{"id":"lens-imaging","version":"1.0.0"}
 -->
 
 <!-- 共享外壳样式（由 sync_shared.py 注入） -->
@@ -537,255 +537,132 @@ html[data-et-theme="dark"] {
 <!-- /ET:INLINE -->
 
 <style>
-/* ============ 工具自身样式 ============ */
-body { overflow: hidden; }
+/* ── 凸透镜成像模拟：工具自身样式（自包含，不引用任何外部资源） ── */
+:root { --lc-accent: #8b5cf6; }
 
-.cd-main {
+.lc-main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+/* ---------- 工具栏 ---------- */
+.lc-bar {
+    flex: none;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: space-evenly;
-    gap: 14px;
-    padding: clamp(12px, 2.5vh, 28px) 20px;
-    height: 100%;
+    gap: 10px 16px;
+    flex-wrap: wrap;
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--et-line);
+    background: var(--et-surface-2);
 }
 
-/* ---------- 模式切换：倒计时 / 正计时 ---------- */
-.cd-modes {
+.lc-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+.lc-group__label {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    color: var(--et-muted);
+}
+
+.lc-seg {
     display: flex;
-    gap: 4px;
-    padding: 4px;
+    gap: 3px;
+    padding: 3px;
     border: 1px solid var(--et-line);
-    border-radius: 12px;
+    border-radius: 10px;
     background: var(--et-surface);
 }
 
-.cd-modes button {
+.lc-seg button {
     border: 0;
     background: none;
     color: var(--et-muted);
     font: inherit;
-    font-size: 14px;
+    font-size: 12.5px;
     font-weight: 700;
-    padding: 8px 22px;
-    border-radius: 9px;
+    padding: 5px 9px;
+    border-radius: 7px;
     cursor: pointer;
+    white-space: nowrap;
     transition: background .14s, color .14s;
     -webkit-tap-highlight-color: transparent;
 }
 
-.cd-modes button:hover { color: var(--et-accent); }
-.cd-modes button.is-active { background: var(--et-accent); color: #fff; }
-.cd-hidden { display: none !important; }
+.lc-seg button:hover { color: var(--et-accent); }
+.lc-seg button.is-active { background: var(--et-accent); color: #fff; }
+.lc-spacer { flex: 1 1 auto; }
 
-/* ---------- 表盘 ---------- */
-.cd-dial {
-    position: relative;
-    width: min(56vh, 84vw, 620px);
-    aspect-ratio: 1;
-    max-height: 62vh;
-}
-
-.cd-dial svg { width: 100%; height: 100%; display: block; transform: rotate(-90deg); }
-
-.cd-ring-track {
-    fill: none;
-    stroke: var(--et-line);
-    stroke-width: 10;
-}
-
-.cd-ring {
-    fill: none;
-    stroke: var(--et-accent);
-    stroke-width: 10;
-    stroke-linecap: round;
-    transition: stroke .3s;
-}
-
-.cd-ring.is-warning { stroke: var(--et-warn); }
-.cd-ring.is-danger { stroke: var(--et-err); }
-
-.cd-time {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
+.lc-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--et-fg);
+    cursor: pointer;
     user-select: none;
 }
 
-.cd-time__text {
-    font-size: clamp(64px, 17vh, 170px);
-    font-weight: 900;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: .01em;
-    line-height: 1;
-    background: linear-gradient(180deg, var(--et-fg) 20%, var(--et-accent) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    filter: drop-shadow(0 6px 24px var(--et-accent-weak));
-    transition: filter .3s;
+.lc-check input { width: 16px; height: 16px; accent-color: var(--et-accent); cursor: pointer; }
+
+/* ---------- 画布 ---------- */
+.lc-stage {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--et-surface);
 }
 
-.cd-time__text.is-warning {
-    background: linear-gradient(180deg, var(--et-fg) 10%, var(--et-warn) 90%);
-    -webkit-background-clip: text;
-    background-clip: text;
-}
-
-.cd-time__text.is-danger {
-    background: linear-gradient(180deg, var(--et-fg) 5%, var(--et-err) 85%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    filter: drop-shadow(0 0 26px rgba(220, 38, 38, .35));
-}
-
-.cd-time__text.is-danger.cd-pulse { animation: cd-pulse 1s infinite; }
-
-@keyframes cd-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.035); }
-}
-
-.cd-time__label {
+.lc-stage canvas {
     position: absolute;
-    bottom: 12%;
-    font-size: clamp(12px, 1.8vh, 15px);
-    font-weight: 700;
-    letter-spacing: .14em;
-    color: var(--et-muted);
-    text-transform: uppercase;
-}
-
-/* ---------- 预设 ---------- */
-.cd-presets {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.cd-preset {
-    padding: 9px 18px;
-    border-radius: 999px;
-    font: inherit;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--et-muted);
-    background: var(--et-surface);
-    border: 1px solid var(--et-line);
-    cursor: pointer;
-    transition: all .15s;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.cd-preset:hover { border-color: var(--et-accent); color: var(--et-accent); transform: translateY(-1px); }
-.cd-preset.is-active { color: #fff; background: var(--et-accent); border-color: var(--et-accent); }
-
-/* ---------- 控制条 ---------- */
-.cd-controls {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.cd-adjust {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 10px 14px;
-    border-radius: 11px;
-    font: inherit;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--et-fg);
-    background: var(--et-surface);
-    border: 1px solid var(--et-line);
-    cursor: pointer;
-    transition: all .14s;
-}
-
-.cd-adjust:hover:not(:disabled) { border-color: var(--et-accent); color: var(--et-accent); }
-.cd-adjust:disabled { opacity: .4; cursor: not-allowed; }
-.cd-adjust .et-icon { width: 15px; height: 15px; }
-
-.cd-main-btn {
-    min-width: 200px;
-    gap: 9px;
-}
-
-.cd-main-btn .et-icon { width: 20px; height: 20px; }
-
-/* ---------- 自定义时长 ---------- */
-.cd-custom {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--et-muted);
-    font-weight: 600;
-}
-
-.cd-custom input {
-    width: 64px;
-    padding: 8px 10px;
-    border: 1px solid var(--et-line-strong);
-    border-radius: 9px;
-    background: var(--et-surface);
-    color: var(--et-fg);
-    font: inherit;
-    font-size: 15px;
-    font-weight: 700;
-    text-align: center;
-    -moz-appearance: textfield;
-    appearance: textfield;
-}
-
-.cd-custom input::-webkit-outer-spin-button,
-.cd-custom input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-
-.cd-custom input:focus {
-    outline: none;
-    border-color: var(--et-accent);
-    box-shadow: 0 0 0 3px var(--et-accent-weak);
-}
-
-/* ---------- 时间到 ---------- */
-.cd-over {
-    position: fixed;
     inset: 0;
-    z-index: 200;
-    display: grid;
-    place-items: center;
-    background: rgba(127, 29, 29, .92);
-    animation: cd-over-in .4s ease;
-    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+    cursor: grab;
 }
 
-.cd-over__text {
-    font-size: clamp(64px, 16vw, 200px);
-    font-weight: 900;
-    color: #fff;
-    letter-spacing: .08em;
-    animation: cd-over-pop .6s cubic-bezier(.34, 1.56, .64, 1);
-    text-shadow: 0 10px 40px rgba(0, 0, 0, .4);
-}
+.lc-stage canvas.is-drag { cursor: grabbing; }
 
-.cd-over__hint {
+.lc-tip {
     position: absolute;
-    bottom: 10%;
-    font-size: 15px;
-    color: rgba(255, 255, 255, .75);
-    letter-spacing: .2em;
+    left: 14px;
+    bottom: 12px;
+    padding: 6px 12px;
+    border: 1px solid var(--et-line);
+    border-radius: 10px;
+    background: var(--et-glass);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-size: 12.5px;
+    color: var(--et-muted);
+    pointer-events: none;
+    box-shadow: var(--et-shadow-md);
 }
 
-@keyframes cd-over-in { from { opacity: 0; } }
-@keyframes cd-over-pop {
-    0% { opacity: 0; transform: scale(.5); }
-    70% { transform: scale(1.06); }
-    100% { transform: scale(1); }
+/* ---------- 结论带 ---------- */
+.lc-foot {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px 22px;
+    flex-wrap: wrap;
+    min-height: 58px;
+    padding: 8px 16px 12px;
+    border-top: 1px solid var(--et-line);
+    background: var(--et-surface-2);
+}
+
+.lc-stat { font-size: 13px; font-weight: 700; color: var(--et-muted); }
+.lc-stat b { font-size: 15px; color: var(--et-fg); font-variant-numeric: tabular-nums; }
+.lc-nature { font-size: clamp(14px, 2.1vh, 20px); font-weight: 900; color: var(--et-accent); }
+.lc-app { font-size: 14px; font-weight: 800; color: var(--et-ok); }
+.lc-warn { font-size: 14px; font-weight: 800; color: var(--et-warn); }
+
+@media (max-width: 1180px) {
+    .lc-seg button { font-size: 11.5px; padding: 4px 7px; }
 }
 </style>
 </head>
@@ -793,64 +670,43 @@ body { overflow: hidden; }
 
 <header id="et-topbar"></header>
 
-<main id="et-main" class="cd-main">
+<main id="et-main" class="lc-main">
 
-    <!-- 模式：倒计时 / 正计时 -->
-    <div class="cd-modes" id="segMode" role="group" aria-label="计时模式">
-        <button type="button" data-mode="down" class="is-active">倒计时</button>
-        <button type="button" data-mode="up">正计时</button>
-    </div>
-
-    <!-- 表盘 -->
-    <div class="cd-dial">
-        <svg viewBox="0 0 200 200" aria-hidden="true">
-            <circle class="cd-ring-track" cx="100" cy="100" r="94"/>
-            <circle class="cd-ring" id="ring" cx="100" cy="100" r="94"/>
-        </svg>
-        <div class="cd-time">
-            <div class="cd-time__text" id="timeText">05:00</div>
-            <div class="cd-time__label" id="timeLabel">准备开始</div>
+    <div class="lc-bar">
+        <div class="lc-group">
+            <span class="lc-group__label">焦距 f</span>
+            <div class="lc-seg" id="segF">
+                <button type="button" data-f="5">5cm</button>
+                <button type="button" data-f="10">10cm</button>
+                <button type="button" data-f="15">15cm</button>
+                <button type="button" data-f="20">20cm</button>
+            </div>
         </div>
+
+        <div class="lc-group">
+            <span class="lc-group__label">典型位置</span>
+            <div class="lc-seg" id="segU">
+                <button type="button" data-mul="3">u=3f 照相机</button>
+                <button type="button" data-mul="2">u=2f 等大</button>
+                <button type="button" data-mul="1.5">f&lt;u&lt;2f 投影仪</button>
+                <button type="button" data-mul="1">u=f 不成像</button>
+                <button type="button" data-mul="0.5">u&lt;f 放大镜</button>
+            </div>
+        </div>
+
+        <span class="lc-spacer"></span>
+
+        <label class="lc-check"><input type="checkbox" id="chkScreen"> 光屏</label>
+        <label class="lc-check"><input type="checkbox" id="chkRays" checked> 三条光线</label>
+        <label class="lc-check"><input type="checkbox" id="chkLabels" checked> 标注</label>
     </div>
 
-    <!-- 预设 -->
-    <div class="cd-presets" id="presets"></div>
-
-    <!-- 控制条 -->
-    <div class="cd-controls">
-        <button class="cd-adjust" id="btnMinus30" title="减 30 秒">
-            <svg class="et-icon"><use href="#i-minus"></use></svg>30秒
-        </button>
-        <button class="et-btn et-btn--lg et-btn--primary cd-main-btn" id="btnMain">
-            <svg class="et-icon"><use href="#i-play"></use></svg>
-            <span id="btnMainText">开始</span>
-        </button>
-        <button class="cd-adjust" id="btnPlus30" title="加 30 秒">
-            <svg class="et-icon"><use href="#i-plus"></use></svg>30秒
-        </button>
-        <button class="et-btn" id="btnReset" title="重置（快捷键 R）">
-            <svg class="et-icon"><use href="#i-rotate"></use></svg>重置
-        </button>
+    <div class="lc-stage" id="stage">
+        <canvas id="cv" aria-label="凸透镜成像光路"></canvas>
+        <div class="lc-tip" id="tip">拖动物体或光屏 · 空格把光屏移到成像位置</div>
     </div>
 
-    <!-- 自定义 -->
-    <div class="cd-custom" id="customRow">
-        自定义
-        <input type="number" id="inHour" min="0" max="23" placeholder="时">
-        <input type="number" id="inMin" min="0" max="59" placeholder="分">
-        <input type="number" id="inSec" min="0" max="59" placeholder="秒">
-        <button class="et-btn" id="btnCustom" style="padding:8px 14px">设定</button>
-    </div>
-
-    <!-- 正计时提醒（可选，到时响铃提示） -->
-    <div class="cd-custom cd-hidden" id="upRemindRow">
-        到点提醒
-        <input type="number" id="inRemindMin" min="0" max="180" placeholder="分">
-        <input type="number" id="inRemindSec" min="0" max="59" placeholder="秒">
-        <button class="et-btn" id="btnRemind" style="padding:8px 14px">设定</button>
-        <button class="et-btn" id="btnRemindClear" style="padding:8px 14px">取消</button>
-        <span id="remindState">未设提醒</span>
-    </div>
+    <div class="lc-foot" id="foot" aria-live="polite"></div>
 
 </main>
 
@@ -1613,189 +1469,6 @@ body { overflow: hidden; }
 </script>
 <!-- /ET:INLINE -->
 
-<!-- ET:INLINE name="countdown" src="logic/countdown.js" -->
-<script>
-  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
-/*!
- * countdown.js — 倒计时引擎（漂移校正，基于 Date.now 绝对时间）
- *
- * 共享逻辑源。改这里，然后跑：python scripts/sync_shared.py
- * 依赖：无。
- * 全局：ET.Countdown
- *
- * 用法：
- *   var timer = ET.Countdown.create({
- *     onTick: function (remaining, total) { … },   // 毫秒，remaining ≤ 0 表示结束
- *     onFinish: function () { … },
- *     onState: function (state) { … }              // 'idle' | 'running' | 'paused' | 'done'
- *   });
- *   timer.set(5 * 60 * 1000);  // 设置总时长（idle 态下）
- *   timer.start(); timer.pause(); timer.resume(); timer.toggle(); timer.reset();
- *   timer.add(30 * 1000);      // 运行中 +30s（可为负，最低减到 0）
- *   timer.state; timer.remaining; timer.total;
- *
- * 特性：
- * - 用 endAt 绝对时间计算剩余，后台标签页休眠后回来不漂移
- * - 触发粒度 100ms，回调里的 remaining 为真实剩余毫秒
- */
-(function (global) {
-    'use strict';
-
-    var TICK_MS = 100;
-
-    function create(options) {
-        var opt = options || {};
-        var state = 'idle';          /* idle / running / paused / done */
-        var total = 0;               /* 总时长 ms */
-        var endAt = 0;               /* 结束绝对时间戳 */
-        var remainAtPause = 0;       /* 暂停时刻的剩余 */
-        var intervalId = 0;
-        var finished = false;
-
-        var api = {};
-
-        function callTick(remaining) {
-            if (opt.onTick) { opt.onTick(remaining, total); }
-        }
-
-        function callState(s) {
-            state = s;
-            api.state = s;
-            if (opt.onState) { opt.onState(s); }
-        }
-
-        function stopLoop() {
-            if (intervalId) {
-                clearInterval(intervalId);
-                intervalId = 0;
-            }
-        }
-
-        function finish() {
-            stopLoop();
-            remainAtPause = 0;
-            if (!finished) {
-                finished = true;
-                callState('done');
-                if (opt.onFinish) { opt.onFinish(); }
-            }
-            callTick(0);
-        }
-
-        function loop() {
-            var remaining = endAt - Date.now();
-            if (remaining <= 0) {
-                finish();
-            } else {
-                callTick(remaining);
-            }
-        }
-
-        /* ---------- 公开方法 ---------- */
-
-        /** 设置总时长（仅在非运行态有效） */
-        api.set = function (ms) {
-            if (state === 'running') { return; }
-            total = Math.max(0, Math.round(ms));
-            remainAtPause = total;
-            finished = false;
-            callState(state === 'done' ? 'idle' : state === 'idle' ? 'idle' : 'idle');
-            callTick(total);
-        };
-
-        api.start = function () {
-            if (state === 'running' || total <= 0) { return; }
-            finished = false;
-            endAt = Date.now() + (state === 'paused' ? remainAtPause : total);
-            callState('running');
-            loop();
-            stopLoop();
-            intervalId = setInterval(loop, TICK_MS);
-        };
-
-        api.resume = api.start;
-
-        api.pause = function () {
-            if (state !== 'running') { return; }
-            remainAtPause = Math.max(0, endAt - Date.now());
-            stopLoop();
-            callState('paused');
-            callTick(remainAtPause);
-        };
-
-        api.toggle = function () {
-            if (state === 'running') { api.pause(); } else { api.start(); }
-        };
-
-        api.reset = function () {
-            stopLoop();
-            remainAtPause = total;
-            finished = false;
-            callState('idle');
-            callTick(total);
-        };
-
-        /** 运行/暂停态增减时间；delta 毫秒（可负）。运行中直接推 endAt。 */
-        api.add = function (delta) {
-            delta = Math.round(delta || 0);
-            if (state === 'running') {
-                endAt += delta;
-                var remaining = endAt - Date.now();
-                if (remaining <= 0) { finish(); }
-                else { callTick(remaining); }
-            } else if (state === 'paused' || state === 'idle') {
-                var base = state === 'paused' ? remainAtPause : total;
-                var next = Math.max(0, base + delta);
-                if (state === 'paused') { remainAtPause = next; }
-                else { total = next; remainAtPause = next; }
-                callTick(next);
-            }
-            if (state === 'idle' && total === 0 && delta > 0) { total = delta; remainAtPause = delta; }
-        };
-
-        Object.defineProperty(api, 'remaining', {
-            get: function () {
-                if (state === 'running') { return Math.max(0, endAt - Date.now()); }
-                if (state === 'paused') { return remainAtPause; }
-                if (state === 'done') { return 0; }
-                return total;
-            }
-        });
-        Object.defineProperty(api, 'total', { get: function () { return total; } });
-
-        api.state = state;
-
-        return api;
-    }
-
-    /* ---------- 展示格式化（共享给各工具保持一致） ---------- */
-
-    /** 毫秒 → {h, m, s, cs}（cs 为百分秒） */
-    function breakdown(ms) {
-        var t = Math.max(0, Math.ceil(ms / 10) * 10); /* 向上取整到 0.1s，显示 0:00 前不会提前 */
-        var cs = Math.floor((t % 1000) / 10);
-        var sec = Math.floor(t / 1000);
-        var s = sec % 60;
-        var m = Math.floor(sec / 60) % 60;
-        var h = Math.floor(sec / 3600);
-        return { h: h, m: m, s: s, cs: cs };
-    }
-
-    /** 毫秒 → "MM:SS" 或 "H:MM:SS" */
-    function format(ms) {
-        var b = breakdown(ms);
-        var mm = (b.m < 10 ? '0' : '') + b.m;
-        var ss = (b.s < 10 ? '0' : '') + b.s;
-        if (b.h > 0) { return b.h + ':' + mm + ':' + ss; }
-        return mm + ':' + ss;
-    }
-
-    global.ET = global.ET || {};
-    global.ET.Countdown = { create: create, breakdown: breakdown, format: format };
-})(window);
-</script>
-<!-- /ET:INLINE -->
-
 <!-- ET:INLINE name="et-stats" src="ui/et-stats.js" -->
 <script>
   /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
@@ -1877,417 +1550,810 @@ body { overflow: hidden; }
 </script>
 <!-- /ET:INLINE -->
 
-<!-- 使用统计（模块化：删除上方 et-stats 注入块即可完全不联网，见 README） -->
+<!-- 使用统计：删除上方 et-stats 块即可完全不联网（模块化设计） -->
 <script>
-try { ET.Stats.send('use_offline', 'countdown-timer'); } catch (e) { /* 静默 */ }
+try { ET.Stats.send('use_offline', 'lens-imaging'); } catch (e) { /* 静默 */ }
 </script>
 
 <script>
 (function () {
     'use strict';
 
-    var TOOL_ID = 'countdown-timer';
+    var TOOL_ID = 'lens-imaging';
     var store = ET.store(TOOL_ID);
 
-    var PRESETS = [1, 2, 3, 5, 10, 15, 20, 30]; /* 分钟 */
-    var RING_LEN = 2 * Math.PI * 94;
-    var WARN_MS = 30 * 1000;   /* <30s 变橙 */
-    var DANGER_MS = 10 * 1000; /* <10s 变红 + 滴答 */
+    var FONT = 'system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif';
+    var FOCALS = [5, 10, 15, 20];
+    var MULS = [3, 2, 1.5, 1, 0.5];
+
+    function pick(list, value, fallback) {
+        return list.indexOf(value) !== -1 ? value : fallback;
+    }
+
+    function trimNum(v, digits) {
+        var s = Number(v).toFixed(digits === undefined ? 1 : digits);
+        s = s.replace(/0+$/, '').replace(/\.$/, '');
+        return (s === '-0' || s === '') ? '0' : s;
+    }
+
+    var savedU = Number(store.get('u', 0));
+
+    var state = {
+        f: pick(FOCALS, Number(store.get('f', 10)), 10),
+        mul: pick(MULS, Number(store.get('mul', 3)), 3),
+        u: (isFinite(savedU) && savedU > 0) ? savedU : 30,
+        screenOn: store.get('screenOn', false) === true,
+        screenX: Number(store.get('screenX', 0)) || 0,
+        rays: store.get('rays', true) !== false,
+        labels: store.get('labels', true) !== false
+    };
+
+    if (state.screenX <= 0) { state.screenX = state.f * 2; }
+
+    function clampU() {
+        state.u = Math.max(state.f * 0.15, Math.min(state.f * 3.3, state.u));
+    }
+
+    function clampScreen() {
+        state.screenX = Math.max(state.f * 0.25, Math.min(state.f * 3.3, state.screenX));
+    }
+
+    clampU();
+    clampScreen();
 
     var chrome = ET.Chrome.mount({
         toolId: TOOL_ID,
-        title: '课堂倒计时',
-        sub: '练习 · 讨论 · 考试',
-        accent: '#6366f1',
+        title: '凸透镜成像模拟',
+        sub: '物理 · 光路实时绘制',
+        accent: '#8b5cf6',
         status: '就绪',
         sound: true,
-        primary: function () { els.btnMain.click(); },   /* 翻页笔 PageDown：开始/暂停 */
-        secondary: function () { els.btnReset.click(); }, /* 翻页笔 PageUp：重置 */
+        primary: moveScreenToImage,
+        secondary: cycleTypical,
+        settings: { title: '成像设置', build: buildSettings },
         help: '<div style="font-size:13.5px;line-height:2">' +
-            '<p style="margin:0 0 8px"><b>两种模式</b>：顶部可切换「倒计时」与「正计时」。倒计时用于限时练习 / 讨论 / 考试；正计时是秒表，用于记录学生完成任务用了多久（朗读、默写、小组汇报等）。</p>' +
-            '<p style="margin:0 0 8px"><b>正计时</b>：空格开始 / 暂停，R 清零；可选「到点提醒」——设一个时长，到点响铃 + 变红，适合「超过 3 分钟就提醒」这类场景（↑↓ 可 ±30 秒调整提醒时长）。</p>' +
-            '<p style="margin:0 0 8px"><b>快捷键</b>：空格 开始/暂停 · R 重置 · ↑↓ 倒计时 ±30 秒 / 正计时调整提醒。</p>' +
-            '<p style="margin:0 0 8px"><b>翻页笔</b>：下页键 开始/暂停 · 上页键 重置（两种模式通用）。</p>' +
-            '<p style="margin:0 0 8px"><b>运行中可调</b>：倒计时的 ±30 秒按钮在计时进行中也能用。</p>' +
-            '<p style="margin:0 0 8px"><b>警示</b>：倒计时剩 30 秒数字变橙，剩 10 秒变红并每秒滴答，结束时全屏提醒。</p>' +
-            '<p style="margin:0"><b>精度</b>：基于系统时钟计算，休眠 / 切页回来不会走快走慢；正计时切到别的标签页也会继续走。</p></div>'
+            '<p style="margin:0 0 8px"><b>怎么玩</b>：左右拖动点燃的蜡烛（物体）改变物距 u，右侧光屏也可以拖动；三条特殊光线与像会实时重画，像距 v 与放大率按 1/u + 1/v = 1/f 计算。</p>' +
+            '<p style="margin:0 0 8px"><b>看规律</b>：点「典型位置」里的 u=3f / u=2f / f&#60;u&#60;2f / u=f / u&#60;f，逐个观察像的位置、正倒、大小、虚实变化，底部会给出像的性质与对应的生活应用。</p>' +
+            '<p style="margin:0 0 8px"><b>找清晰的像</b>：勾选「光屏」后按空格，光屏会自动移到成像位置并显示「清晰」；拖到别处会看到模糊的光斑。</p>' +
+            '<p style="margin:0 0 8px"><b>三条光线</b>：① 平行主光轴的光线折射后过另一侧焦点；② 过光心的光线方向不变；③ 过焦点的光线折射后平行主光轴。u&#60;f 时的虚线表示折射光线的反向延长线。</p>' +
+            '<p style="margin:0"><b>快捷键</b>：空格 = 光屏移到像的位置；←→ = 移动物体；↑↓ = 改焦距；翻页笔下页键同上页键 = 循环典型位置。</p></div>'
     });
 
-    var els = {
-        ring: document.getElementById('ring'),
-        timeText: document.getElementById('timeText'),
-        timeLabel: document.getElementById('timeLabel'),
-        presets: document.getElementById('presets'),
-        btnMain: document.getElementById('btnMain'),
-        btnMainText: document.getElementById('btnMainText'),
-        btnReset: document.getElementById('btnReset'),
-        btnPlus30: document.getElementById('btnPlus30'),
-        btnMinus30: document.getElementById('btnMinus30'),
-        inHour: document.getElementById('inHour'),
-        inMin: document.getElementById('inMin'),
-        inSec: document.getElementById('inSec'),
-        btnCustom: document.getElementById('btnCustom'),
-        segMode: document.getElementById('segMode'),
-        customRow: document.getElementById('customRow'),
-        upRemindRow: document.getElementById('upRemindRow'),
-        inRemindMin: document.getElementById('inRemindMin'),
-        inRemindSec: document.getElementById('inRemindSec'),
-        btnRemind: document.getElementById('btnRemind'),
-        btnRemindClear: document.getElementById('btnRemindClear'),
-        remindState: document.getElementById('remindState')
-    };
+    /* ============ 光学计算 ============ */
 
-    var lastMinutes = store.get('last_minutes', 5);
-    var mode = store.get('mode', 'down') === 'up' ? 'up' : 'down';
-
-    var timer = ET.Countdown.create({
-        onTick: onTick,
-        onFinish: onFinish,
-        onState: onState
-    });
-
-    var lastWholeSecond = -1;
-    var overShown = false;
-
-    /* ============ 正计时（秒表） ============ */
-
-    var up = {
-        running: false,
-        startedAt: 0,
-        acc: 0,
-        timerId: 0,
-        target: Math.max(0, Number(store.get('up_target', 0)) || 0),
-        fired: false
-    };
-
-    function upElapsed() {
-        return up.acc + (up.running ? Date.now() - up.startedAt : 0);
+    function optics() {
+        var f = state.f;
+        var u = state.u;
+        var atFocal = Math.abs(u - f) < f * 0.02;
+        var v = atFocal ? Infinity : (u * f) / (u - f);
+        var m = atFocal ? Infinity : -v / u;
+        return { f: f, u: u, v: v, m: m, atFocal: atFocal, real: isFinite(v) && v > 0 };
     }
 
-    function swapMainIcon(playing) {
-        var icon = els.btnMain.querySelector('use');
-        if (!icon) { return; }
-        var iconId = playing ? '#i-pause' : '#i-play';
-        icon.setAttribute('href', iconId);
-        icon.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', iconId); /* et-allow-external SVG 命名空间 */
+    /* ============ 画布 ============ */
+
+    var cv = document.getElementById('cv');
+    var ctx = cv.getContext('2d');
+    var W = 900;
+    var H = 480;
+    var geom = { cx: 450, cy: 260, s: 10, objPx: 90 };
+    var raf = 0;
+    var tween = null;
+    var drag = null;
+
+    function layout() {
+        geom.cx = W * 0.5;
+        geom.cy = H * 0.55;
+        var half = 3.4 * state.f;
+        geom.s = (W / 2 - 44) / half;
+        geom.objPx = Math.min(H * 0.23, 106);
     }
 
-    function upSyncButton() {
-        els.btnMainText.textContent = up.running ? '暂停' : (upElapsed() > 0 ? '继续' : '开始');
-        swapMainIcon(up.running);
-    }
+    function pxX(cm) { return geom.cx + cm * geom.s; }
+    function cmX(px) { return (px - geom.cx) / geom.s; }
 
-    function renderRemindState() {
-        els.remindState.textContent = up.target > 0
-            ? '当前提醒：' + ET.Countdown.format(up.target)
-            : '未设提醒';
-    }
-
-    function upRender() {
-        var el = upElapsed();
-        els.timeText.textContent = ET.Countdown.format(el);
-
-        var over = up.target > 0 && el >= up.target;
-        var near = up.target > 0 && !over && el >= up.target * 0.8;
-
-        var cls = 'cd-time__text';
-        if (over) { cls += ' is-danger cd-pulse'; }
-        else if (near) { cls += ' is-warning'; }
-        if (els.timeText.className !== cls) { els.timeText.className = cls; }
-
-        var ratio = up.target > 0
-            ? Math.max(0, Math.min(1, el / up.target))
-            : (el % 60000) / 60000;
-        els.ring.style.strokeDasharray = RING_LEN.toFixed(1);
-        els.ring.style.strokeDashoffset = (RING_LEN * (1 - ratio)).toFixed(1);
-        els.ring.setAttribute('class', 'cd-ring' + (over ? ' is-danger' : (near ? ' is-warning' : '')));
-
-        els.timeLabel.textContent = over ? '已超过提醒时长'
-            : (up.running ? '计时中' : (el > 0 ? '已暂停' : '准备开始'));
-
-        if (over && !up.fired) {
-            up.fired = true;
-            chrome.beep('over');
-            chrome.toast('正计时已到 ' + ET.Countdown.format(up.target) + '，注意控制时间', 'warn');
+    function cssVar(name, fallback) {
+        try {
+            var v = window.getComputedStyle(document.documentElement).getPropertyValue(name);
+            v = String(v || '').replace(/^\s+|\s+$/g, '');
+            return v || fallback;
+        } catch (err) {
+            return fallback;
         }
-        chrome.setStatus('正计时 · ' + ET.Countdown.format(el), over ? 'warn' : undefined);
-
-        upSyncButton();
-        if (up.running) { up.timerId = window.setTimeout(upRender, 200); }
     }
 
-    function upToggle() {
-        if (up.running) {
-            up.acc = upElapsed();
-            up.running = false;
-            window.clearTimeout(up.timerId);
-            upRender();
-            return;
+    function line(x1, y1, x2, y2, color, width, dash) {
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.lineCap = 'round';
+        if (dash) { ctx.setLineDash(dash); }
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function arrow(x1, y1, x2, y2, color, width, dash) {
+        line(x1, y1, x2, y2, color, width, dash);
+        var ang = Math.atan2(y2 - y1, x2 - x1);
+        var head = Math.max(7, width * 3.2);
+        ctx.save();
+        ctx.translate(x2, y2);
+        ctx.rotate(ang);
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-head, -head * 0.45);
+        ctx.lineTo(-head, head * 0.45);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function text(str, x, y, color, size, align, baseline) {
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.font = 'bold ' + (size || 13) + 'px ' + FONT;
+        ctx.textAlign = align || 'center';
+        ctx.textBaseline = baseline || 'middle';
+        ctx.fillText(str, x, y);
+        ctx.restore();
+    }
+
+    function chip(str, x, y, color, bg) {
+        ctx.save();
+        ctx.font = 'bold 12.5px ' + FONT;
+        var w = ctx.measureText(str).width;
+        ctx.fillStyle = bg;
+        ctx.globalAlpha = 0.9;
+        ctx.fillRect(x - w / 2 - 6, y - 9, w + 12, 18);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = color;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(str, x, y + 0.5);
+        ctx.restore();
+    }
+
+    function drawAxis(cMuted, cFg) {
+        line(0, geom.cy, W, geom.cy, cMuted, 1.4);
+        text('主光轴', W - 12, geom.cy - 12, cMuted, 12, 'right');
+    }
+
+    function drawLens(cAccent) {
+        var hL = Math.min(H * 0.34, 156);
+        var wL = Math.max(10, Math.min(18, geom.s * 2.2));
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(geom.cx, geom.cy - hL);
+        ctx.quadraticCurveTo(geom.cx - wL, geom.cy, geom.cx, geom.cy + hL);
+        ctx.quadraticCurveTo(geom.cx + wL, geom.cy, geom.cx, geom.cy - hL);
+        ctx.closePath();
+        ctx.fillStyle = cAccent;
+        ctx.globalAlpha = 0.16;
+        ctx.fill();
+        ctx.globalAlpha = 0.85;
+        ctx.strokeStyle = cAccent;
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+        ctx.restore();
+        text('凸透镜', geom.cx + 34, geom.cy - hL + 12, cAccent, 12, 'left');
+    }
+
+    function drawFocalMarks(cMuted, cLabels) {
+        var marks = [
+            { cm: -2, label: '2F' },
+            { cm: -1, label: 'F' },
+            { cm: 1, label: "F′" },
+            { cm: 2, label: "2F′" }
+        ];
+        for (var i = 0; i < marks.length; i++) {
+            var x = pxX(marks[i].cm * state.f);
+            if (x < 6 || x > W - 6) { continue; }
+            ctx.save();
+            ctx.fillStyle = cMuted;
+            ctx.beginPath();
+            ctx.arc(x, geom.cy, 3.4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            if (cLabels) {
+                text(marks[i].label, x, geom.cy - 16, cMuted, 12.5);
+            }
         }
-        up.running = true;
-        up.startedAt = Date.now();
-        upRender();
     }
 
-    function upReset() {
-        up.running = false;
-        window.clearTimeout(up.timerId);
-        up.acc = 0;
-        up.fired = false;
-        upRender();
+    function drawObject(cObj) {
+        var ox = pxX(-state.u);
+        var oy = geom.cy - geom.objPx;
+        arrow(ox, geom.cy, ox, oy, cObj, 3);
+        text('物', ox, oy - 14, cObj, 13);
     }
 
-    function upSetTarget(ms) {
-        up.target = Math.max(0, Math.round(ms));
-        up.fired = up.target > 0 && upElapsed() >= up.target;
-        store.set('up_target', up.target);
-        renderRemindState();
-        upRender();
+    function rayThrough(x0, y0, x1, y1, xTo) {
+        var dx = x1 - x0;
+        if (Math.abs(dx) < 1e-6) { return [xTo, y1]; }
+        var t = (xTo - x0) / dx;
+        return [xTo, y0 + (y1 - y0) * t];
     }
 
-    function applyModeUi() {
-        var btns = els.segMode.querySelectorAll('button');
-        for (var i = 0; i < btns.length; i++) {
-            btns[i].classList.toggle('is-active', btns[i].getAttribute('data-mode') === mode);
-        }
-        var upOnly = mode === 'up';
-        els.presets.classList.toggle('cd-hidden', upOnly);
-        els.customRow.classList.toggle('cd-hidden', upOnly);
-        els.upRemindRow.classList.toggle('cd-hidden', !upOnly);
-        els.btnPlus30.classList.toggle('cd-hidden', upOnly);
-        els.btnMinus30.classList.toggle('cd-hidden', upOnly);
-    }
+    function drawRays(o, cRay, cMuted) {
+        var ox = pxX(-state.u);
+        var oy = geom.cy - geom.objPx;
+        var fpx = state.f * geom.s;
+        var fx2 = geom.cx + fpx;
 
-    function setMode(next, announce) {
-        next = next === 'up' ? 'up' : 'down';
-        if (next === mode) { return; }
-        /* 切换时把另一侧计时停下，避免两个表同时跑 */
-        if (mode === 'up') {
-            up.running = false;
-            window.clearTimeout(up.timerId);
-            up.acc = 0;
-        } else if (timer.state === 'running') {
-            timer.pause();
-        }
-        mode = next;
-        store.set('mode', mode);
-        applyModeUi();
+        /* ① 平行主光轴 → 过另一侧焦点 */
+        var after1 = rayThrough(geom.cx, oy, fx2, geom.cy, W + 4);
+        line(ox, oy, geom.cx, oy, cRay, 1.8);
+        line(geom.cx, oy, after1[0], after1[1], cRay, 1.8);
 
-        if (mode === 'up') {
-            upReset();
-            chrome.setStatus('正计时 · 准备开始');
+        /* ② 过光心 → 方向不变 */
+        var after2 = rayThrough(ox, oy, geom.cx, geom.cy, W + 4);
+        line(ox, oy, after2[0], after2[1], cRay, 1.8);
+
+        /* ③ 过焦点 F → 折射后平行主光轴 */
+        var fx1 = geom.cx - fpx;
+        var y3;
+        if (Math.abs(ox - fx1) < 1e-6) {
+            y3 = oy;
         } else {
-            timer.reset();
-            renderPresets();
+            y3 = geom.cy + (oy - geom.cy) * (geom.cx - fx1) / (ox - fx1);
         }
-        if (announce) {
-            chrome.beep('ok');
-            chrome.toast(mode === 'up' ? '已切到正计时：空格开始，可设到点提醒' : '已切到倒计时');
-        }
-    }
+        line(ox, oy, geom.cx, y3, cRay, 1.8);
+        line(geom.cx, y3, W + 4, y3, cRay, 1.8);
 
-    /* ============ 渲染 ============ */
-
-    function renderPresets() {
-        els.presets.textContent = '';
-        PRESETS.forEach(function (min) {
-            var b = document.createElement('button');
-            b.className = 'cd-preset' + (timer.total === min * 60000 ? ' is-active' : '');
-            b.type = 'button';
-            b.textContent = min + ' 分钟';
-            b.addEventListener('click', function () {
-                if (timer.state === 'running') { return; }
-                lastMinutes = min;
-                store.set('last_minutes', min);
-                timer.set(min * 60000);
-                renderPresets();
-                chrome.toast('已设定 ' + min + ' 分钟');
-            });
-            els.presets.appendChild(b);
-        });
-    }
-
-    function onTick(remaining, total) {
-        var fmt = ET.Countdown.format(remaining);
-        var b = ET.Countdown.breakdown(remaining);
-
-        var cls = 'cd-time__text';
-        if (remaining > 0 && remaining <= DANGER_MS) { cls += ' is-danger cd-pulse'; }
-        else if (remaining > 0 && remaining <= WARN_MS) { cls += ' is-warning'; }
-        if (els.timeText.className !== cls) { els.timeText.className = cls; }
-        els.timeText.textContent = fmt;
-
-        /* 进度环 */
-        var ratio = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0;
-        els.ring.style.strokeDasharray = RING_LEN.toFixed(1);
-        els.ring.style.strokeDashoffset = (RING_LEN * (1 - ratio)).toFixed(1);
-        /* SVG 元素 className 只读，必须用 setAttribute */
-        els.ring.setAttribute('class', 'cd-ring' +
-            (remaining > 0 && remaining <= DANGER_MS ? ' is-danger'
-                : remaining > 0 && remaining <= WARN_MS ? ' is-warning' : ''));
-
-        /* 最后 10 秒每秒滴答 */
-        var whole = Math.ceil(remaining / 1000);
-        if (remaining > 0 && remaining <= DANGER_MS && whole !== lastWholeSecond) {
-            lastWholeSecond = whole;
-            chrome.beep('tick');
-        }
-
-        if (timer.state === 'running') {
-            chrome.setStatus('剩余 ' + fmt);
+        /* 虚像：折射光线的反向延长线（虚线） */
+        if (!o.atFocal && o.v < 0) {
+            var imgX = pxX(o.v);
+            var tipY = geom.cy + geom.objPx * (-o.m);
+            line(geom.cx, oy, imgX - 6, tipY, cMuted, 1.2, [5, 6]);
+            line(geom.cx, y3, imgX - 6, tipY, cMuted, 1.2, [5, 6]);
         }
     }
 
-    function onState(s) {
-        var playing = s === 'running';
-        els.btnMainText.textContent = s === 'paused' ? '继续'
-            : playing ? '暂停'
-            : (s === 'done' ? '再 来' : '开始');
-        var icon = els.btnMain.querySelector('use');
-        var iconId = playing ? '#i-pause' : '#i-play';
-        icon.setAttribute('href', iconId);
-        icon.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', iconId); /* et-allow-external SVG 命名空间 */
-
-        els.timeLabel.textContent = s === 'running' ? '计时中'
-            : s === 'paused' ? '已暂停'
-            : s === 'done' ? '时间到'
-            : '准备开始';
-
-        renderPresets();
-
-        if (s === 'done') {
-            chrome.setStatus('时间到', 'err');
-        } else if (s === 'idle') {
-            chrome.setStatus('就绪 · ' + ET.Countdown.format(timer.total));
-            lastWholeSecond = -1;
+    function drawImage(o, cImg) {
+        if (o.atFocal) { return; }
+        var imgX = pxX(o.v);
+        var hpx = geom.objPx * (-o.m);      /* > 0：倒立（向下）；< 0：正立（向上） */
+        var limit = H * 0.45;
+        var drawH = hpx;
+        var clamped = false;
+        if (Math.abs(hpx) > limit) {
+            drawH = hpx > 0 ? limit : -limit;
+            clamped = true;
+        }
+        var tipY = geom.cy + drawH;
+        arrow(imgX, geom.cy, imgX, tipY, cImg, 3, o.real ? null : [7, 6]);
+        text(o.real ? '实像' : '虚像', imgX, tipY + (drawH > 0 ? 16 : -16), cImg, 13);
+        if (clamped) {
+            text('（像太大，画面已截断）', imgX, tipY + (drawH > 0 ? 34 : -34), cImg, 11.5);
         }
     }
 
-    function onFinish() {
-        chrome.beep('over');
-        if (!overShown) {
-            overShown = true;
-            var overlay = document.createElement('div');
-            overlay.className = 'cd-over';
-            overlay.innerHTML = '<div style="text-align:center"><div class="cd-over__text">时间到</div></div>' +
-                '<div class="cd-over__hint">点击任意处关闭</div>';
-            overlay.addEventListener('click', function () {
-                if (overlay.parentNode) { overlay.parentNode.removeChild(overlay); }
-                overShown = false;
-            });
-            document.body.appendChild(overlay);
-        }
+    function drawDistance(xa, xb, y, label, color) {
+        var dir = xb > xa ? 1 : -1;
+        line(xa, y, xb, y, color, 1.4);
+        arrow(xa + dir * 2, y, xa, y, color, 1.4);
+        arrow(xb - dir * 2, y, xb, y, color, 1.4);
+        var mid = (xa + xb) / 2;
+        chip(label, mid, y, color, cssVar('--et-surface', '#fff'));
     }
 
-    /* ============ 事件 ============ */
+    function drawScreen(o, cMuted, cImg, cOk, cWarn) {
+        if (!state.screenOn) { return; }
+        var sx = pxX(state.screenX);
+        var hS = Math.min(H * 0.3, 132);
+        ctx.save();
+        ctx.fillStyle = cMuted;
+        ctx.globalAlpha = 0.14;
+        ctx.fillRect(sx - 5, geom.cy - hS, 10, hS * 2);
+        ctx.globalAlpha = 0.8;
+        ctx.fillStyle = cMuted;
+        ctx.fillRect(sx - 2, geom.cy - hS, 4, hS * 2);
+        ctx.restore();
+        text('光屏', sx, geom.cy - hS - 12, cMuted, 12.5);
 
-    els.btnMain.addEventListener('click', function () {
-        if (mode === 'up') {
-            upToggle();
-            chrome.beep('ok');
+        if (!isFinite(o.v)) {
+            chip('不成像', sx, geom.cy + hS - 16, cWarn, cssVar('--et-surface', '#fff'));
             return;
         }
-        if (timer.state === 'idle' && timer.total <= 0) {
-            timer.set(lastMinutes * 60000);
-        }
-        if (timer.state === 'done') {
-            timer.reset();
-            overShown = false;
-            var overlay = document.querySelector('.cd-over');
-            if (overlay && overlay.parentNode) { overlay.parentNode.removeChild(overlay); }
-        }
-        timer.toggle();
-        chrome.beep('ok');
-    });
-
-    els.btnReset.addEventListener('click', function () {
-        if (mode === 'up') {
-            upReset();
-            chrome.beep('ok');
-            chrome.toast('已清零，可重新开始计时');
+        if (!o.real) {
+            chip('光屏上接不到虚像', sx, geom.cy + hS - 16, cWarn, cssVar('--et-surface', '#fff'));
             return;
         }
-        overShown = false;
-        var overlay = document.querySelector('.cd-over');
-        if (overlay && overlay.parentNode) { overlay.parentNode.removeChild(overlay); }
-        timer.reset();
-        chrome.beep('ok');
-    });
 
-    els.btnPlus30.addEventListener('click', function () { timer.add(30000); });
-    els.btnMinus30.addEventListener('click', function () { timer.add(-30000); });
+        var diff = Math.abs(state.screenX - o.v);
+        var tol = Math.max(0.25, o.v * 0.03);
+        var hpx = geom.objPx * Math.abs(o.m);
+        if (diff <= tol) {
+            /* 清晰 */
+            var tip = geom.cy + (geom.objPx * (-o.m) > 0 ? hpx : -hpx);
+            arrow(sx, geom.cy, sx, tip, cOk, 2.6);
+            chip('清晰', sx, geom.cy - hS + 18, cOk, cssVar('--et-surface', '#fff'));
+        } else {
+            /* 模糊：椭圆光斑 */
+            var ry = Math.max(14, hpx * (1 + Math.min(2, diff / Math.max(0.5, o.v * 0.1))));
+            ctx.save();
+            ctx.translate(sx, geom.cy);
+            var grd = ctx.createRadialGradient(0, 0, 2, 0, 0, Math.max(ry, 20));
+            grd.addColorStop(0, 'rgba(37,99,235,.5)');
+            grd.addColorStop(1, 'rgba(37,99,235,0)');
+            ctx.fillStyle = grd;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, Math.max(24, hpx * 0.6), ry, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            chip('模糊', sx, geom.cy - hS + 18, cImg, cssVar('--et-surface', '#fff'));
+        }
+    }
 
-    els.segMode.addEventListener('click', function (ev) {
-        var v = ev.target && ev.target.getAttribute ? ev.target.getAttribute('data-mode') : null;
-        if (v) { setMode(v, true); }
-    });
+    function draw() {
+        var cBg = cssVar('--et-surface', '#ffffff');
+        var cFg = cssVar('--et-fg', '#0b1220');
+        var cMuted = cssVar('--et-muted', '#64748b');
+        var cAccent = cssVar('--et-accent', '#8b5cf6');
+        var cObj = '#e11d48';
+        var cImg = '#2563eb';
+        var cRay = '#f59e0b';
+        var cOk = cssVar('--et-ok', '#059669');
+        var cWarn = cssVar('--et-warn', '#d97706');
 
-    els.btnRemind.addEventListener('click', function () {
-        var m = Math.max(0, Math.min(180, Number(els.inRemindMin.value) || 0));
-        var s = Math.max(0, Math.min(59, Number(els.inRemindSec.value) || 0));
-        var ms = (m * 60 + s) * 1000;
-        if (ms <= 0) {
-            chrome.toast('请输入大于 0 的提醒时长，或点「取消」关闭提醒', 'warn');
+        var o = optics();
+
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = cBg;
+        ctx.fillRect(0, 0, W, H);
+
+        drawAxis(cMuted, cFg);
+        drawFocalMarks(cMuted, state.labels);
+
+        if (state.rays) { drawRays(o, cRay, cMuted); }
+
+        drawLens(cAccent);
+        drawObject(cObj);
+        drawImage(o, cImg);
+        drawScreen(o, cMuted, cImg, cOk, cWarn);
+
+        if (state.labels) {
+            var yU = geom.cy + 30;
+            drawDistance(pxX(-state.u), geom.cx, yU, 'u = ' + trimNum(state.u, 1) + 'cm', cObj);
+            if (isFinite(o.v)) {
+                var yV = geom.cy + (o.v > 0 ? 56 : 30);
+                drawDistance(geom.cx, pxX(o.v), yV, (o.v > 0 ? 'v = ' : 'v = -') + trimNum(Math.abs(o.v), 1) + 'cm', cImg);
+            }
+        }
+    }
+
+    function tick() {
+        raf = 0;
+        if (tween) {
+            var now = (window.performance && window.performance.now) ? window.performance.now() : Date.now();
+            var p = Math.min(1, (now - tween.t0) / tween.dur);
+            var e = 1 - Math.pow(1 - p, 3);
+            state[tween.prop] = tween.from + (tween.to - tween.from) * e;
+            if (p >= 1) { state[tween.prop] = tween.to; tween = null; afterChange(); }
+            draw();
+            if (tween) { raf = window.requestAnimationFrame(tick); }
             return;
         }
-        upSetTarget(ms);
-        chrome.beep('ok');
-        chrome.toast('已设到点提醒：' + ET.Countdown.format(ms));
-    });
+        draw();
+    }
 
-    els.btnRemindClear.addEventListener('click', function () {
-        upSetTarget(0);
-        els.inRemindMin.value = '';
-        els.inRemindSec.value = '';
+    function requestDraw() {
+        if (!raf) { raf = window.requestAnimationFrame(tick); }
+    }
+
+    function tweenTo(prop, target, dur) {
+        tween = {
+            prop: prop,
+            from: state[prop],
+            to: target,
+            t0: (window.performance && window.performance.now) ? window.performance.now() : Date.now(),
+            dur: dur || 300
+        };
+        requestDraw();
+    }
+
+    function afterChange() {
+        renderFoot();
+        save();
+        requestDraw();
+    }
+
+    /* ============ 结论带 ============ */
+
+    function el(tag, cls, txt) {
+        var node = document.createElement(tag);
+        if (cls) { node.className = cls; }
+        if (txt !== undefined && txt !== null) { node.textContent = txt; }
+        return node;
+    }
+
+    function stat(label, value) {
+        var s = el('span', 'lc-stat', label + ' ');
+        s.appendChild(el('b', null, value));
+        return s;
+    }
+
+    function natureOf(o) {
+        if (o.atFocal) { return 'u = f：不成像（折射光线平行射出）'; }
+        if (!o.real) { return '正立、放大的虚像（与物体同侧，光屏接不到）'; }
+        var am = Math.abs(o.m);
+        var size = am > 1.03 ? '放大' : (am < 0.97 ? '缩小' : '等大');
+        return '倒立、' + size + '的实像（与物体异侧）';
+    }
+
+    function appOf(o) {
+        if (o.atFocal) { return '无像'; }
+        if (Math.abs(o.u - 2 * state.f) < state.f * 0.06) { return '测焦距（u = 2f，像与物等大）'; }
+        if (o.u > 2 * state.f) { return '照相机原理（u > 2f）'; }
+        if (o.u > state.f) { return '投影仪 / 幻灯机原理（f < u < 2f）'; }
+        return '放大镜原理（u < f）';
+    }
+
+    function renderFoot() {
+        var foot = document.getElementById('foot');
+        var o = optics();
+        foot.textContent = '';
+
+        if (Math.abs(o.u - state.f) < state.f * 0.02) {
+            foot.appendChild(stat('物距 u', trimNum(o.u, 1) + 'cm'));
+            foot.appendChild(stat('焦距 f', state.f + 'cm'));
+            foot.appendChild(el('span', 'lc-nature', 'u = f：不成像'));
+            foot.appendChild(el('span', 'lc-warn', '折射光线平行射出，光屏上只有一片均匀光斑'));
+            return;
+        }
+
+        foot.appendChild(stat('物距 u', trimNum(o.u, 1) + 'cm'));
+        foot.appendChild(stat('焦距 f', state.f + 'cm'));
+        foot.appendChild(stat('像距 v', trimNum(Math.abs(o.v), 1) + 'cm' + (o.v < 0 ? '（虚像，同侧）' : '')));
+        foot.appendChild(stat('放大率', trimNum(Math.abs(o.m), 2) + '×'));
+        foot.appendChild(el('span', 'lc-nature', natureOf(o)));
+        foot.appendChild(el('span', 'lc-app', appOf(o)));
+    }
+
+    /* ============ 操作 ============ */
+
+    function save() {
+        store.set('f', state.f);
+        store.set('u', state.u);
+        store.set('mul', state.mul);
+        store.set('screenOn', state.screenOn);
+        store.set('screenX', state.screenX);
+        store.set('rays', state.rays);
+        store.set('labels', state.labels);
+    }
+
+    function setFocal(f) {
+        if (FOCALS.indexOf(f) === -1) { return; }
+        state.f = f;
+        state.u = state.mul * f;
+        clampU();
+        clampScreen();
+        layout();
+        renderChips();
+        afterChange();
         chrome.beep('tick');
-        chrome.toast('已取消到点提醒');
+    }
+
+    function setMul(mul) {
+        if (MULS.indexOf(mul) === -1) { return; }
+        state.mul = mul;
+        var target = Math.max(state.f * 0.15, Math.min(state.f * 3.3, mul * state.f));
+        tweenTo('u', target, 340);
+        renderChips();
+        chrome.beep('ok');
+    }
+
+    function cycleTypical() {
+        var idx = MULS.indexOf(state.mul);
+        var next = MULS[(idx + 1 + MULS.length) % MULS.length];
+        setMul(next);
+        chrome.toast('典型位置：u = ' + (next === 1.5 ? '1.5f' : next + 'f'));
+    }
+
+    function moveScreenToImage() {
+        var o = optics();
+        if (!state.screenOn) {
+            state.screenOn = true;
+            document.getElementById('chkScreen').checked = true;
+        }
+        if (!isFinite(o.v) || o.v <= 0) {
+            chrome.toast(isFinite(o.v) ? '此时成虚像，光屏上接不到' : '此时不成像，无法在光屏上得到像', 'warn');
+            chrome.beep('err');
+            renderFoot();
+            save();
+            requestDraw();
+            return;
+        }
+        var target = Math.max(state.f * 0.25, Math.min(state.f * 3.3, o.v));
+        tweenTo('screenX', target, 320);
+        chrome.beep('ok');
+        chrome.toast('光屏已移到像的位置（' + trimNum(o.v, 1) + 'cm），此时最清晰');
+    }
+
+    function renderChips() {
+        var list = document.getElementById('segF').querySelectorAll('button');
+        var i;
+        for (i = 0; i < list.length; i++) {
+            list[i].classList.toggle('is-active', Number(list[i].getAttribute('data-f')) === state.f);
+        }
+        /* 物距接近某个典型位置时点亮对应按钮 */
+        var mulNow = state.u / state.f;
+        list = document.getElementById('segU').querySelectorAll('button');
+        for (i = 0; i < list.length; i++) {
+            var mul = Number(list[i].getAttribute('data-mul'));
+            list[i].classList.toggle('is-active', Math.abs(mulNow - mul) < 0.02);
+        }
+    }
+
+    /* ============ 交互 ============ */
+
+    function canvasX(ev) {
+        var rect = cv.getBoundingClientRect();
+        return ev.clientX - rect.left;
+    }
+
+    cv.addEventListener('pointerdown', function (ev) {
+        var px = canvasX(ev);
+        var objPx = pxX(-state.u);
+        var scrPx = pxX(state.screenX);
+        if (state.screenOn && Math.abs(px - scrPx) < 24) {
+            drag = 'screen';
+        } else if (Math.abs(px - objPx) < 34 || px < geom.cx) {
+            drag = 'obj';
+        } else if (state.screenOn) {
+            drag = 'screen';
+        } else {
+            drag = 'obj';
+        }
+        cv.classList.add('is-drag');
+        if (cv.setPointerCapture) {
+            try { cv.setPointerCapture(ev.pointerId); } catch (err) { /* 忽略 */ }
+        }
+        tween = null;
+        applyDrag(px);
+        ev.preventDefault();
     });
 
-    els.btnCustom.addEventListener('click', function () {
-        if (timer.state === 'running') { chrome.toast('请先暂停再调整时长', 'warn'); return; }
-        var h = Math.max(0, Math.min(23, Number(els.inHour.value) || 0));
-        var m = Math.max(0, Math.min(59, Number(els.inMin.value) || 0));
-        var s = Math.max(0, Math.min(59, Number(els.inSec.value) || 0));
-        var ms = (h * 3600 + m * 60 + s) * 1000;
-        if (ms <= 0) { chrome.toast('请输入大于 0 的时长', 'warn'); return; }
-        timer.set(ms);
-        renderPresets();
-        chrome.beep('ok');
-        chrome.setStatus('就绪 · ' + ET.Countdown.format(ms));
+    cv.addEventListener('pointermove', function (ev) {
+        if (!drag) { return; }
+        applyDrag(canvasX(ev));
+    });
+
+    function applyDrag(px) {
+        if (drag === 'obj') {
+            if (px > geom.cx - 6) { px = geom.cx - 6; }
+            state.u = -cmX(px);
+            clampU();
+            var o = optics();
+            if (o.real && Math.abs(state.screenX - o.v) < 0.4) { state.screenX = o.v; }
+        } else if (drag === 'screen') {
+            state.screenX = cmX(px);
+            clampScreen();
+            var oo = optics();
+            if (oo.real && Math.abs(state.screenX - oo.v) < 0.35) { state.screenX = oo.v; }
+        }
+        syncAfterMove();
+    }
+
+    function syncAfterMove() {
+        renderChips();
+        renderFoot();
+        save();
+        requestDraw();
+    }
+
+    function endDrag() {
+        if (!drag) { return; }
+        drag = null;
+        cv.classList.remove('is-drag');
+        var o = optics();
+        if (o.real && Math.abs(state.screenX - o.v) < 0.05) {
+            chrome.beep('ok');
+        }
+    }
+
+    cv.addEventListener('pointerup', endDrag);
+    cv.addEventListener('pointercancel', endDrag);
+
+    document.getElementById('segF').addEventListener('click', function (ev) {
+        var v = ev.target && ev.target.getAttribute ? ev.target.getAttribute('data-f') : null;
+        if (v) { setFocal(Number(v)); }
+    });
+
+    document.getElementById('segU').addEventListener('click', function (ev) {
+        var v = ev.target && ev.target.getAttribute ? ev.target.getAttribute('data-mul') : null;
+        if (v) { setMul(Number(v)); }
+    });
+
+    document.getElementById('chkScreen').addEventListener('change', function (ev) {
+        state.screenOn = ev.target.checked;
+        save();
+        renderFoot();
+        requestDraw();
+    });
+
+    document.getElementById('chkRays').addEventListener('change', function (ev) {
+        state.rays = ev.target.checked;
+        save();
+        requestDraw();
+    });
+
+    document.getElementById('chkLabels').addEventListener('change', function (ev) {
+        state.labels = ev.target.checked;
+        save();
+        requestDraw();
     });
 
     document.addEventListener('keydown', function (ev) {
-        var tag = (document.activeElement && document.activeElement.tagName) || '';
-        var inInput = tag === 'INPUT' || tag === 'TEXTAREA';
-        if (document.querySelector('.et-modal')) { return; }
+        var node = document.activeElement;
+        var tag = node && node.tagName ? node.tagName.toUpperCase() : '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (node && node.isContentEditable)) { return; }
+        if (document.querySelector('.et-modal, .et-drawer-backdrop')) { return; }
 
-        if (ev.key === ' ' && !inInput) {
+        if (ev.code === 'Space' || ev.key === ' ') {
             ev.preventDefault();
-            els.btnMain.click();
-        } else if ((ev.key === 'r' || ev.key === 'R') && !inInput) {
+            moveScreenToImage();
+        } else if (ev.key === 'ArrowLeft') {
             ev.preventDefault();
-            els.btnReset.click();
-        } else if (ev.key === 'ArrowUp' && !inInput) {
+            tween = null;
+            drag = 'obj';
+            state.u = Math.min(state.f * 3.3, state.u + 0.5);
+            clampU();
+            syncAfterMove();
+            drag = null;
+        } else if (ev.key === 'ArrowRight') {
             ev.preventDefault();
-            if (mode === 'up') { upSetTarget(up.target + 30000); } else { timer.add(30000); }
-        } else if (ev.key === 'ArrowDown' && !inInput) {
+            tween = null;
+            drag = 'obj';
+            state.u = Math.max(state.f * 0.15, state.u - 0.5);
+            clampU();
+            syncAfterMove();
+            drag = null;
+        } else if (ev.key === 'ArrowUp' || ev.key === 'ArrowDown') {
             ev.preventDefault();
-            if (mode === 'up') { upSetTarget(Math.max(0, up.target - 30000)); } else { timer.add(-30000); }
+            var idx = FOCALS.indexOf(state.f);
+            idx = ev.key === 'ArrowUp'
+                ? Math.min(FOCALS.length - 1, idx + 1)
+                : Math.max(0, idx - 1);
+            setFocal(FOCALS[idx]);
         }
     });
 
-    /* ============ 启动 ============ */
-    els.ring.style.strokeDasharray = RING_LEN.toFixed(1);
-    els.ring.style.strokeDashoffset = '0';
-    timer.set(lastMinutes * 60000);
-    renderPresets();
-    renderRemindState();
-    applyModeUi();
-    if (mode === 'up') {
-        upRender();
-    } else {
-        timer.set(lastMinutes * 60000);
+    /* ============ 设置抽屉 ============ */
+
+    function buildSettings(body) {
+        function heading(t) {
+            var h = document.createElement('h4');
+            h.textContent = t;
+            body.appendChild(h);
+        }
+
+        function segRow(labels, values, current, onPick) {
+            var row = document.createElement('div');
+            row.className = 'et-drawer__row';
+            for (var i = 0; i < values.length; i++) {
+                (function (value, label) {
+                    var b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'et-btn' + (value === current ? ' et-btn--primary' : '');
+                    b.style.flex = '1 1 28%';
+                    b.textContent = label;
+                    b.addEventListener('click', function () {
+                        onPick(value);
+                        refresh();
+                    });
+                    row.appendChild(b);
+                })(values[i], labels[i]);
+            }
+            body.appendChild(row);
+        }
+
+        function checkRow(label, checked, onChange) {
+            var row = document.createElement('label');
+            row.className = 'et-drawer__switch';
+            row.appendChild(document.createTextNode(label));
+            var cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.checked = checked;
+            cb.addEventListener('change', function () { onChange(cb.checked); });
+            row.appendChild(cb);
+            body.appendChild(row);
+        }
+
+        heading('焦距');
+        segRow(['5cm', '10cm', '15cm', '20cm'], FOCALS, state.f, function (v) { setFocal(v); });
+
+        heading('显示');
+        checkRow('三条特殊光线', state.rays, function (on) {
+            state.rays = on;
+            document.getElementById('chkRays').checked = on;
+            save();
+            requestDraw();
+        });
+        checkRow('标注（F / 2F / u / v）', state.labels, function (on) {
+            state.labels = on;
+            document.getElementById('chkLabels').checked = on;
+            save();
+            requestDraw();
+        });
+        checkRow('光屏', state.screenOn, function (on) {
+            state.screenOn = on;
+            document.getElementById('chkScreen').checked = on;
+            renderFoot();
+            save();
+            requestDraw();
+        });
+
+        heading('快捷操作');
+        var row = document.createElement('div');
+        row.className = 'et-drawer__row';
+        var b1 = document.createElement('button');
+        b1.type = 'button';
+        b1.className = 'et-btn et-btn--primary';
+        b1.style.flex = '1 1 40%';
+        b1.textContent = '光屏移到像的位置';
+        b1.addEventListener('click', moveScreenToImage);
+        var b2 = document.createElement('button');
+        b2.type = 'button';
+        b2.className = 'et-btn';
+        b2.style.flex = '1 1 40%';
+        b2.textContent = '恢复 u = 3f';
+        b2.addEventListener('click', function () { setMul(3); });
+        row.appendChild(b1);
+        row.appendChild(b2);
+        body.appendChild(row);
+
+        var tip = document.createElement('p');
+        tip.className = 'et-drawer__tip';
+        tip.innerHTML = '成像公式：<b>1/u + 1/v = 1/f</b>，放大率 |m| = v/u。'
+            + '<br>u &#62; 2f 成缩小倒立实像（照相机）；u = 2f 成等大倒立实像（测焦距）；'
+            + 'f &#60; u &#60; 2f 成放大倒立实像（投影仪）；u = f 不成像；u &#60; f 成放大正立虚像（放大镜）。'
+            + '<br>虚像用虚线箭头表示，与物体同侧，光屏上接不到。'
+            + '<br>拖动光屏时若靠近成像位置会自动吸附，方便演示「只有像的位置才清晰」。';
+        body.appendChild(tip);
+
+        function refresh() {
+            while (body.firstChild) { body.removeChild(body.firstChild); }
+            buildSettings(body);
+        }
     }
+
+    /* ============ 尺寸与启动 ============ */
+
+    function resize() {
+        var stage = document.getElementById('stage');
+        var rect = stage.getBoundingClientRect();
+        var dpr = window.devicePixelRatio || 1;
+        W = Math.max(360, Math.floor(rect.width));
+        H = Math.max(220, Math.floor(rect.height));
+        cv.width = Math.round(W * dpr);
+        cv.height = Math.round(H * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        layout();
+        draw();
+    }
+
+    window.addEventListener('resize', function () {
+        window.clearTimeout(window.__lcResize);
+        window.__lcResize = window.setTimeout(resize, 140);
+    });
+
+    try {
+        var observer = new MutationObserver(function () { requestDraw(); });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-et-theme'] });
+    } catch (err) { /* 老内核忽略 */ }
+
+    document.getElementById('chkScreen').checked = state.screenOn;
+    document.getElementById('chkRays').checked = state.rays;
+    document.getElementById('chkLabels').checked = state.labels;
+
+    renderChips();
+    resize();
+    renderFoot();
 })();
 </script>
 

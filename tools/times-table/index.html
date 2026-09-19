@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>课堂倒计时 — KeeTools 课工具</title>
+<title>乘法口诀表 — KeeTools 课工具</title>
 <!-- ET-META
-{"id":"countdown-timer","version":"1.4.0"}
+{"id":"times-table","version":"1.0.0"}
 -->
 
 <!-- 共享外壳样式（由 sync_shared.py 注入） -->
@@ -537,255 +537,174 @@ html[data-et-theme="dark"] {
 <!-- /ET:INLINE -->
 
 <style>
-/* ============ 工具自身样式 ============ */
-body { overflow: hidden; }
+/* ── 乘法口诀表：工具自身样式（自包含，不引用任何外部资源） ── */
+:root { --tt-accent: #0891b2; }
 
-.cd-main {
+.tt-main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+/* ---------- 工具栏 ---------- */
+.tt-bar {
+    flex: none;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: space-evenly;
-    gap: 14px;
-    padding: clamp(12px, 2.5vh, 28px) 20px;
-    height: 100%;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--et-line);
+    background: var(--et-surface-2);
 }
 
-/* ---------- 模式切换：倒计时 / 正计时 ---------- */
-.cd-modes {
+.tt-seg {
     display: flex;
-    gap: 4px;
-    padding: 4px;
+    gap: 3px;
+    padding: 3px;
     border: 1px solid var(--et-line);
-    border-radius: 12px;
+    border-radius: 11px;
     background: var(--et-surface);
 }
 
-.cd-modes button {
+.tt-seg button {
     border: 0;
     background: none;
     color: var(--et-muted);
     font: inherit;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
-    padding: 8px 22px;
-    border-radius: 9px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .14s, color .14s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.tt-seg button:hover { color: var(--et-accent); }
+.tt-seg button.is-active { background: var(--et-accent); color: #fff; }
+.tt-spacer { flex: 1 1 auto; }
+
+/* ---------- 表格舞台 ---------- */
+.tt-stage {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 16px 2px;
+    overflow: auto;
+}
+
+.tt-grid {
+    width: min(96%, 1120px, calc(100vh - 206px));
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 5px;
+}
+
+.tt-head {
+    display: grid;
+    place-items: center;
+    min-height: 24px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: none;
+    color: var(--et-muted);
+    font: inherit;
+    font-size: clamp(12px, 1.6vh, 18px);
+    font-weight: 800;
     cursor: pointer;
     transition: background .14s, color .14s;
     -webkit-tap-highlight-color: transparent;
 }
 
-.cd-modes button:hover { color: var(--et-accent); }
-.cd-modes button.is-active { background: var(--et-accent); color: #fff; }
-.cd-hidden { display: none !important; }
+.tt-head:hover { background: var(--et-accent-weak); color: var(--et-accent); }
+.tt-head.is-active { background: var(--et-accent); color: #fff; }
 
-/* ---------- 表盘 ---------- */
-.cd-dial {
+.tt-corner {
+    cursor: default;
+    background: none;
+    color: var(--et-line-strong);
+    font-size: clamp(13px, 1.8vh, 20px);
+}
+
+.tt-corner:hover { background: none; color: var(--et-line-strong); }
+
+.tt-cell {
     position: relative;
-    width: min(56vh, 84vw, 620px);
-    aspect-ratio: 1;
-    max-height: 62vh;
-}
-
-.cd-dial svg { width: 100%; height: 100%; display: block; transform: rotate(-90deg); }
-
-.cd-ring-track {
-    fill: none;
-    stroke: var(--et-line);
-    stroke-width: 10;
-}
-
-.cd-ring {
-    fill: none;
-    stroke: var(--et-accent);
-    stroke-width: 10;
-    stroke-linecap: round;
-    transition: stroke .3s;
-}
-
-.cd-ring.is-warning { stroke: var(--et-warn); }
-.cd-ring.is-danger { stroke: var(--et-err); }
-
-.cd-time {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    user-select: none;
-}
-
-.cd-time__text {
-    font-size: clamp(64px, 17vh, 170px);
-    font-weight: 900;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: .01em;
-    line-height: 1;
-    background: linear-gradient(180deg, var(--et-fg) 20%, var(--et-accent) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    filter: drop-shadow(0 6px 24px var(--et-accent-weak));
-    transition: filter .3s;
-}
-
-.cd-time__text.is-warning {
-    background: linear-gradient(180deg, var(--et-fg) 10%, var(--et-warn) 90%);
-    -webkit-background-clip: text;
-    background-clip: text;
-}
-
-.cd-time__text.is-danger {
-    background: linear-gradient(180deg, var(--et-fg) 5%, var(--et-err) 85%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    filter: drop-shadow(0 0 26px rgba(220, 38, 38, .35));
-}
-
-.cd-time__text.is-danger.cd-pulse { animation: cd-pulse 1s infinite; }
-
-@keyframes cd-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.035); }
-}
-
-.cd-time__label {
-    position: absolute;
-    bottom: 12%;
-    font-size: clamp(12px, 1.8vh, 15px);
-    font-weight: 700;
-    letter-spacing: .14em;
-    color: var(--et-muted);
-    text-transform: uppercase;
-}
-
-/* ---------- 预设 ---------- */
-.cd-presets {
     display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
-}
-
-.cd-preset {
-    padding: 9px 18px;
-    border-radius: 999px;
-    font: inherit;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--et-muted);
-    background: var(--et-surface);
+    gap: .14em;
+    aspect-ratio: 1 / 1;
+    padding: 2px;
     border: 1px solid var(--et-line);
+    border-radius: 10px;
+    background: var(--et-surface);
+    color: var(--et-fg);
+    font: inherit;
+    font-size: clamp(10px, 1.72vh, 19px);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
     cursor: pointer;
-    transition: all .15s;
+    transition: transform .12s, border-color .14s, background .14s, opacity .2s, box-shadow .14s;
     -webkit-tap-highlight-color: transparent;
 }
 
-.cd-preset:hover { border-color: var(--et-accent); color: var(--et-accent); transform: translateY(-1px); }
-.cd-preset.is-active { color: #fff; background: var(--et-accent); border-color: var(--et-accent); }
+.tt-cell:hover { border-color: var(--et-accent); transform: translateY(-1px); box-shadow: var(--et-shadow-md); }
+.tt-cell:focus-visible { outline: 2px solid var(--et-accent); outline-offset: 1px; }
+.tt-cell__ans { color: var(--et-accent); }
+.tt-cell__mask { display: none; color: var(--et-muted); }
+.tt-cell.is-square { background: var(--et-accent-weak); }
+.tt-cell.is-masked { background: var(--et-surface-2); }
+.tt-cell.is-masked .tt-cell__ans { display: none; }
+.tt-cell.is-masked .tt-cell__mask { display: inline; }
+.tt-cell.is-hit { animation: tt-pop .34s cubic-bezier(.34, 1.5, .64, 1); }
+.tt-cell.is-pick { border-color: var(--et-accent); box-shadow: 0 0 0 3px var(--et-accent-weak); }
+.tt-cell.is-dim { opacity: .24; }
+.tt-cell.is-out { opacity: .14; pointer-events: none; }
 
-/* ---------- 控制条 ---------- */
-.cd-controls {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.cd-adjust {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 10px 14px;
-    border-radius: 11px;
-    font: inherit;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--et-fg);
-    background: var(--et-surface);
-    border: 1px solid var(--et-line);
-    cursor: pointer;
-    transition: all .14s;
-}
-
-.cd-adjust:hover:not(:disabled) { border-color: var(--et-accent); color: var(--et-accent); }
-.cd-adjust:disabled { opacity: .4; cursor: not-allowed; }
-.cd-adjust .et-icon { width: 15px; height: 15px; }
-
-.cd-main-btn {
-    min-width: 200px;
-    gap: 9px;
-}
-
-.cd-main-btn .et-icon { width: 20px; height: 20px; }
-
-/* ---------- 自定义时长 ---------- */
-.cd-custom {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--et-muted);
-    font-weight: 600;
-}
-
-.cd-custom input {
-    width: 64px;
-    padding: 8px 10px;
-    border: 1px solid var(--et-line-strong);
-    border-radius: 9px;
-    background: var(--et-surface);
-    color: var(--et-fg);
-    font: inherit;
-    font-size: 15px;
-    font-weight: 700;
-    text-align: center;
-    -moz-appearance: textfield;
-    appearance: textfield;
-}
-
-.cd-custom input::-webkit-outer-spin-button,
-.cd-custom input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-
-.cd-custom input:focus {
-    outline: none;
-    border-color: var(--et-accent);
-    box-shadow: 0 0 0 3px var(--et-accent-weak);
-}
-
-/* ---------- 时间到 ---------- */
-.cd-over {
-    position: fixed;
-    inset: 0;
-    z-index: 200;
-    display: grid;
-    place-items: center;
-    background: rgba(127, 29, 29, .92);
-    animation: cd-over-in .4s ease;
-    cursor: pointer;
-}
-
-.cd-over__text {
-    font-size: clamp(64px, 16vw, 200px);
-    font-weight: 900;
-    color: #fff;
-    letter-spacing: .08em;
-    animation: cd-over-pop .6s cubic-bezier(.34, 1.56, .64, 1);
-    text-shadow: 0 10px 40px rgba(0, 0, 0, .4);
-}
-
-.cd-over__hint {
-    position: absolute;
-    bottom: 10%;
-    font-size: 15px;
-    color: rgba(255, 255, 255, .75);
-    letter-spacing: .2em;
-}
-
-@keyframes cd-over-in { from { opacity: 0; } }
-@keyframes cd-over-pop {
-    0% { opacity: 0; transform: scale(.5); }
-    70% { transform: scale(1.06); }
+@keyframes tt-pop {
+    0% { transform: scale(.9); }
+    60% { transform: scale(1.07); }
     100% { transform: scale(1); }
+}
+
+/* ---------- 口诀宣读条 ---------- */
+.tt-readout {
+    flex: none;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    min-height: 64px;
+    padding: 4px 18px 12px;
+}
+
+.tt-readout__kj {
+    font-size: clamp(22px, 4.4vh, 46px);
+    font-weight: 900;
+    letter-spacing: .05em;
+    line-height: 1.1;
+    color: var(--et-accent);
+}
+
+.tt-readout__expr {
+    font-size: clamp(13px, 1.8vh, 18px);
+    font-weight: 700;
+    color: var(--et-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.tt-readout.is-empty .tt-readout__kj { color: var(--et-line-strong); }
+
+@media (max-height: 700px) {
+    .tt-readout { min-height: 46px; padding-bottom: 6px; }
+    .tt-head { display: none; }
+    .tt-grid { grid-template-columns: repeat(9, minmax(0, 1fr)); }
+    .tt-corner { display: none; }
 }
 </style>
 </head>
@@ -793,63 +712,37 @@ body { overflow: hidden; }
 
 <header id="et-topbar"></header>
 
-<main id="et-main" class="cd-main">
+<main id="et-main" class="tt-main">
 
-    <!-- 模式：倒计时 / 正计时 -->
-    <div class="cd-modes" id="segMode" role="group" aria-label="计时模式">
-        <button type="button" data-mode="down" class="is-active">倒计时</button>
-        <button type="button" data-mode="up">正计时</button>
-    </div>
-
-    <!-- 表盘 -->
-    <div class="cd-dial">
-        <svg viewBox="0 0 200 200" aria-hidden="true">
-            <circle class="cd-ring-track" cx="100" cy="100" r="94"/>
-            <circle class="cd-ring" id="ring" cx="100" cy="100" r="94"/>
-        </svg>
-        <div class="cd-time">
-            <div class="cd-time__text" id="timeText">05:00</div>
-            <div class="cd-time__label" id="timeLabel">准备开始</div>
+    <div class="tt-bar">
+        <div class="tt-seg" id="segRange" role="group" aria-label="口诀范围">
+            <button type="button" data-range="1-9">全部 1–9</button>
+            <button type="button" data-range="1-5">1–5 基础</button>
+            <button type="button" data-range="6-9">6–9 进阶</button>
         </div>
-    </div>
 
-    <!-- 预设 -->
-    <div class="cd-presets" id="presets"></div>
+        <div class="tt-seg" id="segAction" role="group" aria-label="遮挡与抽考">
+            <button type="button" data-act="show">全部揭晓</button>
+            <button type="button" data-act="hide">全部遮住</button>
+            <button type="button" data-act="ask">随机抽考</button>
+            <button type="button" data-act="one">抽一个</button>
+        </div>
 
-    <!-- 控制条 -->
-    <div class="cd-controls">
-        <button class="cd-adjust" id="btnMinus30" title="减 30 秒">
-            <svg class="et-icon"><use href="#i-minus"></use></svg>30秒
-        </button>
-        <button class="et-btn et-btn--lg et-btn--primary cd-main-btn" id="btnMain">
-            <svg class="et-icon"><use href="#i-play"></use></svg>
-            <span id="btnMainText">开始</span>
-        </button>
-        <button class="cd-adjust" id="btnPlus30" title="加 30 秒">
-            <svg class="et-icon"><use href="#i-plus"></use></svg>30秒
-        </button>
-        <button class="et-btn" id="btnReset" title="重置（快捷键 R）">
-            <svg class="et-icon"><use href="#i-rotate"></use></svg>重置
+        <span class="tt-spacer"></span>
+
+        <button class="et-btn" id="btnSpeak" type="button" title="口诀朗读开关">
+            <svg class="et-icon"><use href="#i-volume"></use></svg>
+            <span id="btnSpeakText">朗读开</span>
         </button>
     </div>
 
-    <!-- 自定义 -->
-    <div class="cd-custom" id="customRow">
-        自定义
-        <input type="number" id="inHour" min="0" max="23" placeholder="时">
-        <input type="number" id="inMin" min="0" max="59" placeholder="分">
-        <input type="number" id="inSec" min="0" max="59" placeholder="秒">
-        <button class="et-btn" id="btnCustom" style="padding:8px 14px">设定</button>
+    <div class="tt-stage">
+        <div class="tt-grid" id="grid" aria-label="乘法口诀表"></div>
     </div>
 
-    <!-- 正计时提醒（可选，到时响铃提示） -->
-    <div class="cd-custom cd-hidden" id="upRemindRow">
-        到点提醒
-        <input type="number" id="inRemindMin" min="0" max="180" placeholder="分">
-        <input type="number" id="inRemindSec" min="0" max="59" placeholder="秒">
-        <button class="et-btn" id="btnRemind" style="padding:8px 14px">设定</button>
-        <button class="et-btn" id="btnRemindClear" style="padding:8px 14px">取消</button>
-        <span id="remindState">未设提醒</span>
+    <div class="tt-readout is-empty" id="readout" aria-live="polite">
+        <span class="tt-readout__kj" id="kj">点格子看口诀</span>
+        <span class="tt-readout__expr" id="expr">点击任意格子揭晓答案，空格键一键遮住 / 揭晓</span>
     </div>
 
 </main>
@@ -1613,189 +1506,6 @@ body { overflow: hidden; }
 </script>
 <!-- /ET:INLINE -->
 
-<!-- ET:INLINE name="countdown" src="logic/countdown.js" -->
-<script>
-  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
-/*!
- * countdown.js — 倒计时引擎（漂移校正，基于 Date.now 绝对时间）
- *
- * 共享逻辑源。改这里，然后跑：python scripts/sync_shared.py
- * 依赖：无。
- * 全局：ET.Countdown
- *
- * 用法：
- *   var timer = ET.Countdown.create({
- *     onTick: function (remaining, total) { … },   // 毫秒，remaining ≤ 0 表示结束
- *     onFinish: function () { … },
- *     onState: function (state) { … }              // 'idle' | 'running' | 'paused' | 'done'
- *   });
- *   timer.set(5 * 60 * 1000);  // 设置总时长（idle 态下）
- *   timer.start(); timer.pause(); timer.resume(); timer.toggle(); timer.reset();
- *   timer.add(30 * 1000);      // 运行中 +30s（可为负，最低减到 0）
- *   timer.state; timer.remaining; timer.total;
- *
- * 特性：
- * - 用 endAt 绝对时间计算剩余，后台标签页休眠后回来不漂移
- * - 触发粒度 100ms，回调里的 remaining 为真实剩余毫秒
- */
-(function (global) {
-    'use strict';
-
-    var TICK_MS = 100;
-
-    function create(options) {
-        var opt = options || {};
-        var state = 'idle';          /* idle / running / paused / done */
-        var total = 0;               /* 总时长 ms */
-        var endAt = 0;               /* 结束绝对时间戳 */
-        var remainAtPause = 0;       /* 暂停时刻的剩余 */
-        var intervalId = 0;
-        var finished = false;
-
-        var api = {};
-
-        function callTick(remaining) {
-            if (opt.onTick) { opt.onTick(remaining, total); }
-        }
-
-        function callState(s) {
-            state = s;
-            api.state = s;
-            if (opt.onState) { opt.onState(s); }
-        }
-
-        function stopLoop() {
-            if (intervalId) {
-                clearInterval(intervalId);
-                intervalId = 0;
-            }
-        }
-
-        function finish() {
-            stopLoop();
-            remainAtPause = 0;
-            if (!finished) {
-                finished = true;
-                callState('done');
-                if (opt.onFinish) { opt.onFinish(); }
-            }
-            callTick(0);
-        }
-
-        function loop() {
-            var remaining = endAt - Date.now();
-            if (remaining <= 0) {
-                finish();
-            } else {
-                callTick(remaining);
-            }
-        }
-
-        /* ---------- 公开方法 ---------- */
-
-        /** 设置总时长（仅在非运行态有效） */
-        api.set = function (ms) {
-            if (state === 'running') { return; }
-            total = Math.max(0, Math.round(ms));
-            remainAtPause = total;
-            finished = false;
-            callState(state === 'done' ? 'idle' : state === 'idle' ? 'idle' : 'idle');
-            callTick(total);
-        };
-
-        api.start = function () {
-            if (state === 'running' || total <= 0) { return; }
-            finished = false;
-            endAt = Date.now() + (state === 'paused' ? remainAtPause : total);
-            callState('running');
-            loop();
-            stopLoop();
-            intervalId = setInterval(loop, TICK_MS);
-        };
-
-        api.resume = api.start;
-
-        api.pause = function () {
-            if (state !== 'running') { return; }
-            remainAtPause = Math.max(0, endAt - Date.now());
-            stopLoop();
-            callState('paused');
-            callTick(remainAtPause);
-        };
-
-        api.toggle = function () {
-            if (state === 'running') { api.pause(); } else { api.start(); }
-        };
-
-        api.reset = function () {
-            stopLoop();
-            remainAtPause = total;
-            finished = false;
-            callState('idle');
-            callTick(total);
-        };
-
-        /** 运行/暂停态增减时间；delta 毫秒（可负）。运行中直接推 endAt。 */
-        api.add = function (delta) {
-            delta = Math.round(delta || 0);
-            if (state === 'running') {
-                endAt += delta;
-                var remaining = endAt - Date.now();
-                if (remaining <= 0) { finish(); }
-                else { callTick(remaining); }
-            } else if (state === 'paused' || state === 'idle') {
-                var base = state === 'paused' ? remainAtPause : total;
-                var next = Math.max(0, base + delta);
-                if (state === 'paused') { remainAtPause = next; }
-                else { total = next; remainAtPause = next; }
-                callTick(next);
-            }
-            if (state === 'idle' && total === 0 && delta > 0) { total = delta; remainAtPause = delta; }
-        };
-
-        Object.defineProperty(api, 'remaining', {
-            get: function () {
-                if (state === 'running') { return Math.max(0, endAt - Date.now()); }
-                if (state === 'paused') { return remainAtPause; }
-                if (state === 'done') { return 0; }
-                return total;
-            }
-        });
-        Object.defineProperty(api, 'total', { get: function () { return total; } });
-
-        api.state = state;
-
-        return api;
-    }
-
-    /* ---------- 展示格式化（共享给各工具保持一致） ---------- */
-
-    /** 毫秒 → {h, m, s, cs}（cs 为百分秒） */
-    function breakdown(ms) {
-        var t = Math.max(0, Math.ceil(ms / 10) * 10); /* 向上取整到 0.1s，显示 0:00 前不会提前 */
-        var cs = Math.floor((t % 1000) / 10);
-        var sec = Math.floor(t / 1000);
-        var s = sec % 60;
-        var m = Math.floor(sec / 60) % 60;
-        var h = Math.floor(sec / 3600);
-        return { h: h, m: m, s: s, cs: cs };
-    }
-
-    /** 毫秒 → "MM:SS" 或 "H:MM:SS" */
-    function format(ms) {
-        var b = breakdown(ms);
-        var mm = (b.m < 10 ? '0' : '') + b.m;
-        var ss = (b.s < 10 ? '0' : '') + b.s;
-        if (b.h > 0) { return b.h + ':' + mm + ':' + ss; }
-        return mm + ':' + ss;
-    }
-
-    global.ET = global.ET || {};
-    global.ET.Countdown = { create: create, breakdown: breakdown, format: format };
-})(window);
-</script>
-<!-- /ET:INLINE -->
-
 <!-- ET:INLINE name="et-stats" src="ui/et-stats.js" -->
 <script>
   /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
@@ -1877,417 +1587,594 @@ body { overflow: hidden; }
 </script>
 <!-- /ET:INLINE -->
 
-<!-- 使用统计（模块化：删除上方 et-stats 注入块即可完全不联网，见 README） -->
+<!-- 使用统计：删除上方 et-stats 块即可完全不联网（模块化设计） -->
 <script>
-try { ET.Stats.send('use_offline', 'countdown-timer'); } catch (e) { /* 静默 */ }
+try { ET.Stats.send('use_offline', 'times-table'); } catch (e) { /* 静默 */ }
 </script>
 
 <script>
 (function () {
     'use strict';
 
-    var TOOL_ID = 'countdown-timer';
+    var TOOL_ID = 'times-table';
     var store = ET.store(TOOL_ID);
 
-    var PRESETS = [1, 2, 3, 5, 10, 15, 20, 30]; /* 分钟 */
-    var RING_LEN = 2 * Math.PI * 94;
-    var WARN_MS = 30 * 1000;   /* <30s 变橙 */
-    var DANGER_MS = 10 * 1000; /* <10s 变红 + 滴答 */
+    var CN = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+    var RANGES = { '1-9': [1, 9], '1-5': [1, 5], '6-9': [6, 9] };
+    var ASK_COUNTS = [6, 12, 18, 81];
+    var RATES = [0.7, 0.9, 1.1];
+
+    /* ============ 口诀读法 ============ */
+
+    function cnNum(n) {
+        if (n < 10) { return CN[n]; }
+        if (n === 10) { return '一十'; }
+        if (n < 20) { return '十' + CN[n - 10]; }
+        var tens = Math.floor(n / 10);
+        var unit = n % 10;
+        return CN[tens] + '十' + (unit ? CN[unit] : '');
+    }
+
+    /* 小数在前：3×4 → 三四十二；积不足 10 加「得」：2×2 → 二二得四 */
+    function koujue(a, b) {
+        var p = a * b;
+        return CN[Math.min(a, b)] + CN[Math.max(a, b)] + (p < 10 ? '得' : '') + cnNum(p);
+    }
+
+    function cellKey(a, b) { return a + '-' + b; }
+
+    /* ============ 状态 ============ */
+
+    function validRange(v) { return RANGES[v] ? v : '1-9'; }
+    function validCount(v) { return ASK_COUNTS.indexOf(Number(v)) !== -1 ? Number(v) : 12; }
+    function validRate(v) { return RATES.indexOf(Number(v)) !== -1 ? Number(v) : 0.9; }
+
+    var state = {
+        range: validRange(store.get('range', '1-9')),
+        askCount: validCount(store.get('askCount', 12)),
+        rate: validRate(store.get('rate', 0.9)),
+        speak: store.get('speak', true) !== false,
+        masked: {},
+        ask: [],
+        hlRow: 0,
+        hlCol: 0
+    };
+
+    var cells = {};
+    var heads = { row: {}, col: {} };
+    var pickedKey = null;
+
+    /* ============ 语音（能力检测 + 静默降级） ============ */
+
+    var canSpeak = typeof window.speechSynthesis !== 'undefined'
+        && typeof window.SpeechSynthesisUtterance === 'function';
+
+    function speak(text) {
+        if (!state.speak || !canSpeak) { return; }
+        try {
+            window.speechSynthesis.cancel();
+            var u = new window.SpeechSynthesisUtterance(text);
+            u.lang = 'zh-CN';
+            u.rate = state.rate;
+            window.speechSynthesis.speak(u);
+        } catch (err) { /* 无语音包 / 被策略拦截：静默 */ }
+    }
 
     var chrome = ET.Chrome.mount({
         toolId: TOOL_ID,
-        title: '课堂倒计时',
-        sub: '练习 · 讨论 · 考试',
-        accent: '#6366f1',
+        title: '乘法口诀表',
+        sub: '数学 · 点格子揭晓 / 遮住',
+        accent: '#0891b2',
         status: '就绪',
         sound: true,
-        primary: function () { els.btnMain.click(); },   /* 翻页笔 PageDown：开始/暂停 */
-        secondary: function () { els.btnReset.click(); }, /* 翻页笔 PageUp：重置 */
+        primary: toggleMask,    /* 翻页笔下页键：揭晓 / 遮住 全部 */
+        secondary: pickOne,     /* 翻页笔上页键：抽一个 */
+        settings: { title: '口诀表设置', build: buildSettings },
         help: '<div style="font-size:13.5px;line-height:2">' +
-            '<p style="margin:0 0 8px"><b>两种模式</b>：顶部可切换「倒计时」与「正计时」。倒计时用于限时练习 / 讨论 / 考试；正计时是秒表，用于记录学生完成任务用了多久（朗读、默写、小组汇报等）。</p>' +
-            '<p style="margin:0 0 8px"><b>正计时</b>：空格开始 / 暂停，R 清零；可选「到点提醒」——设一个时长，到点响铃 + 变红，适合「超过 3 分钟就提醒」这类场景（↑↓ 可 ±30 秒调整提醒时长）。</p>' +
-            '<p style="margin:0 0 8px"><b>快捷键</b>：空格 开始/暂停 · R 重置 · ↑↓ 倒计时 ±30 秒 / 正计时调整提醒。</p>' +
-            '<p style="margin:0 0 8px"><b>翻页笔</b>：下页键 开始/暂停 · 上页键 重置（两种模式通用）。</p>' +
-            '<p style="margin:0 0 8px"><b>运行中可调</b>：倒计时的 ±30 秒按钮在计时进行中也能用。</p>' +
-            '<p style="margin:0 0 8px"><b>警示</b>：倒计时剩 30 秒数字变橙，剩 10 秒变红并每秒滴答，结束时全屏提醒。</p>' +
-            '<p style="margin:0"><b>精度</b>：基于系统时钟计算，休眠 / 切页回来不会走快走慢；正计时切到别的标签页也会继续走。</p></div>'
+            '<p style="margin:0 0 8px"><b>怎么用</b>：点任意格子切换「揭晓 / 遮住」，口诀会显示在下方宣读条大字号位置。</p>' +
+            '<p style="margin:0 0 8px"><b>讲课三招</b>：① 点左上「全部遮住」让全班齐背；② 点「随机抽考」遮住若干格，学生答对后点格子揭晓；③ 点「抽一个」随机点题，让某个学生回答。</p>' +
+            '<p style="margin:0 0 8px"><b>讲专题</b>：点表头的行号或列号，可以高亮整行 / 整列（例如只讲 7 的乘法）；再点一次取消。</p>' +
+            '<p style="margin:0 0 8px"><b>范围</b>：可切成 1–5 基础或 6–9 进阶，范围外的格子自动变暗。</p>' +
+            '<p style="margin:0 0 8px"><b>朗读</b>：点格子会自动读出「三四十二」这样的口诀（按小数在前、积小于 10 读「得」的规则）；系统没有中文语音包时不会出声，可关掉。</p>' +
+            '<p style="margin:0"><b>快捷键</b>：空格 = 全部揭晓 / 遮住；翻页笔下页键同效，上页键 = 抽一个。</p></div>'
     });
 
-    var els = {
-        ring: document.getElementById('ring'),
-        timeText: document.getElementById('timeText'),
-        timeLabel: document.getElementById('timeLabel'),
-        presets: document.getElementById('presets'),
-        btnMain: document.getElementById('btnMain'),
-        btnMainText: document.getElementById('btnMainText'),
-        btnReset: document.getElementById('btnReset'),
-        btnPlus30: document.getElementById('btnPlus30'),
-        btnMinus30: document.getElementById('btnMinus30'),
-        inHour: document.getElementById('inHour'),
-        inMin: document.getElementById('inMin'),
-        inSec: document.getElementById('inSec'),
-        btnCustom: document.getElementById('btnCustom'),
-        segMode: document.getElementById('segMode'),
-        customRow: document.getElementById('customRow'),
-        upRemindRow: document.getElementById('upRemindRow'),
-        inRemindMin: document.getElementById('inRemindMin'),
-        inRemindSec: document.getElementById('inRemindSec'),
-        btnRemind: document.getElementById('btnRemind'),
-        btnRemindClear: document.getElementById('btnRemindClear'),
-        remindState: document.getElementById('remindState')
-    };
+    /* ============ 表格构建 ============ */
 
-    var lastMinutes = store.get('last_minutes', 5);
-    var mode = store.get('mode', 'down') === 'up' ? 'up' : 'down';
-
-    var timer = ET.Countdown.create({
-        onTick: onTick,
-        onFinish: onFinish,
-        onState: onState
-    });
-
-    var lastWholeSecond = -1;
-    var overShown = false;
-
-    /* ============ 正计时（秒表） ============ */
-
-    var up = {
-        running: false,
-        startedAt: 0,
-        acc: 0,
-        timerId: 0,
-        target: Math.max(0, Number(store.get('up_target', 0)) || 0),
-        fired: false
-    };
-
-    function upElapsed() {
-        return up.acc + (up.running ? Date.now() - up.startedAt : 0);
+    function makeHead(label, kind, index, title) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'tt-head';
+        b.textContent = label;
+        b.title = title;
+        b.addEventListener('click', function () {
+            if (kind === 'row') {
+                state.hlRow = state.hlRow === index ? 0 : index;
+            } else {
+                state.hlCol = state.hlCol === index ? 0 : index;
+            }
+            paint();
+            chrome.beep('tick');
+        });
+        return b;
     }
 
-    function swapMainIcon(playing) {
-        var icon = els.btnMain.querySelector('use');
-        if (!icon) { return; }
-        var iconId = playing ? '#i-pause' : '#i-play';
-        icon.setAttribute('href', iconId);
-        icon.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', iconId); /* et-allow-external SVG 命名空间 */
+    function makeCell(a, b) {
+        var cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = 'tt-cell';
+
+        var expr = document.createElement('span');
+        expr.className = 'tt-cell__expr';
+        expr.textContent = a + '×' + b;
+
+        var ans = document.createElement('span');
+        ans.className = 'tt-cell__ans';
+        ans.textContent = '=' + (a * b);
+
+        var mask = document.createElement('span');
+        mask.className = 'tt-cell__mask';
+        mask.textContent = '=?';
+
+        cell.appendChild(expr);
+        cell.appendChild(ans);
+        cell.appendChild(mask);
+        cell.addEventListener('click', function () { onCell(a, b); });
+        cell.addEventListener('mouseenter', function () { preview(a, b); });
+        return cell;
     }
 
-    function upSyncButton() {
-        els.btnMainText.textContent = up.running ? '暂停' : (upElapsed() > 0 ? '继续' : '开始');
-        swapMainIcon(up.running);
-    }
+    function buildGrid() {
+        var grid = document.getElementById('grid');
+        grid.textContent = '';
+        cells = {};
+        heads = { row: {}, col: {} };
 
-    function renderRemindState() {
-        els.remindState.textContent = up.target > 0
-            ? '当前提醒：' + ET.Countdown.format(up.target)
-            : '未设提醒';
-    }
+        var corner = document.createElement('div');
+        corner.className = 'tt-head tt-corner';
+        corner.textContent = '×';
+        grid.appendChild(corner);
 
-    function upRender() {
-        var el = upElapsed();
-        els.timeText.textContent = ET.Countdown.format(el);
-
-        var over = up.target > 0 && el >= up.target;
-        var near = up.target > 0 && !over && el >= up.target * 0.8;
-
-        var cls = 'cd-time__text';
-        if (over) { cls += ' is-danger cd-pulse'; }
-        else if (near) { cls += ' is-warning'; }
-        if (els.timeText.className !== cls) { els.timeText.className = cls; }
-
-        var ratio = up.target > 0
-            ? Math.max(0, Math.min(1, el / up.target))
-            : (el % 60000) / 60000;
-        els.ring.style.strokeDasharray = RING_LEN.toFixed(1);
-        els.ring.style.strokeDashoffset = (RING_LEN * (1 - ratio)).toFixed(1);
-        els.ring.setAttribute('class', 'cd-ring' + (over ? ' is-danger' : (near ? ' is-warning' : '')));
-
-        els.timeLabel.textContent = over ? '已超过提醒时长'
-            : (up.running ? '计时中' : (el > 0 ? '已暂停' : '准备开始'));
-
-        if (over && !up.fired) {
-            up.fired = true;
-            chrome.beep('over');
-            chrome.toast('正计时已到 ' + ET.Countdown.format(up.target) + '，注意控制时间', 'warn');
+        var i, j;
+        for (j = 1; j <= 9; j++) {
+            heads.col[j] = makeHead('×' + j, 'col', j, '高亮第 ' + j + ' 列');
+            grid.appendChild(heads.col[j]);
         }
-        chrome.setStatus('正计时 · ' + ET.Countdown.format(el), over ? 'warn' : undefined);
 
-        upSyncButton();
-        if (up.running) { up.timerId = window.setTimeout(upRender, 200); }
+        for (i = 1; i <= 9; i++) {
+            heads.row[i] = makeHead(String(i), 'row', i, '高亮第 ' + i + ' 行');
+            grid.appendChild(heads.row[i]);
+            for (j = 1; j <= 9; j++) {
+                var cell = makeCell(i, j);
+                cells[cellKey(i, j)] = cell;
+                grid.appendChild(cell);
+            }
+        }
     }
 
-    function upToggle() {
-        if (up.running) {
-            up.acc = upElapsed();
-            up.running = false;
-            window.clearTimeout(up.timerId);
-            upRender();
+    /* ============ 判定与绘制 ============ */
+
+    function inRange(a, b) {
+        var r = RANGES[state.range];
+        return a >= r[0] && a <= r[1] && b >= r[0] && b <= r[1];
+    }
+
+    function hasAnyMasked() {
+        for (var k in state.masked) {
+            if (state.masked[k]) { return true; }
+        }
+        return false;
+    }
+
+    function pulse(el, cls) {
+        el.classList.remove(cls);
+        void el.offsetWidth;
+        el.classList.add(cls);
+        setTimeout(function () { el.classList.remove(cls); }, 420);
+    }
+
+    function clearPick() {
+        if (pickedKey && cells[pickedKey]) { cells[pickedKey].classList.remove('is-pick'); }
+        pickedKey = null;
+    }
+
+    function paint() {
+        var a, b, k, cell, inR, masked, dim;
+        for (a = 1; a <= 9; a++) {
+            for (b = 1; b <= 9; b++) {
+                k = cellKey(a, b);
+                cell = cells[k];
+                if (!cell) { continue; }
+                inR = inRange(a, b);
+                masked = !!state.masked[k];
+                dim = (state.hlRow && a !== state.hlRow) || (state.hlCol && b !== state.hlCol);
+                cell.classList.toggle('is-out', !inR);
+                cell.classList.toggle('is-masked', masked && inR);
+                cell.classList.toggle('is-square', a === b && inR);
+                cell.classList.toggle('is-dim', !!dim && inR);
+                cell.title = a + '×' + b + (inR ? (masked ? '（点击揭晓）' : '（点击遮住）') : '（当前范围外）');
+            }
+        }
+        for (var i = 1; i <= 9; i++) {
+            if (heads.row[i]) { heads.row[i].classList.toggle('is-active', state.hlRow === i); }
+            if (heads.col[i]) { heads.col[i].classList.toggle('is-active', state.hlCol === i); }
+        }
+        updateStatus();
+    }
+
+    function updateStatus() {
+        var masked = 0;
+        var left = 0;
+        var i;
+        for (var k in state.masked) {
+            if (state.masked[k]) { masked++; }
+        }
+        for (i = 0; i < state.ask.length; i++) {
+            if (state.masked[state.ask[i]]) { left++; }
+        }
+
+        var text = state.range === '1-9' ? '全部口诀' : state.range.replace('-', '–') + ' 范围';
+        if (state.ask.length) {
+            text += ' · 抽考 ' + state.ask.length + ' 格 · 已揭晓 ' + (state.ask.length - left);
+        } else if (masked) {
+            text += ' · 遮住 ' + masked + ' 格';
+        } else {
+            text += ' · 全部揭晓';
+        }
+        chrome.setStatus(text);
+    }
+
+    /* ============ 宣读条 ============ */
+
+    function showReadout(a, b, reveal) {
+        document.getElementById('kj').textContent = reveal
+            ? koujue(a, b)
+            : a + ' × ' + b + ' = ?';
+        document.getElementById('expr').textContent = reveal
+            ? a + ' × ' + b + ' = ' + (a * b)
+            : '请同学回答后，点这个格子揭晓';
+        document.getElementById('readout').classList.remove('is-empty');
+    }
+
+    function resetReadout() {
+        document.getElementById('kj').textContent = '点格子看口诀';
+        document.getElementById('expr').textContent = '点击任意格子揭晓答案，空格键一键遮住 / 揭晓';
+        document.getElementById('readout').classList.add('is-empty');
+    }
+
+    function preview(a, b) {
+        if (!inRange(a, b)) { return; }
+        if (state.masked[cellKey(a, b)]) { showReadout(a, b, false); }
+        else { showReadout(a, b, true); }
+    }
+
+    /* ============ 交互 ============ */
+
+    function onCell(a, b) {
+        if (!inRange(a, b)) { return; }
+        var k = cellKey(a, b);
+        var cell = cells[k];
+
+        if (state.masked[k]) {
+            delete state.masked[k];
+            chrome.beep('tick');
+            showReadout(a, b, true);
+            speak(koujue(a, b));
+            if (cell) { pulse(cell, 'is-hit'); }
+        } else {
+            state.masked[k] = true;
+            showReadout(a, b, false);
+        }
+        if (pickedKey === k) { clearPick(); }
+        paint();
+        save();
+    }
+
+    function showAll() {
+        state.masked = {};
+        state.ask = [];
+        clearPick();
+        resetReadout();
+        paint();
+        save();
+        chrome.beep('ok');
+    }
+
+    function hideAll() {
+        state.masked = {};
+        state.ask = [];
+        clearPick();
+        var a, b;
+        for (a = 1; a <= 9; a++) {
+            for (b = 1; b <= 9; b++) {
+                if (inRange(a, b)) { state.masked[cellKey(a, b)] = true; }
+            }
+        }
+        paint();
+        save();
+        chrome.beep('tick');
+        chrome.toast('已遮住 ' + countMasked() + ' 格，点格子逐个揭晓');
+    }
+
+    function countMasked() {
+        var n = 0;
+        for (var k in state.masked) {
+            if (state.masked[k]) { n++; }
+        }
+        return n;
+    }
+
+    function doAsk() {
+        var pool = [];
+        var a, b;
+        for (a = 1; a <= 9; a++) {
+            for (b = 1; b <= 9; b++) {
+                if (inRange(a, b)) { pool.push(cellKey(a, b)); }
+            }
+        }
+        for (var i = pool.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var t = pool[i];
+            pool[i] = pool[j];
+            pool[j] = t;
+        }
+
+        var n = Math.min(state.askCount, pool.length);
+        state.masked = {};
+        state.ask = [];
+        clearPick();
+        for (i = 0; i < n; i++) {
+            state.masked[pool[i]] = true;
+            state.ask.push(pool[i]);
+        }
+        paint();
+        save();
+        chrome.beep('ok');
+        chrome.toast('已随机遮住 ' + n + ' 格，点格子揭晓');
+    }
+
+    function pickOne() {
+        var pool = [];
+        for (var k in state.masked) {
+            if (state.masked[k]) { pool.push(k); }
+        }
+        if (!pool.length) {
+            chrome.toast('先点「全部遮住」或「随机抽考」，再抽题', 'warn');
+            chrome.beep('err');
             return;
         }
-        up.running = true;
-        up.startedAt = Date.now();
-        upRender();
-    }
-
-    function upReset() {
-        up.running = false;
-        window.clearTimeout(up.timerId);
-        up.acc = 0;
-        up.fired = false;
-        upRender();
-    }
-
-    function upSetTarget(ms) {
-        up.target = Math.max(0, Math.round(ms));
-        up.fired = up.target > 0 && upElapsed() >= up.target;
-        store.set('up_target', up.target);
-        renderRemindState();
-        upRender();
-    }
-
-    function applyModeUi() {
-        var btns = els.segMode.querySelectorAll('button');
-        for (var i = 0; i < btns.length; i++) {
-            btns[i].classList.toggle('is-active', btns[i].getAttribute('data-mode') === mode);
+        clearPick();
+        pickedKey = pool[Math.floor(Math.random() * pool.length)];
+        var cell = cells[pickedKey];
+        var parts = pickedKey.split('-');
+        if (cell) {
+            cell.classList.add('is-pick');
+            try { cell.scrollIntoView({ block: 'center', inline: 'center' }); } catch (err) { /* 老内核忽略 */ }
         }
-        var upOnly = mode === 'up';
-        els.presets.classList.toggle('cd-hidden', upOnly);
-        els.customRow.classList.toggle('cd-hidden', upOnly);
-        els.upRemindRow.classList.toggle('cd-hidden', !upOnly);
-        els.btnPlus30.classList.toggle('cd-hidden', upOnly);
-        els.btnMinus30.classList.toggle('cd-hidden', upOnly);
+        showReadout(Number(parts[0]), Number(parts[1]), false);
+        chrome.beep('ok');
     }
 
-    function setMode(next, announce) {
-        next = next === 'up' ? 'up' : 'down';
-        if (next === mode) { return; }
-        /* 切换时把另一侧计时停下，避免两个表同时跑 */
-        if (mode === 'up') {
-            up.running = false;
-            window.clearTimeout(up.timerId);
-            up.acc = 0;
-        } else if (timer.state === 'running') {
-            timer.pause();
-        }
-        mode = next;
-        store.set('mode', mode);
-        applyModeUi();
+    function toggleMask() {
+        if (hasAnyMasked()) { showAll(); } else { hideAll(); }
+    }
 
-        if (mode === 'up') {
-            upReset();
-            chrome.setStatus('正计时 · 准备开始');
+    function setRange(v) {
+        state.range = validRange(v);
+        var k, p, i, q;
+        for (k in state.masked) {
+            p = k.split('-');
+            if (!inRange(Number(p[0]), Number(p[1]))) { delete state.masked[k]; }
+        }
+        var nextAsk = [];
+        for (i = 0; i < state.ask.length; i++) {
+            q = state.ask[i].split('-');
+            if (inRange(Number(q[0]), Number(q[1]))) { nextAsk.push(state.ask[i]); }
+        }
+        state.ask = nextAsk;
+        state.hlRow = 0;
+        state.hlCol = 0;
+        clearPick();
+        renderChips();
+        paint();
+        save();
+    }
+
+    /* ============ 持久化 ============ */
+
+    function save() {
+        store.set('range', state.range);
+        store.set('askCount', state.askCount);
+        store.set('rate', state.rate);
+        store.set('speak', state.speak);
+        store.set('ask', state.ask);
+        var keys = [];
+        for (var k in state.masked) {
+            if (state.masked[k]) { keys.push(k); }
+        }
+        store.set('masked', keys);
+    }
+
+    function restore() {
+        var keys = store.get('masked', []);
+        var i, parts, a, b;
+        if (Array.isArray(keys)) {
+            for (i = 0; i < keys.length; i++) {
+                parts = String(keys[i]).split('-');
+                a = Number(parts[0]);
+                b = Number(parts[1]);
+                if (a >= 1 && a <= 9 && b >= 1 && b <= 9 && inRange(a, b)) { state.masked[keys[i]] = true; }
+            }
+        }
+        var ask = store.get('ask', []);
+        if (Array.isArray(ask)) {
+            for (i = 0; i < ask.length; i++) {
+                parts = String(ask[i]).split('-');
+                a = Number(parts[0]);
+                b = Number(parts[1]);
+                if (a >= 1 && a <= 9 && b >= 1 && b <= 9 && inRange(a, b)) { state.ask.push(ask[i]); }
+            }
+        }
+    }
+
+    /* ============ 界面控件 ============ */
+
+    function renderChips() {
+        var list = document.getElementById('segRange').querySelectorAll('button');
+        for (var i = 0; i < list.length; i++) {
+            list[i].classList.toggle('is-active', list[i].getAttribute('data-range') === state.range);
+        }
+
+        var btn = document.getElementById('btnSpeak');
+        var btnText = document.getElementById('btnSpeakText');
+        if (!btn || !btnText) { return; }
+        if (!canSpeak) {
+            btnText.textContent = '朗读不可用';
+            btn.classList.add('is-off');
+            btn.title = '当前浏览器不支持语音朗读，可按下方口诀条带读';
         } else {
-            timer.reset();
-            renderPresets();
-        }
-        if (announce) {
-            chrome.beep('ok');
-            chrome.toast(mode === 'up' ? '已切到正计时：空格开始，可设到点提醒' : '已切到倒计时');
+            btnText.textContent = state.speak ? '朗读开' : '朗读关';
+            btn.classList.toggle('is-off', !state.speak);
+            btn.title = state.speak ? '点击关闭口诀朗读' : '点击开启口诀朗读';
         }
     }
 
-    /* ============ 渲染 ============ */
+    /* ============ 设置抽屉 ============ */
 
-    function renderPresets() {
-        els.presets.textContent = '';
-        PRESETS.forEach(function (min) {
-            var b = document.createElement('button');
-            b.className = 'cd-preset' + (timer.total === min * 60000 ? ' is-active' : '');
-            b.type = 'button';
-            b.textContent = min + ' 分钟';
-            b.addEventListener('click', function () {
-                if (timer.state === 'running') { return; }
-                lastMinutes = min;
-                store.set('last_minutes', min);
-                timer.set(min * 60000);
-                renderPresets();
-                chrome.toast('已设定 ' + min + ' 分钟');
-            });
-            els.presets.appendChild(b);
+    function buildSettings(body) {
+        function heading(text) {
+            var h = document.createElement('h4');
+            h.textContent = text;
+            body.appendChild(h);
+        }
+
+        function segRow(labels, values, current, onPick) {
+            var row = document.createElement('div');
+            row.className = 'et-drawer__row';
+            for (var i = 0; i < values.length; i++) {
+                (function (value, label) {
+                    var b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'et-btn' + (value === current ? ' et-btn--primary' : '');
+                    b.style.flex = '1 1 28%';
+                    b.textContent = label;
+                    b.addEventListener('click', function () {
+                        onPick(value);
+                        refresh();
+                    });
+                    row.appendChild(b);
+                })(values[i], labels[i]);
+            }
+            body.appendChild(row);
+        }
+
+        heading('口诀范围');
+        segRow(['全部 1–9', '1–5 基础', '6–9 进阶'], ['1-9', '1-5', '6-9'], state.range, function (v) {
+            setRange(v);
+            chrome.beep('tick');
         });
+
+        heading('随机抽考题量');
+        segRow(['6 格', '12 格', '18 格', '全部'], [6, 12, 18, 81], state.askCount, function (v) {
+            state.askCount = validCount(v);
+            save();
+        });
+
+        heading('口诀朗读');
+        var switchRow = document.createElement('label');
+        switchRow.className = 'et-drawer__switch';
+        switchRow.appendChild(document.createTextNode('点格子时朗读口诀'));
+        var cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = state.speak;
+        cb.disabled = !canSpeak;
+        cb.addEventListener('change', function () {
+            state.speak = cb.checked;
+            save();
+            renderChips();
+            if (state.speak) { speak('三四十二'); }
+        });
+        switchRow.appendChild(cb);
+        body.appendChild(switchRow);
+
+        if (!canSpeak) {
+            var warn = document.createElement('p');
+            warn.className = 'et-drawer__tip';
+            warn.textContent = '当前浏览器不支持语音朗读（speechSynthesis）。功能已自动关闭，不影响其它操作。';
+            body.appendChild(warn);
+        }
+
+        segRow(['慢速', '正常', '快速'], [0.7, 0.9, 1.1], state.rate, function (v) {
+            state.rate = validRate(v);
+            save();
+            speak('三四十二');
+        });
+
+        var tip = document.createElement('p');
+        tip.className = 'et-drawer__tip';
+        tip.innerHTML = '口诀按<b>小数在前</b>读，如 3×4 读作「三四十二」；积小于 10 时加「得」，如 2×2 读作「二二得四」。'
+            + '<br>若点格子没有声音，请检查系统是否装了中文语音包（Windows：设置 → 时间和语言 → 语音）。'
+            + '<br>点表头行号 / 列号可高亮整行整列，适合讲「7 的乘法」这类专题。'
+            + '<br>范围、遮罩、题量、朗读设置都保存在本机浏览器，下次打开自动恢复。';
+        body.appendChild(tip);
+
+        function refresh() {
+            while (body.firstChild) { body.removeChild(body.firstChild); }
+            buildSettings(body);
+        }
     }
 
-    function onTick(remaining, total) {
-        var fmt = ET.Countdown.format(remaining);
-        var b = ET.Countdown.breakdown(remaining);
+    /* ============ 事件绑定 ============ */
 
-        var cls = 'cd-time__text';
-        if (remaining > 0 && remaining <= DANGER_MS) { cls += ' is-danger cd-pulse'; }
-        else if (remaining > 0 && remaining <= WARN_MS) { cls += ' is-warning'; }
-        if (els.timeText.className !== cls) { els.timeText.className = cls; }
-        els.timeText.textContent = fmt;
-
-        /* 进度环 */
-        var ratio = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0;
-        els.ring.style.strokeDasharray = RING_LEN.toFixed(1);
-        els.ring.style.strokeDashoffset = (RING_LEN * (1 - ratio)).toFixed(1);
-        /* SVG 元素 className 只读，必须用 setAttribute */
-        els.ring.setAttribute('class', 'cd-ring' +
-            (remaining > 0 && remaining <= DANGER_MS ? ' is-danger'
-                : remaining > 0 && remaining <= WARN_MS ? ' is-warning' : ''));
-
-        /* 最后 10 秒每秒滴答 */
-        var whole = Math.ceil(remaining / 1000);
-        if (remaining > 0 && remaining <= DANGER_MS && whole !== lastWholeSecond) {
-            lastWholeSecond = whole;
+    document.getElementById('segRange').addEventListener('click', function (ev) {
+        var t = ev.target;
+        var v = t && t.getAttribute ? t.getAttribute('data-range') : null;
+        if (v) {
+            setRange(v);
             chrome.beep('tick');
         }
+    });
 
-        if (timer.state === 'running') {
-            chrome.setStatus('剩余 ' + fmt);
-        }
-    }
+    document.getElementById('segAction').addEventListener('click', function (ev) {
+        var t = ev.target;
+        var act = t && t.getAttribute ? t.getAttribute('data-act') : null;
+        if (act === 'show') { showAll(); }
+        else if (act === 'hide') { hideAll(); }
+        else if (act === 'ask') { doAsk(); }
+        else if (act === 'one') { pickOne(); }
+    });
 
-    function onState(s) {
-        var playing = s === 'running';
-        els.btnMainText.textContent = s === 'paused' ? '继续'
-            : playing ? '暂停'
-            : (s === 'done' ? '再 来' : '开始');
-        var icon = els.btnMain.querySelector('use');
-        var iconId = playing ? '#i-pause' : '#i-play';
-        icon.setAttribute('href', iconId);
-        icon.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', iconId); /* et-allow-external SVG 命名空间 */
-
-        els.timeLabel.textContent = s === 'running' ? '计时中'
-            : s === 'paused' ? '已暂停'
-            : s === 'done' ? '时间到'
-            : '准备开始';
-
-        renderPresets();
-
-        if (s === 'done') {
-            chrome.setStatus('时间到', 'err');
-        } else if (s === 'idle') {
-            chrome.setStatus('就绪 · ' + ET.Countdown.format(timer.total));
-            lastWholeSecond = -1;
-        }
-    }
-
-    function onFinish() {
-        chrome.beep('over');
-        if (!overShown) {
-            overShown = true;
-            var overlay = document.createElement('div');
-            overlay.className = 'cd-over';
-            overlay.innerHTML = '<div style="text-align:center"><div class="cd-over__text">时间到</div></div>' +
-                '<div class="cd-over__hint">点击任意处关闭</div>';
-            overlay.addEventListener('click', function () {
-                if (overlay.parentNode) { overlay.parentNode.removeChild(overlay); }
-                overShown = false;
-            });
-            document.body.appendChild(overlay);
-        }
-    }
-
-    /* ============ 事件 ============ */
-
-    els.btnMain.addEventListener('click', function () {
-        if (mode === 'up') {
-            upToggle();
-            chrome.beep('ok');
+    document.getElementById('btnSpeak').addEventListener('click', function () {
+        if (!canSpeak) {
+            chrome.toast('当前浏览器不支持语音朗读，可跟读下方口诀条', 'warn');
             return;
         }
-        if (timer.state === 'idle' && timer.total <= 0) {
-            timer.set(lastMinutes * 60000);
+        state.speak = !state.speak;
+        save();
+        renderChips();
+        if (state.speak) {
+            speak('三四十二');
+        } else {
+            try { window.speechSynthesis.cancel(); } catch (err) { /* 静默 */ }
         }
-        if (timer.state === 'done') {
-            timer.reset();
-            overShown = false;
-            var overlay = document.querySelector('.cd-over');
-            if (overlay && overlay.parentNode) { overlay.parentNode.removeChild(overlay); }
-        }
-        timer.toggle();
-        chrome.beep('ok');
-    });
-
-    els.btnReset.addEventListener('click', function () {
-        if (mode === 'up') {
-            upReset();
-            chrome.beep('ok');
-            chrome.toast('已清零，可重新开始计时');
-            return;
-        }
-        overShown = false;
-        var overlay = document.querySelector('.cd-over');
-        if (overlay && overlay.parentNode) { overlay.parentNode.removeChild(overlay); }
-        timer.reset();
-        chrome.beep('ok');
-    });
-
-    els.btnPlus30.addEventListener('click', function () { timer.add(30000); });
-    els.btnMinus30.addEventListener('click', function () { timer.add(-30000); });
-
-    els.segMode.addEventListener('click', function (ev) {
-        var v = ev.target && ev.target.getAttribute ? ev.target.getAttribute('data-mode') : null;
-        if (v) { setMode(v, true); }
-    });
-
-    els.btnRemind.addEventListener('click', function () {
-        var m = Math.max(0, Math.min(180, Number(els.inRemindMin.value) || 0));
-        var s = Math.max(0, Math.min(59, Number(els.inRemindSec.value) || 0));
-        var ms = (m * 60 + s) * 1000;
-        if (ms <= 0) {
-            chrome.toast('请输入大于 0 的提醒时长，或点「取消」关闭提醒', 'warn');
-            return;
-        }
-        upSetTarget(ms);
-        chrome.beep('ok');
-        chrome.toast('已设到点提醒：' + ET.Countdown.format(ms));
-    });
-
-    els.btnRemindClear.addEventListener('click', function () {
-        upSetTarget(0);
-        els.inRemindMin.value = '';
-        els.inRemindSec.value = '';
-        chrome.beep('tick');
-        chrome.toast('已取消到点提醒');
-    });
-
-    els.btnCustom.addEventListener('click', function () {
-        if (timer.state === 'running') { chrome.toast('请先暂停再调整时长', 'warn'); return; }
-        var h = Math.max(0, Math.min(23, Number(els.inHour.value) || 0));
-        var m = Math.max(0, Math.min(59, Number(els.inMin.value) || 0));
-        var s = Math.max(0, Math.min(59, Number(els.inSec.value) || 0));
-        var ms = (h * 3600 + m * 60 + s) * 1000;
-        if (ms <= 0) { chrome.toast('请输入大于 0 的时长', 'warn'); return; }
-        timer.set(ms);
-        renderPresets();
-        chrome.beep('ok');
-        chrome.setStatus('就绪 · ' + ET.Countdown.format(ms));
     });
 
     document.addEventListener('keydown', function (ev) {
-        var tag = (document.activeElement && document.activeElement.tagName) || '';
-        var inInput = tag === 'INPUT' || tag === 'TEXTAREA';
-        if (document.querySelector('.et-modal')) { return; }
-
-        if (ev.key === ' ' && !inInput) {
-            ev.preventDefault();
-            els.btnMain.click();
-        } else if ((ev.key === 'r' || ev.key === 'R') && !inInput) {
-            ev.preventDefault();
-            els.btnReset.click();
-        } else if (ev.key === 'ArrowUp' && !inInput) {
-            ev.preventDefault();
-            if (mode === 'up') { upSetTarget(up.target + 30000); } else { timer.add(30000); }
-        } else if (ev.key === 'ArrowDown' && !inInput) {
-            ev.preventDefault();
-            if (mode === 'up') { upSetTarget(Math.max(0, up.target - 30000)); } else { timer.add(-30000); }
-        }
+        if (ev.code !== 'Space' && ev.key !== ' ') { return; }
+        var node = document.activeElement;
+        var tag = node && node.tagName ? node.tagName.toUpperCase() : '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (node && node.isContentEditable)) { return; }
+        if (document.querySelector('.et-modal, .et-drawer-backdrop')) { return; }
+        ev.preventDefault();
+        toggleMask();
     });
 
     /* ============ 启动 ============ */
-    els.ring.style.strokeDasharray = RING_LEN.toFixed(1);
-    els.ring.style.strokeDashoffset = '0';
-    timer.set(lastMinutes * 60000);
-    renderPresets();
-    renderRemindState();
-    applyModeUi();
-    if (mode === 'up') {
-        upRender();
-    } else {
-        timer.set(lastMinutes * 60000);
-    }
+
+    buildGrid();
+    restore();
+    renderChips();
+    paint();
 })();
 </script>
 

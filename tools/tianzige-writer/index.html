@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>田字格字帖 — KeeTools 课工具</title>
 <!-- ET-META
-{"id":"tianzige-writer","version":"1.0.0"}
+{"id":"tianzige-writer","version":"1.1.0"}
 -->
 
 <!-- 共享外壳样式（由 sync_shared.py 注入） -->
@@ -702,21 +702,26 @@ html[data-et-theme="dark"] {
 .tz-cell__line--d1 { transform: rotate(45deg); }
 .tz-cell__line--d2 { transform: rotate(-45deg); }
 
+/* 范字用 SVG 渲染：字号按格子等比缩放（viewBox 100 单位），
+   屏幕缩放、A4 打印、任意每行字数下都保持「字占格 70%–80%」的字帖标准比例 */
 .tz-cell__char {
     position: absolute;
     inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 76%;
-    line-height: 1;
-    color: var(--tz-trace);
+    display: block;
+    width: 100%;
+    height: 100%;
     user-select: none;
 }
 
-.tz-cell--hollow .tz-cell__char {
-    color: transparent;
-    -webkit-text-stroke: 1px var(--tz-trace);
+.tz-cell__char text {
+    fill: var(--tz-trace);
+    font-family: var(--tz-active-font, var(--tz-font-kai));
+}
+
+.tz-cell--hollow .tz-cell__char text {
+    fill: transparent;
+    stroke: var(--tz-trace);
+    stroke-width: 1.6;
 }
 
 .tz-empty {
@@ -804,7 +809,8 @@ html[data-et-theme="dark"] {
 
     .tz-cell { border-color: #475569 !important; }
     .tz-cell__line { border-color: #94a3b8 !important; }
-    .tz-cell__char { color: #9ca3af !important; }
+    .tz-cell__char text { fill: #9ca3af !important; stroke: none !important; }
+    .tz-cell--hollow .tz-cell__char text { fill: #fff !important; stroke: #9ca3af !important; }
 
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
@@ -1692,6 +1698,8 @@ try { ET.Stats.send('use_offline', 'tianzige-writer'); } catch (e) { /* 静默 *
 
     var TOOL_ID = 'tianzige-writer';
     var store = ET.store(TOOL_ID);
+    var SVG_NS = 'http://www.w3.org/2000/svg'; /* et-allow-external SVG 命名空间 */
+    var CHAR_SCALES = [70, 82, 92];            /* 范字占格比例（字帖通常 70%–80%） */
 
     /* 小学常用字（约 120 字），点一下追加到输入框 */
     var COMMON = '天地人你我他一二三四五六七八九十上下大小口目手足日月水火山石田土'
@@ -1711,6 +1719,7 @@ try { ET.Stats.send('use_offline', 'tianzige-writer'); } catch (e) { /* 静默 *
         grid: ['tian', 'mi', 'blank'].indexOf(store.get('grid', 'tian')) !== -1 ? store.get('grid', 'tian') : 'tian',
         font: store.get('font', 'kai') === 'hei' ? 'hei' : 'kai',
         perRow: clampInt(store.get('per_row', 5), 2, 8, 5),
+        charScale: CHAR_SCALES.indexOf(Number(store.get('char_scale', 82))) !== -1 ? Number(store.get('char_scale', 82)) : 82,
         trace: clampInt(store.get('trace', 1), 0, 2, 1),
         self: clampInt(store.get('self', 2), 1, 4, 2),
         hollow: store.get('hollow', false) === true
@@ -1749,6 +1758,7 @@ try { ET.Stats.send('use_offline', 'tianzige-writer'); } catch (e) { /* 静默 *
         store.set('grid', state.grid);
         store.set('font', state.font);
         store.set('per_row', state.perRow);
+        store.set('char_scale', state.charScale);
         store.set('trace', state.trace);
         store.set('self', state.self);
         store.set('hollow', state.hollow);
@@ -1795,10 +1805,23 @@ try { ET.Stats.send('use_offline', 'tianzige-writer'); } catch (e) { /* 静默 *
         }
 
         if (char && isTrace) {
-            var span = document.createElement('span');
-            span.className = 'tz-cell__char';
-            span.textContent = char;
-            cell.appendChild(span);
+            /* 用 SVG 画范字：字号写在 viewBox 坐标系里，随格子等比缩放，
+               屏幕与打印都能保持字帖标准比例（不再依赖百分比 font-size） */
+            var svg = document.createElementNS(SVG_NS, 'svg');
+            svg.setAttribute('class', 'tz-cell__char');
+            svg.setAttribute('viewBox', '0 0 100 100');
+            svg.setAttribute('aria-hidden', 'true');
+
+            var text = document.createElementNS(SVG_NS, 'text');
+            text.setAttribute('x', '50');
+            text.setAttribute('y', '50');
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('dominant-baseline', 'central');
+            text.setAttribute('font-size', String(state.charScale));
+            text.textContent = char;
+
+            svg.appendChild(text);
+            cell.appendChild(svg);
         }
 
         return cell;
@@ -1920,6 +1943,18 @@ try { ET.Stats.send('use_offline', 'tianzige-writer'); } catch (e) { /* 静默 *
             applyFont();
             render();
             chrome.toast(value === 'kai' ? '已切换为楷体' : '已切换为黑体');
+        });
+
+        heading('范字大小（占格比例）');
+        var scaleBox = row();
+        seg(scaleBox, [
+            { value: 70, label: '小 70%' },
+            { value: 82, label: '标准 82%' },
+            { value: 92, label: '大 92%' }
+        ], state.charScale, function (value) {
+            state.charScale = value;
+            save();
+            render();
         });
 
         heading('每行字数');
@@ -2068,7 +2103,7 @@ try { ET.Stats.send('use_offline', 'tianzige-writer'); } catch (e) { /* 静默 *
 
     /* 字体栈挂在根变量上，格子无需逐个声明 */
     var fontStyle = document.createElement('style');
-    fontStyle.textContent = '.tz-cell__char{font-family:var(--tz-active-font,var(--tz-font-kai))}';
+    fontStyle.textContent = '.tz-cell__char text{font-family:var(--tz-active-font,var(--tz-font-kai))}';
     document.head.appendChild(fontStyle);
 
     function applyFont() {

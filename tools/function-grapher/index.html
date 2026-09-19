@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>随机分组 — KeeTools 课工具</title>
+<title>函数图像绘制器 — KeeTools 课工具</title>
 <!-- ET-META
-{"id":"random-grouping","version":"1.0.0"}
+{"id":"function-grapher","version":"1.1.0"}
 -->
 
 <!-- 共享外壳样式（由 sync_shared.py 注入） -->
@@ -536,346 +536,177 @@ html[data-et-theme="dark"] {
 </style>
 <!-- /ET:INLINE -->
 
-<!-- 导入组件样式（由 sync_shared.py 注入） -->
-<!-- ET:INLINE name="et-import-css" src="ui/et-import.css" type="css" -->
 <style>
-  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
-/*!
- * et-import.css — 通用数据导入组件样式
- *
- * 共享样式源。改这里，然后跑：python scripts/sync_shared.py
- * 依赖 et-chrome.css 的令牌变量（--et-*），须先注入。
- * 类名前缀 etimp-，避免与工具样式冲突。
- */
+/* ── 函数图像绘制器：工具自身样式（自包含，不引用任何外部资源） ── */
+:root { --fg-accent: #2563eb; }
 
-/* ============ 页签 ============ */
-.etimp-tabs {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 14px;
-    padding: 4px;
-    border-radius: 11px;
-    background: var(--et-surface-2);
-    border: 1px solid var(--et-line);
-}
+.fg-main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 
-.etimp-tab {
-    flex: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 8px;
-    font: inherit;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--et-muted);
-    background: transparent;
-    cursor: pointer;
-    transition: color .14s, background .14s;
-}
-
-.etimp-tab:hover { color: var(--et-fg); }
-
-.etimp-tab.is-active {
-    color: var(--et-accent);
-    background: var(--et-surface);
-    box-shadow: var(--et-shadow-md);
-}
-
-/* ============ 粘贴区 ============ */
-.etimp-textarea {
-    width: 100%;
-    min-height: 150px;
-    padding: 12px 14px;
-    border: 1px solid var(--et-line-strong);
-    border-radius: 10px;
-    background: var(--et-surface-2);
-    color: var(--et-fg);
-    font-family: var(--et-mono);
-    font-size: 13px;
-    line-height: 1.7;
-    resize: vertical;
-    transition: border-color .14s, box-shadow .14s;
-}
-
-.etimp-textarea:focus {
-    outline: none;
-    border-color: var(--et-accent);
-    box-shadow: 0 0 0 3px var(--et-accent-weak);
-}
-
-.etimp-textarea::placeholder { color: var(--et-muted); opacity: .7; }
-
-/* ============ 拖放区 ============ */
-.etimp-drop {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    min-height: 150px;
-    padding: 24px;
-    border: 2px dashed var(--et-line-strong);
-    border-radius: 12px;
-    color: var(--et-muted);
-    text-align: center;
-    cursor: pointer;
-    transition: border-color .16s, background .16s, color .16s;
-}
-
-.etimp-drop:hover,
-.etimp-drop.is-over {
-    border-color: var(--et-accent);
-    color: var(--et-accent);
-    background: var(--et-accent-weak);
-}
-
-.etimp-drop .et-icon { width: 30px; height: 30px; stroke-width: 1.6; }
-.etimp-drop__main { font-size: 14px; font-weight: 700; }
-.etimp-drop__hint { font-size: 12px; }
-
-.etimp-file {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-    overflow: hidden;
-}
-
-/* ============ 格式说明 ============ */
-.etimp-help {
-    margin-top: 12px;
-    padding: 10px 14px;
-    border-radius: 10px;
-    background: var(--et-surface-2);
-    border: 1px solid var(--et-line);
-    font-size: 12.5px;
-    color: var(--et-muted);
-    line-height: 1.8;
-}
-
-.etimp-help b { color: var(--et-fg); }
-.etimp-help code {
-    font-family: var(--et-mono);
-    font-size: 12px;
-    padding: 1px 5px;
-    border-radius: 4px;
-    background: var(--et-accent-weak);
-    color: var(--et-accent);
-}
-
-/* ============ 解析结果 ============ */
-.etimp-result { margin-top: 14px; }
-
-.etimp-stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 10px;
-}
-
-.etimp-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 12px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 700;
-    background: var(--et-surface-2);
-    border: 1px solid var(--et-line);
-    color: var(--et-muted);
-}
-
-.etimp-chip--ok { color: var(--et-ok); border-color: var(--et-ok); background: rgba(5, 150, 105, .08); }
-.etimp-chip--warn { color: var(--et-warn); border-color: var(--et-warn); background: rgba(217, 119, 6, .08); }
-.etimp-chip--err { color: var(--et-err); border-color: var(--et-err); background: rgba(220, 38, 38, .08); }
-
-.etimp-table-wrap {
-    max-height: 220px;
-    overflow: auto;
-    border: 1px solid var(--et-line);
-    border-radius: 10px;
-}
-
-.etimp-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12.5px;
-}
-
-.etimp-table th,
-.etimp-table td {
-    padding: 7px 12px;
-    text-align: left;
-    border-bottom: 1px solid var(--et-line);
-    white-space: nowrap;
-}
-
-.etimp-table th {
-    position: sticky;
-    top: 0;
-    background: var(--et-surface-2);
-    color: var(--et-muted);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    z-index: 1;
-}
-
-.etimp-table tr:last-child td { border-bottom: none; }
-.etimp-table td.etimp-dim { color: var(--et-muted); }
-.etimp-table td.etimp-num { font-variant-numeric: tabular-nums; }
-
-.etimp-errors {
-    margin-top: 10px;
-    padding: 10px 14px;
-    border-radius: 10px;
-    background: rgba(220, 38, 38, .07);
-    border: 1px solid rgba(220, 38, 38, .35);
-    font-size: 12.5px;
-    color: var(--et-err);
-    line-height: 1.8;
-    max-height: 110px;
-    overflow: auto;
-}
-
-.etimp-empty {
-    padding: 14px;
-    text-align: center;
-    font-size: 12.5px;
-    color: var(--et-muted);
-    border: 1px dashed var(--et-line);
-    border-radius: 10px;
-}
-
-/* 选项行 */
-.etimp-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 14px;
-    align-items: center;
-    margin-top: 12px;
-    font-size: 13px;
-}
-
-.etimp-check {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    cursor: pointer;
-    color: var(--et-fg);
-    user-select: none;
-}
-
-.etimp-check input {
-    width: 16px;
-    height: 16px;
-    accent-color: var(--et-accent);
-    cursor: pointer;
-}
-</style>
-<!-- /ET:INLINE -->
-
-<style>
-/* ── 工具自身样式：自包含，不引用任何外部资源 ── */
-:root {
-    --rg-accent: #0d9488;
-}
-
-.rg-main {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-.rg-toolbar {
+/* ---------- 输入栏 ---------- */
+.fg-bar {
     flex: none;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
-    padding: 12px 20px;
+    padding: 9px 18px;
     border-bottom: 1px solid var(--et-line);
     background: var(--et-surface-2);
 }
 
-.rg-label {
-    font-size: 13px;
+.fg-label {
+    font-family: "Cambria Math", Georgia, "Times New Roman", serif;
+    font-size: 20px;
     font-weight: 700;
     color: var(--et-muted);
 }
 
-.rg-seg {
-    display: inline-flex;
-    gap: 3px;
-    padding: 3px;
+.fg-input {
+    width: min(46vw, 430px);
+    padding: 9px 13px;
+    border: 1px solid var(--et-line-strong);
+    border-radius: 10px;
+    background: var(--et-surface);
+    color: var(--et-fg);
+    font-family: var(--et-mono);
+    font-size: 16px;
+    outline: none;
+    transition: border-color .14s, box-shadow .14s;
+}
+
+.fg-input:focus { border-color: var(--et-accent); box-shadow: 0 0 0 3px var(--et-accent-weak); }
+.fg-input.is-err { border-color: var(--et-err); }
+
+.fg-msg { font-size: 13px; font-weight: 700; color: var(--et-muted); max-width: 34vw; }
+.fg-msg.is-err { color: var(--et-err); }
+.fg-msg.is-ok { color: var(--et-ok); }
+.fg-spacer { flex: 1 1 auto; }
+
+.fg-chips { display: flex; gap: 5px; flex-wrap: wrap; padding: 2px; }
+
+.fg-chip {
+    flex: none;
+    padding: 6px 10px;
     border: 1px solid var(--et-line);
-    border-radius: 11px;
+    border-radius: 9px;
     background: var(--et-surface);
-}
-
-.rg-seg button {
-    padding: 7px 12px;
-    border: 0;
-    border-radius: 8px;
-    background: transparent;
     color: var(--et-muted);
     font: inherit;
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
+    white-space: nowrap;
+    transition: border-color .14s, color .14s, background .14s;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.rg-seg button.is-active {
-    color: #fff;
-    background: var(--et-accent);
+.fg-chip:hover { border-color: var(--et-accent); color: var(--et-accent); }
+.fg-chip.is-active { background: var(--et-accent); border-color: var(--et-accent); color: #fff; }
+
+/* ---------- 画布舞台 ---------- */
+.fg-stage {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--et-surface);
 }
 
-.rg-chips {
+.fg-stage canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: grab;
+    touch-action: none;
+}
+
+.fg-stage canvas.is-drag { cursor: grabbing; }
+
+.fg-overlay {
+    position: absolute;
+    left: 14px;
+    top: 12px;
     display: flex;
+    flex-direction: column;
     gap: 6px;
-    flex-wrap: wrap;
+    pointer-events: none;
+    max-width: 44%;
 }
 
-.rg-chip {
-    min-width: 42px;
+.fg-tag {
+    align-self: flex-start;
+    padding: 6px 12px;
+    border: 1px solid var(--et-line);
+    border-radius: 10px;
+    background: var(--et-glass);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-family: var(--et-mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--et-accent);
+    box-shadow: var(--et-shadow-md);
+}
+
+.fg-keys {
     padding: 8px 12px;
-    border: 1px solid var(--et-line-strong);
+    border: 1px solid var(--et-line);
     border-radius: 10px;
-    background: var(--et-surface);
-    color: var(--et-fg);
-    font: inherit;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
+    background: var(--et-glass);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-size: 12.5px;
+    line-height: 1.9;
+    color: var(--et-muted);
+    box-shadow: var(--et-shadow-md);
 }
 
-.rg-chip.is-active {
-    color: #fff;
-    background: var(--et-accent);
-    border-color: var(--et-accent);
+.fg-keys b { color: var(--et-fg); font-variant-numeric: tabular-nums; }
+
+.fg-panel {
+    position: absolute;
+    right: 14px;
+    top: 12px;
+    max-height: calc(100% - 24px);
+    overflow: auto;
+    padding: 10px 12px;
+    border: 1px solid var(--et-line);
+    border-radius: 12px;
+    background: var(--et-glass);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: var(--et-shadow-md);
 }
 
-.rg-num {
-    width: 72px;
-    padding: 8px 10px;
-    border: 1px solid var(--et-line-strong);
-    border-radius: 10px;
-    background: var(--et-surface);
-    color: var(--et-fg);
-    font: inherit;
-    font-size: 14px;
-    font-weight: 700;
-    text-align: center;
-    box-sizing: border-box;
+.fg-panel h4 {
+    margin: 0 0 6px;
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    color: var(--et-muted);
+    text-transform: uppercase;
 }
 
-.rg-check {
+.fg-panel table { border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.fg-panel th, .fg-panel td { padding: 3px 10px; text-align: right; }
+.fg-panel th { color: var(--et-muted); font-weight: 700; border-bottom: 1px solid var(--et-line); }
+.fg-panel td:first-child { color: var(--et-accent); font-weight: 700; }
+
+/* ---------- 底部工具条 ---------- */
+.fg-foot {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+    padding: 9px 18px 12px;
+    border-top: 1px solid var(--et-line);
+    background: var(--et-surface-2);
+}
+
+.fg-check {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -883,120 +714,24 @@ html[data-et-theme="dark"] {
     font-weight: 600;
     color: var(--et-fg);
     cursor: pointer;
+    user-select: none;
 }
 
-.rg-spacer { flex: 1 1 auto; }
+.fg-check input { width: 16px; height: 16px; accent-color: var(--et-accent); cursor: pointer; }
 
-.rg-roster-info {
+.fg-span {
     font-size: 13px;
     font-weight: 700;
     color: var(--et-muted);
+    font-variant-numeric: tabular-nums;
 }
 
-.rg-stage {
-    flex: 1;
-    min-height: 0;
-    overflow: auto;
-    padding: 20px;
-}
+.fg-vsep { width: 1px; align-self: stretch; background: var(--et-line); }
 
-.rg-groups {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-    gap: 16px;
-    align-content: start;
-}
-
-.rg-group {
-    border: 1px solid var(--et-line);
-    border-radius: 14px;
-    background: var(--et-surface);
-    box-shadow: var(--et-shadow-md);
-    overflow: hidden;
-    animation: rg-pop .34s cubic-bezier(.34, 1.3, .64, 1) both;
-    animation-delay: calc(var(--rg-i, 0) * 45ms);
-}
-
-@keyframes rg-pop {
-    from { opacity: 0; transform: translateY(14px) scale(.95); }
-}
-
-.rg-group__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--et-line);
-    background: linear-gradient(120deg, var(--et-accent-weak), transparent);
-}
-
-.rg-group__no {
-    font-size: 16px;
-    font-weight: 900;
-    color: var(--et-accent);
-}
-
-.rg-group__n {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--et-muted);
-}
-
-.rg-group__list {
-    margin: 0;
-    padding: 10px 14px 14px;
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.rg-group__list li {
-    font-size: clamp(15px, 1.5vw, 22px);
-    font-weight: 700;
-    line-height: 1.35;
-    word-break: break-all;
-}
-
-.rg-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    min-height: 48vh;
-    text-align: center;
-}
-
-.rg-empty__big {
-    font-size: clamp(34px, 6vw, 64px);
-    font-weight: 900;
-    letter-spacing: -.02em;
-    color: var(--et-fg);
-}
-
-.rg-empty__tip {
-    margin: 0;
-    max-width: 46ch;
-    font-size: 15px;
-    line-height: 1.8;
-    color: var(--et-muted);
-}
-
-.rg-ta {
-    width: 100%;
-    min-height: 190px;
-    padding: 10px 12px;
-    border: 1px solid var(--et-line-strong);
-    border-radius: 10px;
-    background: var(--et-surface-2);
-    color: var(--et-fg);
-    font-family: var(--et-font);
-    font-size: 14px;
-    line-height: 1.8;
-    resize: vertical;
-    box-sizing: border-box;
+@media (max-width: 1180px) {
+    .fg-chips { max-width: 34vw; }
+    .fg-msg { max-width: 22vw; }
+    .fg-input { width: min(38vw, 320px); }
 }
 </style>
 </head>
@@ -1004,37 +739,63 @@ html[data-et-theme="dark"] {
 
 <header id="et-topbar"></header>
 
-<main id="et-main" class="rg-main">
+<main id="et-main" class="fg-main">
 
-    <div class="rg-toolbar">
-        <div class="rg-seg" id="segMode">
-            <button type="button" data-mode="count" class="is-active">按组数</button>
-            <button type="button" data-mode="size">按每组人数</button>
-        </div>
-
-        <span class="rg-label" id="labelCount">分成</span>
-        <div class="rg-chips" id="chips"></div>
-        <span class="rg-label" id="labelCountUnit">组</span>
-
-        <label class="rg-label" id="labelSize" hidden>每组
-            <input class="rg-num" id="inSize" type="number" min="2" max="12" value="6">
-            人
-        </label>
-
-        <label class="rg-check"><input type="checkbox" id="chkSort"> 组内按姓名排序</label>
-
-        <span class="rg-spacer"></span>
-        <span class="rg-roster-info" id="rosterInfo">名单 0 人</span>
-        <button class="et-btn" id="btnRoster" type="button">
-            <svg class="et-icon"><use href="#i-users"></use></svg><span>名单</span>
+    <div class="fg-bar">
+        <span class="fg-label">y =</span>
+        <input class="fg-input" id="expr" type="text" spellcheck="false" autocomplete="off"
+               placeholder="例如 x^2-2x-3 、1/x 、sin x" aria-label="函数解析式">
+        <button class="et-btn et-btn--primary" id="btnDraw" type="button" title="绘制（回车）">
+            <svg class="et-icon"><use href="#i-check"></use></svg>
+            <span>绘制</span>
         </button>
-        <button class="et-btn et-btn--primary" id="btnRun" type="button">
-            <svg class="et-icon"><use href="#i-shuffle"></use></svg><span id="btnRunText">开始分组</span>
-        </button>
+        <span class="fg-msg" id="msg"></span>
+        <span class="fg-spacer"></span>
+        <div class="fg-chips" id="chips" aria-label="示例函数"></div>
     </div>
 
-    <div class="rg-stage">
-        <div id="stage"></div>
+    <div class="fg-stage" id="stage">
+        <canvas id="cv" aria-label="函数图像画布"></canvas>
+        <div class="fg-overlay">
+            <div class="fg-tag" id="tag">y = x</div>
+            <div class="fg-keys" id="keys">拖动平移 · 滚轮缩放 · 鼠标移到图上读取坐标</div>
+        </div>
+        <div class="fg-panel" id="panel" hidden>
+            <h4>数值表</h4>
+            <div id="tableBox"></div>
+        </div>
+    </div>
+
+    <div class="fg-foot">
+        <button class="et-btn" id="btnZoomOut" type="button" title="缩小（-）">
+            <svg class="et-icon"><use href="#i-minus"></use></svg>
+        </button>
+        <button class="et-btn" id="btnZoomIn" type="button" title="放大（+）">
+            <svg class="et-icon"><use href="#i-plus"></use></svg>
+        </button>
+        <button class="et-btn" id="btnFit" type="button" title="按函数值自适应视图">
+            <svg class="et-icon"><use href="#i-target"></use></svg>
+            <span>自适应</span>
+        </button>
+        <button class="et-btn" id="btnReset" type="button" title="回到原点视图">
+            <svg class="et-icon"><use href="#i-refresh"></use></svg>
+            <span>重置</span>
+        </button>
+
+        <span class="fg-vsep"></span>
+
+        <label class="fg-check"><input type="checkbox" id="chkGrid" checked> 网格</label>
+        <label class="fg-check"><input type="checkbox" id="chkKeys" checked> 关键点</label>
+        <label class="fg-check"><input type="checkbox" id="chkTable"> 数值表</label>
+
+        <span class="fg-spacer"></span>
+
+        <span class="fg-span" id="spanInfo"></span>
+
+        <button class="et-btn" id="btnPng" type="button">
+            <svg class="et-icon"><use href="#i-download"></use></svg>
+            <span>导出 PNG</span>
+        </button>
     </div>
 
 </main>
@@ -1879,1051 +1640,841 @@ html[data-et-theme="dark"] {
 </script>
 <!-- /ET:INLINE -->
 
-<!-- 导入组件（由 sync_shared.py 注入；必须晚于 et-chrome，导入弹窗依赖 ET.Chrome.modal） -->
-<!-- ET:INLINE name="et-import" src="ui/et-import.js" -->
-<script>
-  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
-/*!
- * et-import.js — 通用数据导入组件（shell 型工具的核心基建）
- *
- * 共享逻辑源。改这里，然后跑：python scripts/sync_shared.py
- * 依赖：et-util.js（ET.store）、et-chrome.js（ET.Chrome.modal，弹窗宿主）
- * 兼容性：现代浏览器（TextDecoder GBK / FileReader / Drag&Drop）。
- * 全局：ET.Import
- *
- * 用法（名单模式，默认）：
- *   ET.Import.open({
- *     toolId: 'random-name-classic',
- *     title: '导入名单',
- *     columns: ['name', 'id', 'weight'],   // 允许识别的列
- *     current: '张三\n李四',                // 可选，回填当前数据便于增改
- *     onConfirm: function (rows, meta) { … }  // rows: [{name, id, weight}]
- *   });
- *
- * 用法（自定义字段模式，词表 / 题表等非名单数据）：
- *   ET.Import.open({
- *     toolId: 'word-flashcard',
- *     title: '导入单词表',
- *     fields: [
- *       { key: 'word', label: '单词', keys: ['单词', '英文', 'word'] },
- *       { key: 'ipa',  label: '音标', keys: ['音标', '发音', 'phonetic'] },
- *       { key: 'mean', label: '释义', keys: ['释义', '意思', 'meaning'] }
- *     ],
- *     placeholder: '…',   // 可选，覆盖粘贴框提示
- *     help: '…',          // 可选，覆盖说明文字
- *     onConfirm: function (rows, meta) { … }  // rows: [{word, ipa, mean}]
- *   });
- *   未传 fields 时行为与旧版完全一致（name / id / weight 三列）。
- *
- * 也提供纯解析入口（不弹窗）：
- *   var result = ET.Import.parseText(text, { weight: true });
- *   // result = { rows: [...], stats: { lines, valid, dupes, blanks, errors: [...] } }
- */
-(function (global) {
-    'use strict';
-
-    /* ============ 常量 ============ */
-
-    var NAME_KEYS = ['姓名', '名字', '名称', '学生', '学员', 'name', 'student'];
-    var ID_KEYS = ['学号', '编号', '序号', '号码', 'id', 'no', 'number'];
-    var WEIGHT_KEYS = ['权重', '次数', '倍数', 'weight', 'times'];
-
-    var MAX_WEIGHT = 99;
-
-    /* ============ 解析 ============ */
-
-    function normCell(s) {
-        return String(s === undefined || s === null ? '' : s).trim();
-    }
-
-    function matchKey(cell, keys) {
-        var c = normCell(cell).toLowerCase();
-        if (!c) { return false; }
-        for (var i = 0; i < keys.length; i++) {
-            if (c === keys[i]) { return true; }
-        }
-        for (var j = 0; j < keys.length; j++) {
-            /* 中文表头常见"学生姓名"，用包含匹配 */
-            if (/[\u4e00-\u9fa5]/.test(keys[j]) && c.indexOf(keys[j]) !== -1) { return true; }
-        }
-        return false;
-    }
-
-    function isAllNumeric(arr) {
-        if (!arr.length) { return false; }
-        for (var i = 0; i < arr.length; i++) {
-            if (!/^\d{1,6}(\.\d+)?$/.test(normCell(arr[i]))) { return false; }
-        }
-        return true;
-    }
-
-    /** 引号感知的 CSV 行拆分（RFC4180 简化版，不支持跨行引号） */
-    function splitLine(line, delim) {
-        var out = [];
-        var cur = '';
-        var inQ = false;
-        for (var i = 0; i < line.length; i++) {
-            var ch = line[i];
-            if (inQ) {
-                if (ch === '"') {
-                    if (line.charAt(i + 1) === '"') { cur += '"'; i++; }
-                    else { inQ = false; }
-                } else {
-                    cur += ch;
-                }
-            } else if (ch === '"') {
-                inQ = true;
-            } else if (ch === delim) {
-                out.push(cur);
-                cur = '';
-            } else {
-                cur += ch;
-            }
-        }
-        out.push(cur);
-        return out;
-    }
-
-    function detectDelimiter(lines) {
-        var counts = { '\t': 0, ',': 0, ';': 0 };
-        for (var i = 0; i < lines.length; i++) {
-            for (var d in counts) {
-                counts[d] += lines[i].split(d).length - 1;
-            }
-        }
-        var best = '\t';
-        var bestN = -1;
-        for (var k in counts) {
-            if (counts[k] > bestN) { bestN = counts[k]; best = k; }
-        }
-        return bestN > 0 ? best : null;
-    }
-
-    /**
-     * 把"原始表格行（二维数组）"规范化为 rows。
-     * opts.weight 是否识别权重列；opts.id 是否识别学号列。
-     */
-    function tableToRows(table, opts, stats) {
-        opts = opts || {};
-        if (!table.length) { return []; }
-
-        var width = 0;
-        for (var w = 0; w < table.length; w++) {
-            width = Math.max(width, table[w].length);
-        }
-
-        /* --- 表头识别 --- */
-        var header = null;
-        var first = table[0];
-        var firstAllEmpty = true;
-        for (var c0 = 0; c0 < first.length; c0++) {
-            if (normCell(first[c0])) { firstAllEmpty = false; break; }
-        }
-        if (!firstAllEmpty) {
-            for (var c = 0; c < first.length; c++) {
-                if (matchKey(first[c], NAME_KEYS) || matchKey(first[c], WEIGHT_KEYS) || matchKey(first[c], ID_KEYS)) {
-                    header = first;
-                    table = table.slice(1);
-                    stats.blanks++; /* 表头行不算数据 */
-                    break;
-                }
-            }
-        }
-
-        /* --- 列映射 --- */
-        var map = { name: -1, id: -1, weight: -1 };
-        if (header) {
-            for (var hc = 0; hc < header.length; hc++) {
-                if (map.name < 0 && matchKey(header[hc], NAME_KEYS)) { map.name = hc; }
-                else if (opts.id && map.id < 0 && matchKey(header[hc], ID_KEYS)) { map.id = hc; }
-                else if (opts.weight && map.weight < 0 && matchKey(header[hc], WEIGHT_KEYS)) { map.weight = hc; }
-            }
-        }
-
-        var cols = table.map(function (row) { return row; });
-        function colValues(idx) {
-            return cols.map(function (r) { return normCell(r[idx]); }).filter(function (v) { return v !== ''; });
-        }
-
-        if (map.name < 0) {
-            if (width === 1) {
-                map.name = 0;
-            } else {
-                var c0 = colValues(0);
-                var c1 = colValues(1);
-                var numeric0 = isAllNumeric(c0);
-                var numeric1 = isAllNumeric(c1);
-                if (width === 2) {
-                    if (numeric0 && !numeric1) { map.id = 0; map.name = 1; }
-                    else if (numeric1 && !numeric0 && opts.weight) { map.name = 0; map.weight = 1; }
-                    else { map.name = 0; }
-                } else {
-                    /* ≥3 列：编号 | 姓名 | 权重 的经典布局 */
-                    if (numeric0) { map.id = 0; map.name = 1; } else { map.name = 0; }
-                    if (opts.weight) { map.weight = width - 1; }
-                }
-            }
-        }
-        if (map.name < 0) { map.name = 0; }
-        if (!opts.weight) { map.weight = -1; }
-        if (!opts.id) { map.id = -1; }
-
-        /* --- 逐行处理 --- */
-        var rows = [];
-        var seen = {};
-        var wantWeight = map.weight >= 0;
-
-        for (var i = 0; i < table.length; i++) {
-            var raw = table[i];
-            var lineNo = i + (header ? 2 : 1); /* 用户视角的行号（含表头） */
-            var name = map.name < raw.length ? normCell(raw[map.name]) : '';
-            var restEmpty = true;
-            for (var rc = 0; rc < raw.length; rc++) {
-                if (normCell(raw[rc])) { restEmpty = false; break; }
-            }
-            if (!name && restEmpty) { stats.blanks++; continue; }
-
-            if (!name) {
-                stats.errors.push('第 ' + lineNo + ' 行：姓名列为空，已跳过');
-                continue;
-            }
-
-            var weight = 1;
-            if (wantWeight && map.weight < raw.length) {
-                var wv = normCell(raw[map.weight]);
-                if (wv !== '') {
-                    var wn = Number(wv);
-                    if (isFinite(wn) && wn >= 1) {
-                        weight = Math.min(MAX_WEIGHT, Math.round(wn));
-                        if (weight !== wn) {
-                            stats.errors.push('第 ' + lineNo + ' 行：权重 "' + wv + '" 已取整为 ' + weight);
-                        }
-                    } else {
-                        stats.errors.push('第 ' + lineNo + ' 行：权重 "' + wv + '" 无效（需 ≥1 的数字），按 1 处理');
-                    }
-                }
-            }
-
-            var id = '';
-            if (map.id >= 0 && map.id < raw.length) {
-                id = normCell(raw[map.id]);
-            }
-
-            if (opts.dedupe !== false && seen[name]) {
-                stats.dupes++;
-                continue;
-            }
-            seen[name] = true;
-
-            rows.push({ name: name, id: id, weight: weight });
-        }
-        return rows;
-    }
-
-    /* ============ 自定义字段模式（词表 / 题表等非名单数据） ============ */
-
-    function normKeyList(field) {
-        var keys = field.keys && field.keys.length ? field.keys.slice() : [];
-        if (field.label) { keys.push(field.label); }
-        return keys;
-    }
-
-    function matchAnyKey(cell, keys) {
-        for (var i = 0; i < keys.length; i++) {
-            if (matchKey(cell, [keys[i]])) { return true; }
-        }
-        return false;
-    }
-
-    function colTaken(map, idx) {
-        for (var k in map) {
-            if (map[k] === idx) { return true; }
-        }
-        return false;
-    }
-
-    /**
-     * 把二维表格规范化为「按 fields 定义的对象数组」。
-     * fields = [{key, label, keys?}]，行对象形如 {key1: '…', key2: '…'}。
-     * 与 tableToRows 并列存在：只有显式传 fields 时才走这里，名单路径行为不变。
-     */
-    function tableToFields(table, fields, stats) {
-        if (!table.length) { return []; }
-
-        var width = 0;
-        for (var w = 0; w < table.length; w++) {
-            width = Math.max(width, table[w].length);
-        }
-
-        var keyLists = [];
-        var flat = [];
-        for (var f = 0; f < fields.length; f++) {
-            var list = normKeyList(fields[f]);
-            keyLists.push(list);
-            for (var k = 0; k < list.length; k++) { flat.push(list[k]); }
-        }
-
-        /* --- 表头识别 --- */
-        var header = null;
-        var first = table[0];
-        var hasAny = false;
-        for (var c0 = 0; c0 < first.length; c0++) {
-            if (normCell(first[c0])) { hasAny = true; break; }
-        }
-        if (hasAny) {
-            for (var c = 0; c < first.length; c++) {
-                if (matchAnyKey(first[c], flat)) {
-                    header = first;
-                    table = table.slice(1);
-                    stats.blanks++; /* 表头行不算数据 */
-                    break;
-                }
-            }
-        }
-
-        /* --- 列映射：先按表头，缺的按出现顺序补空列 --- */
-        var map = {};
-        for (var fi = 0; fi < fields.length; fi++) { map[fields[fi].key] = -1; }
-
-        if (header) {
-            for (var hc = 0; hc < header.length; hc++) {
-                for (var fj = 0; fj < fields.length; fj++) {
-                    if (map[fields[fj].key] < 0 && matchAnyKey(header[hc], keyLists[fj])) {
-                        map[fields[fj].key] = hc;
-                        break;
-                    }
-                }
-            }
-        }
-
-        var next = 0;
-        for (var fp = 0; fp < fields.length; fp++) {
-            if (map[fields[fp].key] >= 0) { continue; }
-            while (next < width && colTaken(map, next)) { next++; }
-            if (next < width) {
-                map[fields[fp].key] = next;
-                next++;
-            }
-        }
-
-        /* --- 逐行处理 --- */
-        var rows = [];
-        var seen = {};
-        var firstKey = fields[0].key;
-
-        for (var i = 0; i < table.length; i++) {
-            var raw = table[i];
-            var lineNo = i + (header ? 2 : 1);
-            var row = {};
-            var allEmpty = true;
-
-            for (var rf = 0; rf < fields.length; rf++) {
-                var col = map[fields[rf].key];
-                var val = (col >= 0 && col < raw.length) ? normCell(raw[col]) : '';
-                row[fields[rf].key] = val;
-                if (val) { allEmpty = false; }
-            }
-
-            if (allEmpty) { stats.blanks++; continue; }
-
-            if (!row[firstKey]) {
-                stats.errors.push('第 ' + lineNo + ' 行：' + (fields[0].label || '首列') + '为空，已跳过');
-                continue;
-            }
-
-            if (seen[row[firstKey]]) { stats.dupes++; continue; }
-            seen[row[firstKey]] = true;
-
-            rows.push(row);
-        }
-        return rows;
-    }
-
-    /** 统一入口：有 fields 走自定义字段，否则沿用名单路径 */
-    function buildRows(table, opts, stats) {
-        return opts.fields ? tableToFields(table, opts.fields, stats) : tableToRows(table, opts, stats);
-    }
-
-    function jsonToTableFields(json, fields) {
-        if (!Array.isArray(json)) { return []; }
-        var labels = [];
-        for (var i = 0; i < fields.length; i++) { labels.push(fields[i].label || fields[i].key); }
-        var table = [labels];
-
-        for (var r = 0; r < json.length; r++) {
-            var item = json[r];
-            var out = [];
-            if (typeof item === 'string' || typeof item === 'number') {
-                for (var c = 0; c < fields.length; c++) {
-                    out.push(c === 0 ? String(item) : '');
-                }
-            } else if (item && typeof item === 'object') {
-                for (var c2 = 0; c2 < fields.length; c2++) {
-                    var v = item[fields[c2].key];
-                    if (v === undefined || v === null) { v = item[fields[c2].label] || ''; }
-                    out.push(String(v));
-                }
-            } else {
-                continue;
-            }
-            table.push(out);
-        }
-        return table;
-    }
-
-    function jsonToTable(json) {
-        if (Array.isArray(json)) {
-            var table = [];
-            for (var i = 0; i < json.length; i++) {
-                var item = json[i];
-                if (typeof item === 'string' || typeof item === 'number') {
-                    table.push([String(item)]);
-                } else if (item && typeof item === 'object') {
-                    var name = item.name || item.姓名 || item.名字 || item.title || '';
-                    var weight = item.weight || item.权重 || item.次数 || '';
-                    var id = item.id || item.学号 || item.编号 || '';
-                    if (name !== undefined && name !== null) {
-                        table.push([String(id), String(name), String(weight)]);
-                    }
-                }
-            }
-            return table;
-        }
-        return [];
-    }
-
-    /**
-     * 纯文本解析入口。
-     * 返回 { rows, stats }；stats = { lines, valid, dupes, blanks, errors[] }
-     */
-    function parseText(text, opts) {
-        opts = opts || {};
-        var stats = { lines: 0, valid: 0, dupes: 0, blanks: 0, errors: [] };
-        var rows = [];
-
-        var trimmed = String(text || '').replace(/^\uFEFF/, '').trim();
-        if (!trimmed) {
-            return { rows: rows, stats: stats };
-        }
-
-        /* JSON 优先 */
-        if (trimmed.charAt(0) === '[' || trimmed.charAt(0) === '{') {
-            try {
-                var json = JSON.parse(trimmed);
-                var jsonTable = opts.fields ? jsonToTableFields(json, opts.fields) : jsonToTable(json);
-                rows = buildRows(jsonTable, opts, stats);
-            } catch (err) {
-                stats.errors.push('JSON 解析失败：' + err.message);
-            }
-        } else {
-            var lines = trimmed.split(/\r\n|\r|\n/);
-            while (lines.length && !lines[lines.length - 1].trim()) { lines.pop(); }
-            stats.lines = lines.length;
-
-            var delim = detectDelimiter(lines);
-            var table = [];
-            for (var i = 0; i < lines.length; i++) {
-                if (!lines[i].trim()) { continue; }
-                table.push(delim ? splitLine(lines[i], delim) : [lines[i]]);
-            }
-            rows = buildRows(table, opts, stats);
-        }
-
-        stats.valid = rows.length;
-        return { rows: rows, stats: stats };
-    }
-
-    /* ============ 文件解码 ============ */
-
-    function decodeBuffer(buffer) {
-        var bytes = new Uint8Array(buffer);
-        /* UTF-8 BOM */
-        if (bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
-            return new TextDecoder('utf-8').decode(bytes.subarray(3));
-        }
-        /* UTF-16 LE BOM */
-        if (bytes[0] === 0xFF && bytes[1] === 0xFE) {
-            return new TextDecoder('utf-16le').decode(bytes.subarray(2));
-        }
-        /* 严格 UTF-8 失败 → GBK / GB18030（Excel 导出的中文 CSV 常见） */
-        try {
-            return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-        } catch (err) {
-            try { return new TextDecoder('gb18030').decode(bytes); }
-            catch (err2) { return new TextDecoder('gbk').decode(bytes); }
-        }
-    }
-
-    /* ============ 弹窗 UI ============ */
-
-    function esc(s) {
-        return String(s === undefined || s === null ? '' : s)
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
-
-    function chip(label, n, tone) {
-        if (!n) { return ''; }
-        return '<span class="etimp-chip' + (tone ? ' etimp-chip--' + tone : '') + '">' + esc(label) + ' ' + n + '</span>';
-    }
-
-    function renderResult(container, result, opts) {
-        var rows = result.rows;
-        var stats = result.stats;
-        var html = '';
-
-        if (!stats.lines && !rows.length && !stats.errors.length) {
-            container.innerHTML = '<div class="etimp-empty">输入内容后这里会显示解析结果</div>';
-            return;
-        }
-
-        html += '<div class="etimp-stats">';
-        html += chip('有效', rows.length, rows.length ? 'ok' : '');
-        if (stats.dupes) { html += chip('去重', stats.dupes, 'warn'); }
-        if (stats.blanks) { html += chip('空行/表头', stats.blanks, ''); }
-        html += '</div>';
-
-        if (rows.length) {
-            html += '<div class="etimp-table-wrap"><table class="etimp-table"><thead><tr>';
-            html += '<th>#</th>';
-            if (opts.fields) {
-                for (var lc = 0; lc < opts.fields.length; lc++) {
-                    html += '<th>' + esc(opts.fields[lc].label || opts.fields[lc].key) + '</th>';
-                }
-            } else {
-                html += '<th>姓名</th>';
-                if (opts.id) { html += '<th>学号</th>'; }
-                if (opts.weight) { html += '<th>权重</th>'; }
-            }
-            html += '</tr></thead><tbody>';
-            var previewMax = Math.min(rows.length, 10);
-            for (var i = 0; i < previewMax; i++) {
-                html += '<tr><td class="etimp-dim">' + (i + 1) + '</td>';
-                if (opts.fields) {
-                    for (var fc = 0; fc < opts.fields.length; fc++) {
-                        html += '<td>' + esc(rows[i][opts.fields[fc].key] || '—') + '</td>';
-                    }
-                } else {
-                    html += '<td>' + esc(rows[i].name) + '</td>';
-                    if (opts.id) { html += '<td class="etimp-dim">' + esc(rows[i].id || '—') + '</td>'; }
-                    if (opts.weight) { html += '<td class="etimp-num">' + rows[i].weight + '</td>'; }
-                }
-                html += '</tr>';
-            }
-            html += '</tbody></table></div>';
-            if (rows.length > previewMax) {
-                html += '<div class="etimp-empty" style="margin-top:8px;border:none;padding:6px">… 共 ' + rows.length + ' 条，仅预览前 ' + previewMax + ' 条</div>';
-            }
-        } else if (!stats.errors.length) {
-            html += '<div class="etimp-empty">未解析出有效数据</div>';
-        }
-
-        if (stats.errors.length) {
-            html += '<div class="etimp-errors"><b>' + stats.errors.length + ' 处问题：</b><br>' +
-                stats.errors.slice(0, 20).map(esc).join('<br>') +
-                (stats.errors.length > 20 ? '<br>… 还有 ' + (stats.errors.length - 20) + ' 条' : '') + '</div>';
-        }
-
-        container.innerHTML = html;
-    }
-
-    function open(options) {
-        var opt = options || {};
-        var toolId = opt.toolId || 'unknown-tool';
-        var customFields = (opt.fields && opt.fields.length) ? opt.fields : null;
-        var opts = {
-            weight: customFields ? false : (opt.columns || ['name', 'weight']).indexOf('weight') !== -1,
-            id: customFields ? false : (opt.columns || []).indexOf('id') !== -1,
-            fields: customFields,
-            dedupe: true
-        };
-
-        var Chrome = global.ET && global.ET.Chrome;
-        if (!Chrome || !Chrome.modal) {
-            if (opt.onConfirm) { opt.onConfirm([], { cancelled: true }); }
-            return null;
-        }
-
-        var defaultPlaceholder = customFields
-            ? ('一行一条，按列依次填写，例如：\n' + customFields.map(function (f) {
-                return '示例' + (f.label || f.key);
-            }).join(', '))
-            : '一行一个人，支持粘贴 Excel 表格、逗号/Tab 分隔文本，例如：\n张三\n李四,2\n1,王五,3';
-
-        var defaultHelp = customFields
-            ? ('每行一条，按列依次为 <b>' + customFields.map(function (f) {
-                return esc(f.label || f.key);
-            }).join(' / ') + '</b>；支持逗号 / Tab 分隔文本、带表头的 CSV 与 JSON 数组。首列重复的行会自动去重。')
-            : ('支持 <b>纯姓名</b>（一行一个）、<b>姓名,权重</b>、<b>学号,姓名,权重</b>，' +
-                '也支持带表头的 CSV（姓名 / 学号 / 权重 列自动识别）与 JSON 数组。' +
-                (opts.weight ? '权重越大被抽中概率越高，默认 1。' : ''));
-
-        var root = document.createElement('div');
-        root.innerHTML =
-            '<div class="etimp-tabs">' +
-            '<button type="button" class="etimp-tab is-active" data-tab="paste"><b>粘贴文本</b></button>' +
-            '<button type="button" class="etimp-tab" data-tab="file">打开文件</button>' +
-            '</div>' +
-            '<div data-panel="paste">' +
-            '<textarea class="etimp-textarea" id="etimp-text" placeholder="' +
-            esc(opt.placeholder || defaultPlaceholder) + '"></textarea>' +
-            '<div class="etimp-help">' + (opt.help || defaultHelp) + '</div>' +
-            '</div>' +
-            '<div data-panel="file" hidden>' +
-            '<div class="etimp-drop" id="etimp-drop" tabindex="0">' +
-            '<span class="et-drop-icon"></span>' +
-            '<span class="etimp-drop__main">点击选择或拖入文件</span>' +
-            '<span class="etimp-drop__hint">支持 .csv / .txt / .json，自动识别 UTF-8 与 GBK 编码</span>' +
-            '<input type="file" class="etimp-file" id="etimp-file" accept=".csv,.txt,.tsv,.json,text/csv,text/plain,application/json">' +
-            '</div>' +
-            '<div class="etimp-help">Excel 请先另存为 <b>CSV</b> 再导入（文件 → 另存为 → CSV）。</div>' +
-            '</div>' +
-            '<div class="etimp-result" id="etimp-result"><div class="etimp-empty">输入内容后这里会显示解析结果</div></div>';
-
-        var body = root.firstChild ? root : root;
-        /* root 本身作为容器 */
-        var wrap = document.createElement('div');
-        while (root.firstChild) { wrap.appendChild(root.firstChild); }
-
-        var modal = global.ET.Chrome.modal({
-            title: opt.title || '导入数据',
-            icon: 'i-upload',
-            size: 'wide',
-            body: wrap,
-            buttons: [
-                { label: '取消' },
-                {
-                    label: '导入',
-                    primary: true,
-                    onClick: function (close) {
-                        if (!lastResult || !lastResult.rows.length) { return; }
-                        close();
-                        if (opt.onConfirm) {
-                            opt.onConfirm(lastResult.rows, {
-                                dupes: lastResult.stats.dupes,
-                                dedupe: opts.dedupe
-                            });
-                        }
-                    }
-                }
-            ]
-        });
-
-        var q = function (sel) { return wrap.querySelector(sel); };
-        var textEl = q('#etimp-text');
-        var resultEl = q('#etimp-result');
-        var importBtn = modal.foot.querySelector('.et-btn--primary');
-        var lastResult = null;
-
-        if (opt.current) { textEl.value = opt.current; }
-
-        function refresh() {
-            var text = textEl.value;
-            lastResult = parseText(text, opts);
-            renderResult(resultEl, lastResult, opts);
-            importBtn.disabled = !lastResult.rows.length;
-            if (lastResult.rows.length) {
-                importBtn.textContent = '导入 ' + lastResult.rows.length + ' 条';
-            } else {
-                importBtn.textContent = '导入';
-            }
-        }
-
-        var timer = 0;
-        textEl.addEventListener('input', function () {
-            clearTimeout(timer);
-            timer = setTimeout(refresh, 250);
-        });
-
-        /* 页签切换 */
-        wrap.querySelectorAll('.etimp-tab').forEach(function (tab) {
-            tab.addEventListener('click', function () {
-                wrap.querySelectorAll('.etimp-tab').forEach(function (t) { t.classList.remove('is-active'); });
-                tab.classList.add('is-active');
-                var name = tab.getAttribute('data-tab');
-                q('[data-panel="paste"]').hidden = name !== 'paste';
-                q('[data-panel="file"]').hidden = name !== 'file';
-            });
-        });
-
-        /* 文件区 */
-        var drop = q('#etimp-drop');
-        var fileInput = q('#etimp-file');
-
-        var dropIconHost = drop.querySelector('.et-drop-icon');
-        var NS_SVG = 'http://www.w3.org/2000/svg'; /* et-allow-external SVG 命名空间 */
-        var dropSvg = document.createElementNS(NS_SVG, 'svg');
-        dropSvg.setAttribute('class', 'et-icon');
-        var dropUse = document.createElementNS(NS_SVG, 'use');
-        dropUse.setAttribute('href', '#i-upload');
-        dropSvg.appendChild(dropUse);
-        dropIconHost.appendChild(dropSvg);
-
-        drop.addEventListener('click', function () { fileInput.click(); });
-        drop.addEventListener('keydown', function (ev) {
-            if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); fileInput.click(); }
-        });
-        ['dragenter', 'dragover'].forEach(function (evName) {
-            drop.addEventListener(evName, function (ev) {
-                ev.preventDefault();
-                drop.classList.add('is-over');
-            });
-        });
-        ['dragleave', 'drop'].forEach(function (evName) {
-            drop.addEventListener(evName, function (ev) {
-                ev.preventDefault();
-                drop.classList.remove('is-over');
-            });
-        });
-        drop.addEventListener('drop', function (ev) {
-            var files = ev.dataTransfer && ev.dataTransfer.files;
-            if (files && files.length) { readFile(files[0]); }
-        });
-        fileInput.addEventListener('change', function () {
-            if (fileInput.files && fileInput.files.length) { readFile(fileInput.files[0]); }
-        });
-
-        function readFile(file) {
-            var reader = new FileReader();
-            reader.onload = function () {
-                var text = decodeBuffer(reader.result);
-                var isJson = /\.json$/i.test(file.name) ||
-                    (text.charAt(0) !== '\n' && (text.charAt(0) === '['));
-                if (isJson) {
-                    try {
-                        JSON.parse(text.trim()); /* 校验合法性，错误交给 parseText 报 */
-                    } catch (err) { /* parseText 会再次报错 */ }
-                }
-                textEl.value = text;
-                /* 切回粘贴页让用户可见内容 */
-                wrap.querySelectorAll('.etimp-tab').forEach(function (t) {
-                    t.classList.toggle('is-active', t.getAttribute('data-tab') === 'paste');
-                });
-                q('[data-panel="paste"]').hidden = false;
-                q('[data-panel="file"]').hidden = true;
-                refresh();
-                global.ET.Chrome.toast('已读取 ' + file.name, 'ok');
-            };
-            reader.onerror = function () {
-                global.ET.Chrome.toast('文件读取失败', 'err');
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        refresh();
-        setTimeout(function () { textEl.focus(); }, 60);
-
-        return modal;
-    }
-
-    global.ET = global.ET || {};
-    global.ET.Import = { open: open, parseText: parseText, decodeBuffer: decodeBuffer };
-})(window);
-</script>
-<!-- /ET:INLINE -->
-
 <!-- 使用统计：删除上方 et-stats 块即可完全不联网（模块化设计） -->
 <script>
-try { ET.Stats.send('use_offline', 'random-grouping'); } catch (e) { /* 静默 */ }
+try { ET.Stats.send('use_offline', 'function-grapher'); } catch (e) { /* 静默 */ }
 </script>
 
 <script>
 (function () {
     'use strict';
 
-    var TOOL_ID = 'random-grouping';
+    var TOOL_ID = 'function-grapher';
     var store = ET.store(TOOL_ID);
 
-    function clampInt(value, lo, hi, fallback) {
-        var n = Math.round(Number(value));
-        if (!isFinite(n)) { return fallback; }
-        return Math.max(lo, Math.min(hi, n));
+    var FONT = 'system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif';
+    var CHIPS = [
+        ['y = x', 'x'],
+        ['y = x²', 'x^2'],
+        ['y = x²-2x-3', 'x^2-2x-3'],
+        ['y = x³-3x', 'x^3-3x'],
+        ['y = 1/x', '1/x'],
+        ['y = 3/x', '3/x'],
+        ['y = 2^x', '2^x'],
+        ['y = sin x', 'sin x'],
+        ['y = tan x', 'tan x'],
+        ['y = ln x', 'ln x'],
+        ['y = |x|', '|x|'],
+        ['y = √x', 'sqrt x'],
+        ['y = 立方根', 'cbrt(x)'],
+        ['y = sin x / x', 'sinc(x)'],
+        ['y = e^-x²', 'gauss(x)'],
+        ['y = 方波', 'square(x)'],
+        ['y = 三角波', 'triangle(x)'],
+        ['y = 锯齿波', 'saw(x)'],
+        ['y = 取整 [x]', 'floor(x)'],
+        ['y = x·sin(1/x)', 'x*sin(1/x)']
+    ];
+
+    /* ============ 解析式编译器（递归下降，编译为闭包） ============ */
+
+    var degMode = false;
+
+    function wrapTrig(fn) {
+        return function (v) { return fn(degMode ? v * Math.PI / 180 : v); };
     }
 
-    var collator = null;
-    try { collator = new Intl.Collator('zh-Hans-CN'); } catch (e) { collator = null; }
+    function wrapInv(fn) {
+        return function (v) { var r = fn(v); return degMode ? r * 180 / Math.PI : r; };
+    }
 
-    var state = {
-        mode: store.get('mode', 'count') === 'size' ? 'size' : 'count',
-        count: clampInt(store.get('count', 4), 2, 10, 4),
-        size: clampInt(store.get('size', 6), 2, 12, 6),
-        sort: store.get('sort', false) === true,
-        roster: store.get('roster', null)
+    var FUNCS = {
+        /* 三角 / 反三角（角度制开关对输入输出影响） */
+        sin: wrapTrig(Math.sin),
+        cos: wrapTrig(Math.cos),
+        tan: wrapTrig(Math.tan),
+        cot: function (v) { return 1 / Math.tan(degMode ? v * Math.PI / 180 : v); },
+        sec: function (v) { return 1 / Math.cos(degMode ? v * Math.PI / 180 : v); },
+        csc: function (v) { return 1 / Math.sin(degMode ? v * Math.PI / 180 : v); },
+        asin: wrapInv(Math.asin),
+        acos: wrapInv(Math.acos),
+        atan: wrapInv(Math.atan),
+        sinh: Math.sinh,
+        cosh: Math.cosh,
+        tanh: Math.tanh,
+        asinh: Math.asinh,
+        acosh: Math.acosh,
+        atanh: Math.atanh,
+        /* 幂 / 根 / 对数 */
+        sqrt: Math.sqrt,
+        cbrt: Math.cbrt || function (v) { return v < 0 ? -Math.pow(-v, 1 / 3) : Math.pow(v, 1 / 3); },
+        abs: Math.abs,
+        ln: Math.log,
+        log: function (v) { return Math.log(v) / Math.LN10; },
+        log2: function (v) { return Math.log(v) / Math.LN2; },
+        exp: Math.exp,
+        /* 取整 / 分段 / 常用奇偶函数 */
+        floor: Math.floor,
+        ceil: Math.ceil,
+        round: Math.round,
+        sign: Math.sign || function (v) { return v > 0 ? 1 : (v < 0 ? -1 : 0); },
+        frac: function (v) { return v - Math.floor(v); },
+        step: function (v) { return v < 0 ? 0 : 1; },
+        relu: function (v) { return v > 0 ? v : 0; },
+        clamp: function (v) { return v < -1 ? -1 : (v > 1 ? 1 : v); },
+        /* 有趣的函数（讲波形、信号、极限时很好用） */
+        gauss: function (v) { return Math.exp(-v * v); },
+        sinc: function (v) { return Math.abs(v) < 1e-12 ? 1 : Math.sin(v) / v; },
+        square: function (v) { return Math.sin(v) >= 0 ? 1 : -1; },
+        triangle: function (v) {
+            var t = v / (2 * Math.PI);
+            t = t - Math.floor(t);
+            return t < 0.25 ? t * 4 : (t < 0.75 ? 2 - t * 4 : t * 4 - 4);
+        },
+        saw: function (v) {
+            var t = v / (2 * Math.PI);
+            return 2 * (t - Math.floor(t + 0.5));
+        }
     };
 
-    if (!Array.isArray(state.roster) || !state.roster.length) {
-        state.roster = defaultRoster();
+    /* 常见别名，照顾课本与习惯写法 */
+    FUNCS.arcsin = FUNCS.asin;
+    FUNCS.arccos = FUNCS.acos;
+    FUNCS.arctan = FUNCS.atan;
+    FUNCS.log10 = FUNCS.log;
+    FUNCS.tg = FUNCS.tan;
+    FUNCS.ctg = FUNCS.cot;
+    FUNCS.lg = FUNCS.log;
+    FUNCS.mod = function (v) { return Math.abs(v); };
+    FUNCS.int = Math.floor;
+
+    /* |x| → abs(x)：非嵌套绝对值 */
+    function convertBars(s) {
+        var out = '';
+        var open = true;
+        for (var i = 0; i < s.length; i++) {
+            var c = s.charAt(i);
+            if (c === '|') {
+                out += open ? 'abs(' : ')';
+                open = !open;
+            } else {
+                out += c;
+            }
+        }
+        return out;
     }
 
-    function defaultRoster() {
-        var out = [];
-        for (var i = 1; i <= 40; i++) { out.push(i + '号'); }
-        return out;
+    function normalize(src) {
+        var s = String(src === undefined || src === null ? '' : src);
+        s = s.replace(/[（【\[]/g, '(').replace(/[）】\]]/g, ')');
+        s = s.replace(/[×＊·∙⋅✕]/g, '*').replace(/[÷／]/g, '/');
+        s = s.replace(/[－—–−]/g, '-').replace(/＋/g, '+');
+        s = s.replace(/．|。/g, '.');
+        s = s.replace(/\*\*/g, '^');
+        s = s.replace(/²/g, '^2').replace(/³/g, '^3');
+        s = s.replace(/√/g, 'sqrt ');
+        s = s.replace(/π/g, 'pi');
+        /* 允许整体全角输入 */
+        s = s.replace(/[Ａ-Ｚａ-ｚ０-９]/g, function (c) {
+            return String.fromCharCode(c.charCodeAt(0) - 0xFEE0);
+        });
+        /* 去掉开头的 y= / f(x)= （空格式写法也兼容） */
+        s = s.replace(/^\s*y\s*=\s*/i, '').replace(/^\s*f\s*\(\s*x\s*\)\s*=\s*/i, '');
+        return convertBars(s);
+    }
+
+    function tokenize(s) {
+        var tokens = [];
+        var i = 0;
+        while (i < s.length) {
+            var c = s.charAt(i);
+            /* 空白仅作分隔符：让「sin x」「sqrt x」这类写法与「sin(x)」等价 */
+            if (c === ' ' || c === '\t' || c === '\n' || c === '\r' || c === '\u3000') {
+                i++;
+                continue;
+            }
+            if ((c >= '0' && c <= '9') || c === '.') {
+                var num = '';
+                while (i < s.length && ((s.charAt(i) >= '0' && s.charAt(i) <= '9') || s.charAt(i) === '.')) {
+                    num += s.charAt(i);
+                    i++;
+                }
+                if (isNaN(Number(num))) { throw new Error('数字格式有误：' + num); }
+                tokens.push({ t: 'num', v: Number(num) });
+                continue;
+            }
+            if (/[a-zA-Z]/.test(c)) {
+                var name = '';
+                while (i < s.length && /[a-zA-Z]/.test(s.charAt(i))) {
+                    name += s.charAt(i);
+                    i++;
+                }
+                /* log2 / log10 / asinh 这类含数字的函数名：仅当「字母 + 数字」确实是已注册函数时才吃进数字，
+                   否则保持原样（x2 仍是 x 乘 2） */
+                var digits = '';
+                var probe = i;
+                while (probe < s.length && /[0-9]/.test(s.charAt(probe))) {
+                    digits += s.charAt(probe);
+                    probe++;
+                }
+                if (digits && FUNCS[(name + digits).toLowerCase()]) {
+                    name = name + digits;
+                    i = probe;
+                }
+                tokens.push({ t: 'name', v: name.toLowerCase() });
+                continue;
+            }
+            if ('+-*/^()'.indexOf(c) !== -1) {
+                tokens.push({ t: c === '(' ? 'lp' : (c === ')' ? 'rp' : 'op'), v: c });
+                i++;
+                continue;
+            }
+            throw new Error('不认识的字符：' + c);
+        }
+        return tokens;
+    }
+
+    function compile(src) {
+        var tokens = tokenize(normalize(src));
+        if (!tokens.length) { throw new Error('请输入解析式，例如 x^2-2x-3'); }
+
+        var pos = 0;
+
+        function peek() { return tokens[pos]; }
+        function isOp(v) { var t = peek(); return !!t && t.t === 'op' && t.v === v; }
+        function mul(a, b) { return function (x) { return a(x) * b(x); }; }
+
+        function primary() {
+            var t = peek();
+            if (!t) { throw new Error('解析式不完整'); }
+
+            if (t.t === 'num') {
+                pos++;
+                var value = t.v;
+                return function () { return value; };
+            }
+
+            if (t.t === 'lp') {
+                pos++;
+                var inner = expr();
+                if (!peek() || peek().t !== 'rp') { throw new Error('括号没有闭合'); }
+                pos++;
+                return inner;
+            }
+
+            if (t.t === 'name') {
+                var name = t.v;
+                pos++;
+                if (name === 'x') { return function (x) { return x; }; }
+                if (name === 'pi') { return function () { return Math.PI; }; }
+                if (name === 'e') { return function () { return Math.E; }; }
+                if (name === 'tau') { return function () { return Math.PI * 2; }; }
+                if (name === 'phi') { return function () { return (1 + Math.sqrt(5)) / 2; }; }
+                var fn = FUNCS[name];
+                if (!fn) { throw new Error('不认识的符号：' + name); }
+                var argFn;
+                if (peek() && peek().t === 'lp') {
+                    pos++;
+                    argFn = expr();
+                    if (!peek() || peek().t !== 'rp') { throw new Error('函数 ' + name + ' 的括号没有闭合'); }
+                    pos++;
+                } else {
+                    argFn = unary();
+                }
+                return function (x) { return fn(argFn(x)); };
+            }
+
+            throw new Error('解析式不完整');
+        }
+
+        function power() {
+            var base = primary();
+            if (isOp('^')) {
+                pos++;
+                var ex = unary();
+                return function (x) { return Math.pow(base(x), ex(x)); };
+            }
+            return base;
+        }
+
+        function unary() {
+            if (isOp('-')) {
+                pos++;
+                var a = unary();
+                return function (x) { return -a(x); };
+            }
+            if (isOp('+')) {
+                pos++;
+                return unary();
+            }
+            return power();
+        }
+
+        function term() {
+            var left = unary();
+            for (;;) {
+                var t = peek();
+                if (!t) { break; }
+                if (t.t === 'op' && (t.v === '*' || t.v === '/')) {
+                    pos++;
+                    var right = unary();
+                    left = t.v === '*' ? mul(left, right)
+                        : (function (a, b) { return function (x) { return a(x) / b(x); }; })(left, right);
+                    continue;
+                }
+                /* 隐式乘法：2x、3(x+1)、x sin x */
+                if (t.t === 'num' || t.t === 'name' || t.t === 'lp') {
+                    left = mul(left, unary());
+                    continue;
+                }
+                break;
+            }
+            return left;
+        }
+
+        function expr() {
+            var left = term();
+            for (;;) {
+                var t = peek();
+                if (!t || t.t !== 'op' || (t.v !== '+' && t.v !== '-')) { break; }
+                pos++;
+                var right = term();
+                left = (function (a, b, op) {
+                    return op === '+'
+                        ? function (x) { return a(x) + b(x); }
+                        : function (x) { return a(x) - b(x); };
+                })(left, right, t.v);
+            }
+            return left;
+        }
+
+        var fn = expr();
+        if (pos < tokens.length) { throw new Error('解析式有多余内容'); }
+        return fn;
+    }
+
+    /* ============ 状态 ============ */
+
+    var cv = document.getElementById('cv');
+    var ctx = cv.getContext('2d');
+
+    var W = 800;
+    var H = 600;
+    var view = { cx: 0, cy: 0, ppu: 60 };
+    var f = null;
+    var trace = null;
+    var keyPoints = [];
+    var rafId = 0;
+
+    var settings = {
+        grid: store.get('grid', true) !== false,
+        keys: store.get('keys', true) !== false,
+        table: store.get('table', false) === true,
+        deg: store.get('deg', false) === true
+    };
+
+    degMode = settings.deg;
+
+    function safeEval(x) {
+        if (!f) { return NaN; }
+        try {
+            var v = f(x);
+            return typeof v === 'number' ? v : NaN;
+        } catch (err) {
+            return NaN;
+        }
+    }
+
+    function toPx(x) { return (x - view.cx) * view.ppu + W / 2; }
+    function toPy(y) { return H / 2 - (y - view.cy) * view.ppu; }
+    function toX(px) { return (px - W / 2) / view.ppu + view.cx; }
+    function toY(py) { return (H / 2 - py) / view.ppu + view.cy; }
+
+    function cssVar(name, fallback) {
+        try {
+            var v = window.getComputedStyle(document.documentElement).getPropertyValue(name);
+            v = String(v || '').replace(/^\s+|\s+$/g, '');
+            return v || fallback;
+        } catch (err) {
+            return fallback;
+        }
+    }
+
+    function trimNum(v, digits) {
+        var d = typeof digits === 'number' ? digits : 2;
+        var s = Number(v).toFixed(d);
+        s = s.replace(/0+$/, '').replace(/\.$/, '');
+        return (s === '-0' || s === '') ? '0' : s;
     }
 
     var chrome = ET.Chrome.mount({
         toolId: TOOL_ID,
-        title: '随机分组',
-        sub: '通用 · 小组合作',
-        accent: '#0d9488',
+        title: '函数图像绘制器',
+        sub: '数学 · 输入解析式即时绘图',
+        accent: '#2563eb',
         status: '就绪',
         sound: true,
-        primary: group,                                  /* 翻页笔 PageDown：随机分组 */
-        settings: { title: '名单设置', build: buildSettings },
+        primary: function () { applyExpr(document.getElementById('expr').value, true); },
+        secondary: resetView,
+        settings: { title: '绘图设置', build: buildSettings },
         help: '<div style="font-size:13.5px;line-height:2">' +
-            '<p style="margin:0 0 8px"><b>做什么</b>：把班级名单随机分成若干小组，结果一屏展示，适合小组合作、值日轮岗、讨论课。</p>' +
-            '<p style="margin:0 0 8px"><b>两种分法</b>：按组数（固定分成 N 组）；按每组人数（按人数反推组数）。</p>' +
-            '<p style="margin:0 0 8px"><b>人数均衡</b>：除不尽时，多出来的人分散到靠前的组，不会出现"最后一组只剩一个人"。</p>' +
-            '<p style="margin:0 0 8px"><b>快捷键</b>：空格 = 随机分组；翻页笔下页键同效。</p>' +
-            '<p style="margin:0 0 8px"><b>名单</b>：点右侧「名单」按钮可手工编辑、按学号快速生成、或从粘贴 / CSV / 文本导入。</p>' +
-            '<p style="margin:0"><b>数据</b>：名单与设置保存在本机浏览器，刷新或重开仍在，完全离线可用。</p></div>'
+            '<p style="margin:0 0 8px"><b>输入解析式</b>：支持 + − × ÷ ^ 与括号（<code>**</code> 等同 <code>^</code>），可省略乘号（2x、3(x+1) 都行），函数可带括号也可空格分隔（<code>sin x</code> = <code>sin(x)</code>），支持 |x| 绝对值、√ 根号、² ³ 上下标，y= 开头可省略；全角字符会自动转换。</p>' +
+            '<p style="margin:0 0 8px"><b>函数库</b>：<br>' +
+            '· 三角：sin cos tan cot sec csc；反三角 asin acos atan（别名 arcsin 等）<br>' +
+            '· 双曲：sinh cosh tanh asinh acosh atanh<br>' +
+            '· 幂根对数：sqrt cbrt abs ln log(10) log2 exp<br>' +
+            '· 取整分段：floor ceil round sign frac step relu clamp<br>' +
+            '· 有趣波形：gauss（钟形）sinc（sin x/x）square（方波）triangle（三角波）saw（锯齿波）<br>' +
+            '· 常量：pi e tau phi</p>' +
+            '<p style="margin:0 0 8px"><b>看图像</b>：按住拖动可平移，滚轮缩放，鼠标移到图上会实时读出该点的坐标；点「自适应」按函数值自动调整纵向范围。</p>' +
+            '<p style="margin:0 0 8px"><b>关键点</b>：自动标出与 y 轴交点、与 x 轴交点（蓝色）与最高 / 最低点（红色），便于讲二次函数顶点、方程根。</p>' +
+            '<p style="margin:0 0 8px"><b>数值表</b>：勾选后右上角出现 x / y 对应表；「导出 PNG」把当前画布保存为图片，可直接插入课件。</p>' +
+            '<p style="margin:0"><b>快捷键</b>：回车 = 绘制；↑↓←→ 平移；+ / − 缩放；R 重置；翻页笔下页键 = 绘制。</p></div>'
     });
 
-    var els = {
-        seg: document.getElementById('segMode'),
-        chips: document.getElementById('chips'),
-        labelCount: document.getElementById('labelCount'),
-        labelCountUnit: document.getElementById('labelCountUnit'),
-        labelSize: document.getElementById('labelSize'),
-        inSize: document.getElementById('inSize'),
-        chkSort: document.getElementById('chkSort'),
-        rosterInfo: document.getElementById('rosterInfo'),
-        btnRoster: document.getElementById('btnRoster'),
-        btnRun: document.getElementById('btnRun'),
-        btnRunText: document.getElementById('btnRunText'),
-        stage: document.getElementById('stage')
-    };
+    /* ============ 画布绘制 ============ */
 
-    function save() {
-        store.set('mode', state.mode);
-        store.set('count', state.count);
-        store.set('size', state.size);
-        store.set('sort', state.sort);
+    function niceStep(targetPx) {
+        var raw = targetPx / view.ppu;
+        if (!isFinite(raw) || raw <= 0) { return 1; }
+        var exp = Math.floor(Math.log(raw) / Math.LN10);
+        var base = Math.pow(10, exp);
+        var m = raw / base;
+        var mult = m <= 1 ? 1 : (m <= 2 ? 2 : (m <= 5 ? 5 : 10));
+        return mult * base;
     }
 
-    function groupCount() {
-        if (state.mode === 'size') {
-            return Math.max(1, Math.ceil(state.roster.length / state.size));
-        }
-        return state.count;
+    function tickLabel(v, step) {
+        if (Math.abs(v) < step / 1e6) { return '0'; }
+        var dec = Math.max(0, Math.min(6, Math.ceil(-Math.log(step) / Math.LN10)));
+        return Number(v).toFixed(dec);
     }
 
-    /* Fisher-Yates 洗牌：真随机，不用 sort(random) 那种有偏写法 */
-    function shuffled(list) {
-        var out = list.slice();
-        for (var i = out.length - 1; i > 0; i--) {
-            var j = Math.floor(Math.random() * (i + 1));
-            var t = out[i]; out[i] = out[j]; out[j] = t;
-        }
-        return out;
-    }
+    function draw() {
+        var cBg = cssVar('--et-surface', '#ffffff');
+        var cLine = cssVar('--et-line', 'rgba(15,23,42,.12)');
+        var cMuted = cssVar('--et-muted', '#64748b');
+        var cFg = cssVar('--et-fg', '#0b1220');
+        var cAccent = cssVar('--et-accent', '#2563eb');
 
-    function sortedNames(list) {
-        var copy = list.slice();
-        if (!collator) { return copy.sort(); }
-        return copy.sort(function (a, b) { return collator.compare(a, b); });
-    }
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = cBg;
+        ctx.fillRect(0, 0, W, H);
 
-    /** 均衡分配：轮流发牌，余数自然落到靠前的组 */
-    function divide(names, groups) {
-        var out = [];
-        for (var i = 0; i < groups; i++) { out.push([]); }
-        for (var k = 0; k < names.length; k++) {
-            out[k % groups].push(names[k]);
-        }
-        return out;
-    }
+        var step = niceStep(88);
+        var xMin = toX(0);
+        var xMax = toX(W);
+        var yMin = toY(H);
+        var yMax = toY(0);
+        var x, y, px, py;
 
-    /* ============ 渲染 ============ */
-
-    function renderEmpty() {
-        els.stage.textContent = '';
-        var box = document.createElement('div');
-        box.className = 'rg-empty';
-
-        var big = document.createElement('div');
-        big.className = 'rg-empty__big';
-        big.textContent = groupCount() + ' 组';
-
-        var tip = document.createElement('p');
-        tip.className = 'rg-empty__tip';
-        tip.textContent = '当前名单 ' + state.roster.length + ' 人。点「开始分组」或按空格键即可随机分组；'
-            + '点右上角「名单」可修改、按学号生成或导入名单。';
-
-        box.appendChild(big);
-        box.appendChild(tip);
-        els.stage.appendChild(box);
-    }
-
-    function renderGroups(groups) {
-        els.stage.textContent = '';
-        var wrap = document.createElement('div');
-        wrap.className = 'rg-groups';
-
-        for (var i = 0; i < groups.length; i++) {
-            var card = document.createElement('article');
-            card.className = 'rg-group';
-            card.style.setProperty('--rg-i', String(i));
-
-            var head = document.createElement('div');
-            head.className = 'rg-group__head';
-
-            var no = document.createElement('span');
-            no.className = 'rg-group__no';
-            no.textContent = '第 ' + (i + 1) + ' 组';
-
-            var count = document.createElement('span');
-            count.className = 'rg-group__n';
-            count.textContent = groups[i].length + ' 人';
-
-            head.appendChild(no);
-            head.appendChild(count);
-
-            var list = document.createElement('ul');
-            list.className = 'rg-group__list';
-            for (var k = 0; k < groups[i].length; k++) {
-                var li = document.createElement('li');
-                li.textContent = groups[i][k];
-                list.appendChild(li);
+        /* 网格 */
+        if (settings.grid) {
+            ctx.strokeStyle = cLine;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            x = Math.ceil(xMin / step) * step;
+            for (; x <= xMax; x += step) {
+                px = Math.round(toPx(x)) + 0.5;
+                ctx.moveTo(px, 0);
+                ctx.lineTo(px, H);
             }
-
-            card.appendChild(head);
-            card.appendChild(list);
-            wrap.appendChild(card);
-        }
-
-        els.stage.appendChild(wrap);
-    }
-
-    function refreshChrome() {
-        var bySize = state.mode === 'size';
-        els.labelCount.hidden = bySize;
-        els.chips.hidden = bySize;
-        els.labelCountUnit.hidden = bySize;
-        els.labelSize.hidden = !bySize;
-
-        els.chkSort.checked = state.sort;
-        els.inSize.value = String(state.size);
-        els.rosterInfo.textContent = '名单 ' + state.roster.length + ' 人 · 将分 ' + groupCount() + ' 组';
-
-        var buttons = els.seg.querySelectorAll('button');
-        for (var i = 0; i < buttons.length; i++) {
-            buttons[i].classList.toggle('is-active', buttons[i].getAttribute('data-mode') === state.mode);
-        }
-
-        renderChips();
-    }
-
-    function renderChips() {
-        els.chips.textContent = '';
-        for (var n = 2; n <= 10; n++) {
-            (function (value) {
-                var b = document.createElement('button');
-                b.type = 'button';
-                b.className = 'rg-chip' + (value === state.count ? ' is-active' : '');
-                b.textContent = String(value);
-                b.addEventListener('click', function () {
-                    state.count = value;
-                    save();
-                    refreshChrome();
-                    renderEmpty();
-                    chrome.beep('ok');
-                });
-                els.chips.appendChild(b);
-            })(n);
-        }
-    }
-
-    /* ============ 分组 ============ */
-
-    function group() {
-        if (state.roster.length < 2) {
-            chrome.toast('先在「名单」里设置至少 2 个人', 'warn');
-            chrome.beep('err');
-            return;
-        }
-
-        var groups = divide(shuffled(state.roster), groupCount());
-        if (state.sort) {
-            groups = groups.map(sortedNames);
-        }
-
-        store.set('last', groups);
-        renderGroups(groups);
-
-        var sizes = groups.map(function (g) { return g.length; });
-        var min = Math.min.apply(null, sizes);
-        var max = Math.max.apply(null, sizes);
-        els.btnRunText.textContent = '重新分组';
-        chrome.beep('win');
-        chrome.setStatus('已分成 ' + groups.length + ' 组 · 每组 ' + (min === max ? min + ' 人' : min + '–' + max + ' 人'));
-        chrome.toast('分组完成：' + groups.length + ' 组');
-    }
-
-    /* ============ 名单 ============ */
-
-    function splitNames(text) {
-        var out = [];
-        var lines = String(text || '').split(/\r\n|\r|\n/);
-        for (var i = 0; i < lines.length; i++) {
-            var v = lines[i].replace(/^\uFEFF/, '').trim();
-            if (v) { out.push(v); }
-        }
-        return out;
-    }
-
-    function setRoster(names, silent) {
-        state.roster = names;
-        store.set('roster', names);
-        refreshChrome();
-        if (!silent) {
-            renderEmpty();
-            els.btnRunText.textContent = '开始分组';
-        }
-    }
-
-    function openImport() {
-        if (!ET.Import || typeof ET.Import.open !== 'function') {
-            chrome.toast('导入组件不可用，请直接粘贴名单', 'warn');
-            return;
-        }
-        ET.Import.open({
-            toolId: TOOL_ID,
-            title: '导入班级名单',
-            columns: ['name'],
-            current: state.roster.join('\n'),
-            onConfirm: function (rows, meta) {
-                var names = [];
-                for (var i = 0; i < rows.length; i++) {
-                    var name = String(rows[i].name == null ? '' : rows[i].name).trim();
-                    if (name) { names.push(name); }
-                }
-                if (!names.length) { return; }
-                setRoster(names);
-                chrome.toast('已导入 ' + names.length + ' 人' +
-                    (meta && meta.dupes ? '（自动去重 ' + meta.dupes + ' 人）' : ''), 'ok');
+            y = Math.ceil(yMin / step) * step;
+            for (; y <= yMax; y += step) {
+                py = Math.round(toPy(y)) + 0.5;
+                ctx.moveTo(0, py);
+                ctx.lineTo(W, py);
             }
+            ctx.stroke();
+        }
+
+        /* 坐标轴 */
+        var axisY = toPy(0);
+        var axisX = toPx(0);
+        ctx.strokeStyle = cMuted;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        if (axisY >= -1 && axisY <= H + 1) {
+            ctx.moveTo(0, Math.round(axisY) + 0.5);
+            ctx.lineTo(W, Math.round(axisY) + 0.5);
+        }
+        if (axisX >= -1 && axisX <= W + 1) {
+            ctx.moveTo(Math.round(axisX) + 0.5, 0);
+            ctx.lineTo(Math.round(axisX) + 0.5, H);
+        }
+        ctx.stroke();
+
+        /* 刻度 */
+        ctx.fillStyle = cMuted;
+        ctx.font = '12px ' + FONT;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        var labelY = Math.min(Math.max(axisY + 5, 4), H - 18);
+        x = Math.ceil(xMin / step) * step;
+        for (; x <= xMax; x += step) {
+            if (Math.abs(x) < step / 1e6) { continue; }
+            ctx.fillText(tickLabel(x, step), toPx(x), labelY);
+        }
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        var labelX = Math.min(Math.max(axisX - 6, 36), W - 4);
+        y = Math.ceil(yMin / step) * step;
+        for (; y <= yMax; y += step) {
+            if (Math.abs(y) < step / 1e6) { continue; }
+            ctx.fillText(tickLabel(y, step), labelX, toPy(y));
+        }
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText('O', Math.min(Math.max(axisX + 5, 4), W - 16), Math.min(Math.max(axisY + 5, 4), H - 18));
+
+        /* 曲线 */
+        if (f) {
+            ctx.strokeStyle = cAccent;
+            ctx.lineWidth = 2.6;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            var started = false;
+            var prevPy = 0;
+            var limit = H * 6;
+            for (var p = -2; p <= W + 2; p += 1) {
+                var vx = toX(p);
+                var vy = safeEval(vx);
+                if (!isFinite(vy)) { started = false; continue; }
+                var cpy = toPy(vy);
+                if (!isFinite(cpy) || cpy < -limit || cpy > limit) { started = false; continue; }
+                if (started && Math.abs(cpy - prevPy) > H * 1.6) { started = false; }
+                if (started) { ctx.lineTo(p, cpy); } else { ctx.moveTo(p, cpy); started = true; }
+                prevPy = cpy;
+            }
+            ctx.stroke();
+        }
+
+        /* 关键点 */
+        if (settings.keys && keyPoints.length) {
+            for (var i = 0; i < keyPoints.length; i++) {
+                var kp = keyPoints[i];
+                var kx = toPx(kp.x);
+                var ky = toPy(kp.y);
+                if (kx < 10 || kx > W - 10 || ky < 10 || ky > H - 10) { continue; }
+                ctx.beginPath();
+                ctx.arc(kx, ky, 5, 0, Math.PI * 2);
+                ctx.fillStyle = cBg;
+                ctx.fill();
+                ctx.lineWidth = 2.4;
+                ctx.strokeStyle = kp.type === 'ext' ? '#dc2626' : cAccent;
+                ctx.stroke();
+
+                ctx.fillStyle = cFg;
+                ctx.font = '12px ' + FONT;
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'bottom';
+                var text = kp.label;
+                var tw = ctx.measureText(text).width;
+                var tx = kx + 9;
+                if (tx + tw > W - 8) { tx = kx - 9 - tw; }
+                ctx.fillText(text, tx, ky - 8);
+            }
+        }
+
+        /* 追踪十字线 */
+        if (trace && trace.ok) {
+            var tpx = trace.px;
+            var tpy = toPy(trace.y);
+            ctx.strokeStyle = cMuted;
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(tpx, 0);
+            ctx.lineTo(tpx, H);
+            ctx.moveTo(0, tpy);
+            ctx.lineTo(W, tpy);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.beginPath();
+            ctx.arc(tpx, tpy, 5.5, 0, Math.PI * 2);
+            ctx.fillStyle = cAccent;
+            ctx.fill();
+
+            var tip = '(' + trimNum(trace.x, 2) + ', ' + trimNum(trace.y, 2) + ')';
+            ctx.font = '13px ' + FONT;
+            var tipW = ctx.measureText(tip).width;
+            var bx = tpx + 12;
+            if (bx + tipW + 16 > W) { bx = tpx - tipW - 28; }
+            var by = Math.min(Math.max(tpy - 34, 6), H - 34);
+            ctx.fillStyle = cssVar('--et-glass', 'rgba(255,255,255,.9)');
+            ctx.fillRect(bx, by, tipW + 16, 26);
+            ctx.strokeStyle = cMuted;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(bx + 0.5, by + 0.5, tipW + 15, 25);
+            ctx.fillStyle = cFg;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(tip, bx + 8, by + 14);
+            ctx.textBaseline = 'top';
+        }
+    }
+
+    function scheduleDraw() {
+        if (rafId) { return; }
+        rafId = window.requestAnimationFrame(function () {
+            rafId = 0;
+            draw();
         });
     }
 
-    function downloadRoster() {
-        var text = '\uFEFF' + state.roster.join('\n') + '\n';
-        try {
-            var blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
-            var a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = '班级名单.csv';
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(function () {
-                URL.revokeObjectURL(a.href);
-                if (a.parentNode) { a.parentNode.removeChild(a); }
-            }, 1500);
-            chrome.toast('已导出名单文件');
-        } catch (e) {
-            chrome.toast('浏览器不支持下载，请手动复制', 'warn');
+    /* ============ 关键点分析 ============ */
+
+    function bisect(a, b) {
+        var fa = safeEval(a);
+        if (!isFinite(fa)) { return null; }
+        for (var i = 0; i < 60; i++) {
+            var m = (a + b) / 2;
+            var fm = safeEval(m);
+            if (!isFinite(fm)) { return null; }
+            if (Math.abs(fm) < 1e-12 || (b - a) < 1e-9) { return m; }
+            if ((fa > 0) !== (fm > 0)) { b = m; } else { a = m; fa = fm; }
+        }
+        return (a + b) / 2;
+    }
+
+    function analyze() {
+        keyPoints = [];
+        if (!f) { return; }
+
+        var xMin = toX(0);
+        var xMax = toX(W);
+        var yMin = toY(H);
+        var yMax = toY(0);
+
+        var y0 = safeEval(0);
+
+        /* x 轴交点 */
+        var n = 700;
+        var prevX = xMin;
+        var prevY = safeEval(xMin);
+        var roots = [];
+        for (var i = 1; i <= n && roots.length < 6; i++) {
+            var x = xMin + (xMax - xMin) * i / n;
+            var y = safeEval(x);
+            if (isFinite(prevY) && isFinite(y) && prevY !== 0 && y !== 0 && (prevY > 0) !== (y > 0)) {
+                var r = bisect(prevX, x);
+                if (r !== null && isFinite(r)) { roots.push(r); }
+            } else if (isFinite(y) && y === 0 && prevY !== 0) {
+                roots.push(x);
+            }
+            prevX = x;
+            prevY = y;
+        }
+        var nearZeroRoot = false;
+        for (i = 0; i < roots.length; i++) {
+            var dup = false;
+            for (var j = 0; j < i; j++) {
+                if (Math.abs(roots[i] - roots[j]) < 1e-6) { dup = true; }
+            }
+            if (dup) { continue; }
+            if (Math.abs(roots[i]) < 1e-6) { nearZeroRoot = true; }
+            keyPoints.push({ x: roots[i], y: 0, type: 'root', label: '(' + trimNum(roots[i], 3) + ', 0)' });
+        }
+
+        /* y 轴交点（已在原点标过就不再重复） */
+        if (!nearZeroRoot && isFinite(y0) && y0 >= yMin - 1e-9 && y0 <= yMax + 1e-9) {
+            keyPoints.push({ x: 0, y: y0, type: 'root', label: 'y 轴交点 (0, ' + trimNum(y0, 3) + ')' });
+        }
+
+        /* 最高 / 最低点（三点抛物线插值） */
+        var m = 500;
+        var pts = [];
+        for (i = 0; i <= m; i++) {
+            var pxVal = xMin + (xMax - xMin) * i / m;
+            pts.push({ x: pxVal, y: safeEval(pxVal) });
+        }
+        var found = 0;
+        for (i = 1; i < m && found < 4; i++) {
+            var a = pts[i - 1].y;
+            var b = pts[i].y;
+            var c = pts[i + 1].y;
+            if (!isFinite(a) || !isFinite(b) || !isFinite(c)) { continue; }
+            var isMax = (b > a && b >= c);
+            var isMin = (b < a && b <= c);
+            if (!isMax && !isMin) { continue; }
+            var h = pts[i].x - pts[i - 1].x;
+            var den = a - 2 * b + c;
+            var xv = Math.abs(den) < 1e-12 ? pts[i].x : pts[i].x + h * (a - c) / (2 * den);
+            var yv = safeEval(xv);
+            if (!isFinite(yv)) { continue; }
+            if (yv < yMin || yv > yMax) { continue; }
+            found++;
+            keyPoints.push({
+                x: xv,
+                y: yv,
+                type: 'ext',
+                label: (isMin ? '最低点 ' : '最高点 ') + '(' + trimNum(xv, 3) + ', ' + trimNum(yv, 3) + ')'
+            });
         }
     }
+
+    /* ============ 数值表与信息 ============ */
+
+    function renderTable() {
+        var panel = document.getElementById('panel');
+        if (!settings.table || !f) {
+            panel.hidden = true;
+            return;
+        }
+        panel.hidden = false;
+
+        var xMin = Math.ceil(toX(0));
+        var xMax = Math.floor(toX(W));
+        var span = xMax - xMin;
+        var stepI = span > 44 ? Math.ceil(span / 40) : 1;
+        var rows = '';
+        var count = 0;
+        for (var x = xMin; x <= xMax && count < 44; x += stepI, count++) {
+            var y = safeEval(x);
+            rows += '<tr><td>' + x + '</td><td>' +
+                (isFinite(y) ? trimNum(y, 3) : '—') + '</td></tr>';
+        }
+        document.getElementById('tableBox').innerHTML =
+            '<table><thead><tr><th>x</th><th>y</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    }
+
+    function updateInfo() {
+        var xMin = toX(0);
+        var xMax = toX(W);
+        document.getElementById('spanInfo').textContent =
+            'x ∈ [' + trimNum(xMin, 2) + ', ' + trimNum(xMax, 2) + ']　' +
+            (f ? ('关键点 ' + keyPoints.length + ' 个') : '未绘制');
+    }
+
+    function refresh(needAnalyze) {
+        if (needAnalyze !== false) { analyze(); }
+        renderTable();
+        updateInfo();
+        draw();
+    }
+
+    /* ============ 视图操作 ============ */
+
+    function resize() {
+        var stage = document.getElementById('stage');
+        var rect = stage.getBoundingClientRect();
+        var dpr = window.devicePixelRatio || 1;
+        W = Math.max(160, Math.floor(rect.width));
+        H = Math.max(140, Math.floor(rect.height));
+        cv.width = Math.round(W * dpr);
+        cv.height = Math.round(H * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        refresh(false);
+    }
+
+    function resetView() {
+        view.ppu = Math.max(22, Math.min(W, H) / 12);
+        view.cx = 0;
+        view.cy = 0;
+        refresh(true);
+        chrome.beep('tick');
+    }
+
+    function autoFit() {
+        if (!f) { return; }
+        var values = [];
+        for (var x = -12; x <= 12; x += 0.05) {
+            var y = safeEval(x);
+            if (isFinite(y) && Math.abs(y) < 1e6) { values.push(y); }
+        }
+        if (values.length < 8) {
+            chrome.toast('该函数在当前范围内取不到有效值，已回到默认视图', 'warn');
+            resetView();
+            return;
+        }
+        values.sort(function (a, b) { return a - b; });
+        var lo = values[Math.floor(values.length * 0.05)];
+        var hi = values[Math.floor(values.length * 0.95)];
+        if (hi - lo < 1e-6) { hi = lo + 2; lo -= 2; }
+        var pad = (hi - lo) * 0.16;
+        lo -= pad;
+        hi += pad;
+        view.cx = 0;
+        view.cy = (lo + hi) / 2;
+        view.ppu = Math.max(2, Math.min(H / (hi - lo), W / ((hi - lo) * 1.5)));
+        refresh(true);
+        chrome.beep('ok');
+        chrome.toast('已按函数值自适应视图');
+    }
+
+    function zoomBy(factor) {
+        view.ppu = Math.max(1e-3, Math.min(1e6, view.ppu * factor));
+        refresh(true);
+    }
+
+    /* ============ 应用解析式 ============ */
+
+    function setMsg(text, tone) {
+        var el = document.getElementById('msg');
+        el.textContent = text || '';
+        el.className = 'fg-msg' + (tone === 'err' ? ' is-err' : (tone === 'ok' ? ' is-ok' : ''));
+    }
+
+    function applyExpr(text, announce) {
+        var raw = String(text === undefined || text === null ? '' : text).replace(/^\s+|\s+$/g, '');
+        if (!raw) { raw = 'x'; }
+
+        var fn;
+        try {
+            fn = compile(raw);
+            fn(1.7);
+            fn(-2.3);
+        } catch (err) {
+            document.getElementById('expr').classList.add('is-err');
+            setMsg(err && err.message ? err.message : '解析失败', 'err');
+            chrome.beep('err');
+            return false;
+        }
+
+        var compiled = fn;
+        f = function (x) {
+            try {
+                var v = compiled(x);
+                return typeof v === 'number' ? v : NaN;
+            } catch (err2) {
+                return NaN;
+            }
+        };
+
+        document.getElementById('expr').classList.remove('is-err');
+        document.getElementById('tag').textContent = 'y = ' + raw;
+        setMsg('绘制成功', 'ok');
+        store.set('expr', raw);
+        renderChips(raw);
+        refresh(true);
+        if (announce) { chrome.beep('ok'); }
+        return true;
+    }
+
+    /* ============ 界面控件 ============ */
+
+    function renderChips(current) {
+        var box = document.getElementById('chips');
+        box.textContent = '';
+        for (var i = 0; i < CHIPS.length; i++) {
+            (function (pair) {
+                var b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'fg-chip' + (pair[1] === current ? ' is-active' : '');
+                b.textContent = pair[0];
+                b.title = '使用示例：' + pair[1];
+                b.addEventListener('click', function () {
+                    document.getElementById('expr').value = pair[1];
+                    applyExpr(pair[1], true);
+                });
+                box.appendChild(b);
+            })(CHIPS[i]);
+        }
+    }
+
+    /* ============ 设置抽屉 ============ */
 
     function buildSettings(body) {
         function heading(text) {
@@ -2932,132 +2483,241 @@ try { ET.Stats.send('use_offline', 'random-grouping'); } catch (e) { /* 静默 *
             body.appendChild(h);
         }
 
-        function row() {
-            var d = document.createElement('div');
-            d.className = 'et-drawer__row';
-            body.appendChild(d);
-            return d;
+        function switchRow(label, checked, onChange) {
+            var row = document.createElement('label');
+            row.className = 'et-drawer__switch';
+            row.appendChild(document.createTextNode(label));
+            var cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.checked = checked;
+            cb.addEventListener('change', function () { onChange(cb.checked); });
+            row.appendChild(cb);
+            body.appendChild(row);
         }
 
-        function button(host, label, icon, primary, onClick) {
-            var b = document.createElement('button');
-            b.type = 'button';
-            b.className = 'et-btn' + (primary ? ' et-btn--primary' : '');
-            b.style.flex = '1 1 40%';
-            b.innerHTML = '<svg class="et-icon"><use href="#' + icon + '"></use></svg>' + label;
-            b.addEventListener('click', onClick);
-            host.appendChild(b);
-            return b;
+        function syncCheckbox(id, value) {
+            var el = document.getElementById(id);
+            if (el) { el.checked = value; }
         }
 
-        heading('名单（一行一个名字）');
-        var area = document.createElement('textarea');
-        area.className = 'rg-ta';
-        area.spellcheck = false;
-        area.value = state.roster.join('\n');
-        area.addEventListener('input', function () {
-            setRoster(splitNames(area.value), true);
+        heading('显示');
+        switchRow('显示网格', settings.grid, function (on) {
+            settings.grid = on;
+            store.set('grid', on);
+            syncCheckbox('chkGrid', on);
+            refresh(false);
         });
-        body.appendChild(area);
-
-        var ops = row();
-        button(ops, '导入文件', 'i-upload', true, openImport);
-        button(ops, '导出名单', 'i-download', false, downloadRoster);
-        button(ops, '清空', 'i-trash', false, function () {
-            area.value = '';
-            setRoster([]);
-            chrome.toast('名单已清空');
+        switchRow('标注关键点', settings.keys, function (on) {
+            settings.keys = on;
+            store.set('keys', on);
+            syncCheckbox('chkKeys', on);
+            refresh(false);
         });
-
-        heading('按学号快速生成');
-        var gen = row();
-        gen.innerHTML =
-            '<input class="rg-num" id="rgFrom" type="number" min="1" max="999" value="1" title="起始学号">' +
-            '<span style="color:var(--et-muted);font-size:13px">到</span>' +
-            '<input class="rg-num" id="rgTo" type="number" min="1" max="999" value="40" title="结束学号">' +
-            '<input class="rg-ta" id="rgTpl" value="{n}号" style="min-height:0;flex:1 1 100%;margin-top:8px" title="名称模板，{n} 代表学号">';
-        button(gen, '生成名单', 'i-zap', false, function () {
-            var from = clampInt(document.getElementById('rgFrom').value, 1, 999, 1);
-            var to = clampInt(document.getElementById('rgTo').value, 1, 999, from);
-            if (to < from) { to = from; }
-            var tpl = document.getElementById('rgTpl').value || '{n}';
-            var names = [];
-            for (var n = from; n <= to; n++) {
-                names.push(tpl.replace(/\{n\}/g, String(n)));
-            }
-            area.value = names.join('\n');
-            setRoster(names);
-            chrome.toast('已生成 ' + names.length + ' 人名单', 'ok');
+        switchRow('显示数值表', settings.table, function (on) {
+            settings.table = on;
+            store.set('table', on);
+            syncCheckbox('chkTable', on);
+            renderTable();
         });
 
-        heading('说明');
+        heading('三角函数');
+        switchRow('角度制（sin 30 = 0.5）', settings.deg, function (on) {
+            settings.deg = on;
+            degMode = on;
+            store.set('deg', on);
+            applyExpr(document.getElementById('expr').value, false);
+        });
+
+        heading('视图');
+        var row = document.createElement('div');
+        row.className = 'et-drawer__row';
+        var fitBtn = document.createElement('button');
+        fitBtn.type = 'button';
+        fitBtn.className = 'et-btn';
+        fitBtn.style.flex = '1 1 40%';
+        fitBtn.textContent = '自适应函数值';
+        fitBtn.addEventListener('click', function () { autoFit(); });
+        var resetBtn = document.createElement('button');
+        resetBtn.type = 'button';
+        resetBtn.className = 'et-btn';
+        resetBtn.style.flex = '1 1 40%';
+        resetBtn.textContent = '重置为原点视图';
+        resetBtn.addEventListener('click', function () { resetView(); });
+        row.appendChild(fitBtn);
+        row.appendChild(resetBtn);
+        body.appendChild(row);
+
         var tip = document.createElement('p');
         tip.className = 'et-drawer__tip';
-        tip.innerHTML = '名单改完后点主界面的「开始分组」重新分组。'
-            + '<br>「组内按姓名排序」勾选后，每组内部按姓名排列，方便点名与记录。'
-            + '<br>名单与设置自动保存在本机浏览器，完全离线，不上传任何数据。';
+        tip.innerHTML = '当前解析式：<b>y = ' + (document.getElementById('tag').textContent || 'x').replace('y = ', '') + '</b>'
+            + '<br>平移拖动、滚轮缩放时，网格刻度会自动选取 1 / 2 / 5 × 10ⁿ 的整数档位，避免出现杂乱小数。'
+            + '<br>关键点中<b>蓝色</b>为与坐标轴交点，<b>红色</b>为最高 / 最低点（二次函数即顶点）。'
+            + '<br>角度制只影响 sin / cos / tan 与反三角函数的输入输出单位（默认弧度制）。';
         body.appendChild(tip);
     }
 
-    /* ============ 事件 ============ */
+    /* ============ 事件绑定 ============ */
 
-    els.seg.addEventListener('click', function (ev) {
-        var btn = ev.target.closest ? ev.target.closest('button[data-mode]') : null;
-        if (!btn) { return; }
-        state.mode = btn.getAttribute('data-mode') === 'size' ? 'size' : 'count';
-        save();
-        refreshChrome();
-        renderEmpty();
-        chrome.beep('ok');
+    function bindCanvas() {
+        var dragging = false;
+        var lastX = 0;
+        var lastY = 0;
+        var moved = false;
+
+        cv.addEventListener('pointerdown', function (ev) {
+            dragging = true;
+            moved = false;
+            lastX = ev.clientX;
+            lastY = ev.clientY;
+            cv.classList.add('is-drag');
+            if (cv.setPointerCapture) {
+                try { cv.setPointerCapture(ev.pointerId); } catch (err) { /* 忽略 */ }
+            }
+            ev.preventDefault();
+        });
+
+        cv.addEventListener('pointermove', function (ev) {
+            if (dragging) {
+                var dx = ev.clientX - lastX;
+                var dy = ev.clientY - lastY;
+                if (Math.abs(dx) + Math.abs(dy) > 1) { moved = true; }
+                view.cx -= dx / view.ppu;
+                view.cy += dy / view.ppu;
+                lastX = ev.clientX;
+                lastY = ev.clientY;
+                scheduleDraw();
+                return;
+            }
+            var rect = cv.getBoundingClientRect();
+            var px = ev.clientX - rect.left;
+            var y = safeEval(toX(px));
+            trace = { x: toX(px), y: y, px: px, ok: isFinite(y) };
+            scheduleDraw();
+        });
+
+        function endDrag() {
+            if (!dragging) { return; }
+            dragging = false;
+            cv.classList.remove('is-drag');
+            if (moved) { refresh(true); }
+        }
+
+        cv.addEventListener('pointerup', endDrag);
+        cv.addEventListener('pointercancel', endDrag);
+        cv.addEventListener('pointerleave', function () {
+            if (dragging) { return; }
+            trace = null;
+            scheduleDraw();
+        });
+
+        cv.addEventListener('wheel', function (ev) {
+            ev.preventDefault();
+            var rect = cv.getBoundingClientRect();
+            var px = ev.clientX - rect.left;
+            var py = ev.clientY - rect.top;
+            var mx = toX(px);
+            var my = toY(py);
+            var factor = Math.pow(1.0015, -ev.deltaY);
+            var next = Math.max(1e-3, Math.min(1e6, view.ppu * factor));
+            if (next === view.ppu) { return; }
+            view.ppu = next;
+            view.cx = mx - (px - W / 2) / view.ppu;
+            view.cy = my + (py - H / 2) / view.ppu;
+            refresh(true);
+        }, { passive: false });
+    }
+
+    document.getElementById('btnDraw').addEventListener('click', function () {
+        applyExpr(document.getElementById('expr').value, true);
     });
 
-    els.inSize.addEventListener('change', function () {
-        state.size = clampInt(els.inSize.value, 2, 12, state.size);
-        save();
-        refreshChrome();
-        renderEmpty();
+    document.getElementById('expr').addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') {
+            ev.preventDefault();
+            applyExpr(ev.target.value, true);
+        }
     });
 
-    els.chkSort.addEventListener('change', function () {
-        state.sort = els.chkSort.checked;
-        save();
-        chrome.toast(state.sort ? '组内将按姓名排序' : '组内保持随机顺序');
+    document.getElementById('btnZoomIn').addEventListener('click', function () { zoomBy(1.25); });
+    document.getElementById('btnZoomOut').addEventListener('click', function () { zoomBy(0.8); });
+    document.getElementById('btnReset').addEventListener('click', resetView);
+    document.getElementById('btnFit').addEventListener('click', autoFit);
+
+    document.getElementById('chkGrid').addEventListener('change', function (ev) {
+        settings.grid = ev.target.checked;
+        store.set('grid', settings.grid);
+        refresh(false);
+    });
+    document.getElementById('chkKeys').addEventListener('change', function (ev) {
+        settings.keys = ev.target.checked;
+        store.set('keys', settings.keys);
+        refresh(false);
+    });
+    document.getElementById('chkTable').addEventListener('change', function (ev) {
+        settings.table = ev.target.checked;
+        store.set('table', settings.table);
+        renderTable();
     });
 
-    els.btnRun.addEventListener('click', group);
-    els.btnRoster.addEventListener('click', function () {
-        if (typeof chrome.openSettings === 'function') {
-            chrome.openSettings();
+    document.getElementById('btnPng').addEventListener('click', function () {
+        try {
+            var url = cv.toDataURL('image/png');
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'function-graph.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            chrome.toast('已导出 PNG，可直接插入课件');
+        } catch (err) {
+            chrome.toast('当前环境不支持导出图片，可改用系统截图', 'err');
         }
     });
 
     document.addEventListener('keydown', function (ev) {
-        if (ev.code !== 'Space' && ev.key !== ' ') { return; }
         var node = document.activeElement;
         var tag = node && node.tagName ? node.tagName.toUpperCase() : '';
         if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (node && node.isContentEditable)) { return; }
         if (document.querySelector('.et-modal, .et-drawer-backdrop')) { return; }
-        ev.preventDefault();
-        group();
+
+        var pan = 40 / view.ppu;
+        if (ev.key === 'ArrowLeft') { view.cx -= pan; refresh(true); ev.preventDefault(); }
+        else if (ev.key === 'ArrowRight') { view.cx += pan; refresh(true); ev.preventDefault(); }
+        else if (ev.key === 'ArrowUp') { view.cy += pan; refresh(true); ev.preventDefault(); }
+        else if (ev.key === 'ArrowDown') { view.cy -= pan; refresh(true); ev.preventDefault(); }
+        else if (ev.key === '+' || ev.key === '=') { zoomBy(1.25); ev.preventDefault(); }
+        else if (ev.key === '-' || ev.key === '_') { zoomBy(0.8); ev.preventDefault(); }
+        else if (ev.key === 'r' || ev.key === 'R') { resetView(); ev.preventDefault(); }
+        else if (ev.code === 'Space' || ev.key === ' ') {
+            ev.preventDefault();
+            applyExpr(document.getElementById('expr').value, true);
+        }
     });
+
+    window.addEventListener('resize', function () {
+        window.clearTimeout(window.__fgResize);
+        window.__fgResize = window.setTimeout(resize, 140);
+    });
+
+    /* 主题切换后重绘（跟随 data-et-theme 变化） */
+    try {
+        var observer = new MutationObserver(function () { scheduleDraw(); });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-et-theme'] });
+    } catch (err) { /* 老内核无 MutationObserver：忽略 */ }
 
     /* ============ 启动 ============ */
 
-    refreshChrome();
+    var savedExpr = store.get('expr', 'x');
+    if (typeof savedExpr !== 'string' || !savedExpr) { savedExpr = 'x'; }
+    document.getElementById('expr').value = savedExpr;
+    document.getElementById('chkGrid').checked = settings.grid;
+    document.getElementById('chkKeys').checked = settings.keys;
+    document.getElementById('chkTable').checked = settings.table;
 
-    var last = store.get('last', null);
-    if (Array.isArray(last) && last.length && !state.sort) {
-        var total = 0;
-        for (var i = 0; i < last.length; i++) { total += last[i].length; }
-        if (total === state.roster.length) {
-            renderGroups(last);
-            els.btnRunText.textContent = '重新分组';
-        } else {
-            renderEmpty();
-        }
-    } else {
-        renderEmpty();
-    }
+    bindCanvas();
+    resize();
+    resetView();
+    applyExpr(savedExpr, false);
 })();
 </script>
 

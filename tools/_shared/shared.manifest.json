@@ -89,5 +89,115 @@
     "et-chrome-css": "ui/et-chrome.css",
     "et-chrome": "ui/et-chrome.js",
     "et-stats": "ui/et-stats.js"
+  },
+  "times-table": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "fraction-visual": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "poem-cards": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "function-grapher": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "periodic-table": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "circuit-builder": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "lens-imaging": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "pick-lottery": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js",
+    "et-import-css": "ui/et-import.css",
+    "et-import": "ui/et-import.js",
+    "random-pick": "logic/random-pick.js"
+  },
+  "stroke-order": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "idiom-dict": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "geometry-builder": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "clock-learning": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "ipa-chart": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "word-flashcard": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js",
+    "et-import-css": "ui/et-import.css",
+    "et-import": "ui/et-import.js"
+  },
+  "probability-lab": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
   }
 }

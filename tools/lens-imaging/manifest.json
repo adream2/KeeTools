@@ -1,0 +1,21 @@
+{
+  "id": "lens-imaging",
+  "title": "凸透镜成像模拟",
+  "version": "1.0.0",
+  "type": "experiment",
+  "description": "拖动物距与焦距实时算出像距和放大率，三条特殊光线与光屏清晰度同步呈现。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["7-9"],
+  "subjects": ["物理"],
+  "tags": ["凸透镜", "成像规律", "光路图", "焦距", "物距", "光屏", "光学实验", "大屏"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-18",
+  "updated_at": "2026-09-18"
+}

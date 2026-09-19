@@ -1,0 +1,35 @@
+{
+  "id": "function-grapher",
+  "title": "函数图像绘制器",
+  "version": "1.1.0",
+  "type": "fixed",
+  "description": "输入解析式即时绘图，支持平移缩放、坐标追踪、交点与顶点标注、数值表与 PNG 导出。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "7-9",
+    "10-12"
+  ],
+  "subjects": [
+    "数学"
+  ],
+  "tags": [
+    "函数图像",
+    "二次函数",
+    "反比例函数",
+    "解析式",
+    "顶点",
+    "交点",
+    "数形结合",
+    "大屏"
+  ],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-18",
+  "updated_at": "2026-09-18"
+}

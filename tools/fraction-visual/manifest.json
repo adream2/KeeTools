@@ -1,29 +1,31 @@
 {
-  "id": "alphabet-chart",
-  "title": "英语字母表",
+  "id": "fraction-visual",
+  "title": "分数可视化",
   "version": "1.1.0",
   "type": "fixed",
-  "description": "26 个英文字母的大小写、音标与例词速查，可点读发音，适合低年级字母教学。",
+  "description": "拖动色条改变分子分母，饼图与色条同时呈现，自动约分并支持两个分数通分比大小。",
   "author": "KeeTools Team",
   "entry": "index.html",
   "single_file": true,
   "offline": true,
   "grade_range": [
-    "1-2",
-    "3-4"
+    "3-4",
+    "5-6"
   ],
   "subjects": [
-    "英语"
+    "数学"
   ],
   "tags": [
-    "字母表",
-    "26个字母",
-    "音标",
-    "自然拼读",
-    "启蒙",
+    "分数",
+    "约分",
+    "通分",
+    "比大小",
+    "饼图",
+    "数轴",
+    "可视化",
     "大屏"
   ],
-  "family": "alphabet-chart",
+  "family": null,
   "license": "free",
   "dependencies": [],
   "screen": "large",
