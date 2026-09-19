@@ -67,6 +67,9 @@ final class AuthController extends AdminController
 
     public function logout(Request $request): Response
     {
+        // 登出也校验 token（GET 链接附带）：防第三方页面用 <img> 静默踢人下线
+        \App\Core\Csrf::verify(\App\Core\Csrf::fromRequest($request));
+
         Session::destroy();
 
         return Response::redirect(url('/admin/login'));

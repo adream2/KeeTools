@@ -51,7 +51,7 @@ $nav = [
       <a class="admin-nav-link" href="<?= e(url('/')) ?>" target="_blank" rel="noopener">
         <?= icon('external-link') ?>查看站点
       </a>
-      <a class="admin-nav-link" href="<?= e(url('/admin/logout')) ?>">
+      <a class="admin-nav-link" href="<?= e(url('/admin/logout')) ?>?_csrf=<?= e(\App\Core\Csrf::token()) ?>">
         <?= icon('log-out') ?>退出登录
       </a>
     </div>
