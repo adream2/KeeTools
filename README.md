@@ -62,7 +62,7 @@ php -S 127.0.0.1:8000 -t public public/router.php
 | 你可以 | 从这里开始 |
 |---|---|
 | 提需求 / 报 Bug | [Issues](../../issues/new/choose) |
-| 写一个新工具 | [CONTRIBUTING.md](CONTRIBUTING.md) · 脚手架一键生成骨架 |
+| 写一个新工具 | [教程：做一个课工具](docs/教程-做一个课工具.md)（手把手全流程） |
 | 改进共享逻辑 | `tools/_shared/`（改一处，全部工具受益） |
 | 完善文档 / 教程 | 直接 PR |
 

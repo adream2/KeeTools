@@ -7,6 +7,7 @@
  * @var int $subjectCount
  * @var array{categories: list<array{id: string, title: string, items: list<array{name: string, source: string, license: string, usage: string}>, notes: list<string>}>} $notices
  * @var bool $hasNotices
+ * @var list<array{author: string, n: int}> $authors
  */
 use App\Services\SiteOps;
 
@@ -54,6 +55,26 @@ $stats[] = ['num' => '0', 'label' => '外部依赖'];
     断网也能用，投影到教室大屏不糊；个别需要大素材的大型工具会附带资源目录，随离线合集包整目录分发。</p>
     <p>本站只做工具，不做题库、不做课程、不做作业系统；全部工具免费使用。</p>
     <p>工具可在线使用，也可在工具详情页下载或按学段打包离线合集，方便没有网络的教室。</p>
+  </div>
+</div>
+
+<div class="card about-card">
+  <div class="card-head">
+    <h2 class="card-title"><?= icon('book-open') ?>共建者</h2>
+  </div>
+  <div class="card-body">
+    <p style="color: var(--c-text-muted);">每个工具都是社区成员的作品——名单由工具元数据自动汇总，
+    你也可以成为其中一员（见<a href="https://github.com/adream2/KeeTools/blob/main/CONTRIBUTING.md"<!-- et-allow-external 项目仓库导航链接，非运行时资源 -->
+    target="_blank" rel="noopener">参与指南</a>）。</p>
+    <?php if ($authors !== []): ?>
+      <div class="chip-row" style="margin-bottom: 0;">
+        <?php foreach ($authors as $a): ?>
+          <span class="tag tag-primary"><?= e((string) $a['author']) ?> · <?= e((string) $a['n']) ?> 个工具</span>
+        <?php endforeach; ?>
+      </div>
+    <?php else: ?>
+      <p style="color: var(--c-text-muted);">工具尚未入库，名单将在扫描同步后自动生成。</p>
+    <?php endif; ?>
   </div>
 </div>
 

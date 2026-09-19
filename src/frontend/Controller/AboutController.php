@@ -33,6 +33,19 @@ final class AboutController
 
         $notices = ThirdPartyNotices::all();
 
+        /* 共建者：manifest author 聚合（工具入库时随扫描自动带出，无需手工维护） */
+        $authors = [];
+        if (App::hasDb()) {
+            try {
+                $authors = App::db()->fetchAll(
+                    'SELECT author, COUNT(*) AS n FROM tools
+                     GROUP BY author ORDER BY n DESC, author ASC LIMIT 24'
+                );
+            } catch (\Throwable) {
+                $authors = [];
+            }
+        }
+
         $html = View::render('pages/about', [
             'pageTitle'    => '关于本站 — ' . site_name(),
             'pageDesc'     => '关于 ' . site_name() . '：项目介绍与图标、音频、数据等第三方素材的版权说明',
@@ -40,6 +53,7 @@ final class AboutController
             'subjectCount' => $subjectCount,
             'notices'      => $notices,
             'hasNotices'   => ThirdPartyNotices::hasEntries(),
+            'authors'      => $authors,
         ]);
 
         return Response::html($html);
