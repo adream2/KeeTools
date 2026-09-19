@@ -1,0 +1,103 @@
+{
+  "_readme": "第三方素材登记唯一真源。/about 页与 THIRD-PARTY-LICENSES.md 均由本文件自动生成/渲染（scripts/gen_licenses.py）。新增素材：在本文件加条目 → 跑 python scripts/gen_licenses.py → 提交。",
+  "updated": "2026-09-19",
+  "preamble": "本项目遵循**零外部依赖**原则：运行时不得引用任何第三方域名资源。本登记覆盖所有**内联打包**进产出物的第三方资源及其许可证。",
+  "rules": [
+    "确认许可证允许商用",
+    "在 assets-src/third-party.json 新增条目",
+    "若许可证要求署名（如 CC-BY），在产出的页面中保留声明",
+    "若来源为 npm/CDN，需一并下载到 assets-src/ 或 tools/_shared/ 后内联",
+    "跑 python scripts/gen_licenses.py 重新生成 THIRD-PARTY-LICENSES.md"
+  ],
+  "forbidden": [
+    "不得引用运行时外部 URL",
+    "不得使用许可证不明或禁止商用的资源",
+    "不得使用带商标限制的图标集（如 logos:、simple-icons:）用于商业界面"
+  ],
+  "categories": [
+    {
+      "id": "icons",
+      "title": "图标",
+      "intro": "通过 `scripts/icons/build_sprite.py` 按需子集化，产出 `public/assets/icons/sprite.svg`，仅包含 `assets-src/icons/icons.txt` 中声明的图标。",
+      "items": [
+        {
+          "name": "Lucide Icons",
+          "source": "https://lucide.dev",
+          "license": "ISC",
+          "commercial": true,
+          "attribution": "无需（建议保留）",
+          "usage": "网站 UI 图标与工具内图标，经 Iconify 按需子集化后打包为本地 SVG sprite。"
+        },
+        {
+          "name": "Tabler Icons",
+          "source": "https://tabler.io/icons",
+          "license": "MIT",
+          "commercial": true,
+          "attribution": "无需",
+          "usage": "少量网站 UI 图标，同样本地子集化打包。"
+        }
+      ],
+      "notes": [
+        "已内置图标集明细：Lucide 以 `assets-src/icons/lucide.json`（Iconify JSON 子集，46 图标 + 4 别名）入库，获取日期 2026-09-18。",
+        "工具图标：位于 `tools/_shared/icons/icons.svg`（Lucide 子集手工内联，约 40 个 symbol，ISC 许可证，currentColor 跟随主题），经 `sync_shared.py` 内联进各工具 HTML，与网站 sprite 相互独立。",
+        "若后续引入 Material Symbols（Apache-2.0），需在本文件登记并在页面保留 NOTICE。"
+      ]
+    },
+    {
+      "id": "fonts",
+      "title": "字体",
+      "items": [],
+      "notes": [
+        "全程使用**系统字体栈**（定义于 `assets-src/css/tokens.css`），不引入任何字体文件。"
+      ]
+    },
+    {
+      "id": "js",
+      "title": "JavaScript 库",
+      "items": [],
+      "notes": [
+        "全程使用原生 JS，不引入任何 JS 库。"
+      ]
+    },
+    {
+      "id": "css",
+      "title": "CSS 框架",
+      "items": [],
+      "notes": [
+        "自写 CSS（tokens / base / components / site 四层）。"
+      ]
+    },
+    {
+      "id": "data",
+      "title": "数据与素材",
+      "items": [
+        {
+          "name": "汉语拼音音节真人录音（183 个 mp3）",
+          "source": "https://github.com/hugolpz/audio-cmn（18k-abr/syllabs/），Chen Wang 录制；原音源 shtooka/cmn",
+          "license": "CC BY-SA",
+          "commercial": true,
+          "attribution": "须署名",
+          "usage": "tools/pinyin-chart/ 点读音频（base64 内嵌）。"
+        },
+        {
+          "name": "汉字笔画中位线数据（210 字）",
+          "source": "npm hanzi-writer-data@2.0.1，派生自 Make Me a Hanzi",
+          "license": "Arphic Public License",
+          "commercial": true,
+          "attribution": "须保留许可证文本与声明",
+          "usage": "tools/stroke-order/ 逐笔书写动画（内联，运行时不联网）。"
+        }
+      ],
+      "notes": [
+        "署名义务：已在 `tools/pinyin-chart/README.md` 与工具内帮助弹窗注明「音频：Chen Wang 录制（audio-cmn，CC BY-SA）」。CC BY-SA 具有相同方式共享义务，音频以独立 mp3 形式内嵌、未做演绎修改（仅格式/码率经上游转换），在此登记以履行披露。",
+        "`hanzi-writer-data` 的笔画中位线派生自 Make Me a Hanzi（Arphic Public License），工具内仅保留每字各笔的中位线采样点（medians），未含原始 SVG 轮廓；已在 `tools/stroke-order/index.html` 的帮助弹窗与设置抽屉注明来源与许可证。"
+      ]
+    }
+  ],
+  "audit": [
+    { "date": "2026-09-18", "action": "建立登记表", "detail": "初始登记，当前仅 Lucide + Tabler" },
+    { "date": "2026-09-18", "action": "P2 工具图标集", "detail": "tools/_shared/icons/icons.svg 内联 Lucide 子集（ISC）约 40 符号" },
+    { "date": "2026-09-19", "action": "关于页上线", "detail": "/about 面向访客展示署名版" },
+    { "date": "2026-09-19", "action": "登记自动化", "detail": "唯一真源迁移至 assets-src/third-party.json，/about 自动渲染，THIRD-PARTY-LICENSES.md 改为脚本生成" }
+  ]
+}

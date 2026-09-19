@@ -15,7 +15,7 @@ use App\Services\SiteOps;
 <section class="hero">
   <h1 class="hero-title"><?= e(site_name()) ?><span class="hero-title-cn">课工具</span></h1>
   <p class="hero-subtitle">
-    免费离线课堂工具集：下载单文件，U盘插上就能用，教室断网也能上课。<br>
+    免费离线课堂工具集：下载工具，U盘插上就能用，教室断网也能上课。<br>
     不下载？在线应急使用，效果一样。
   </p>
 

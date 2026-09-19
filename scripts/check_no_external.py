@@ -54,6 +54,12 @@ NAMESPACE_HOSTS = {"www.w3.org", "schema.org", "www.sitemaps.org"}
 # 行内豁免标记
 EXEMPT_MARKER = "et-allow-external"
 
+# 文件级豁免：第三方素材登记清单——它本身就是「声明外部来源」的登记表，
+# 条目中的 URL 是署名/溯源信息，运行时永不请求（/about 与 THIRD-PARTY-LICENSES.md 均只做文本展示）。
+EXEMPT_FILES = {
+    "assets-src/third-party.json",
+}
+
 # 本站域名（部署后替换；相对路径优先，此处只是兜底白名单）
 SITE_HOSTS = {
     "keetools.cn",
@@ -79,6 +85,8 @@ def is_exempt(line: str) -> bool:
 
 
 def scan_file(path: Path) -> list[Finding]:
+    if path.relative_to(ROOT).as_posix() in EXEMPT_FILES:
+        return []
     findings: list[Finding] = []
     try:
         text = path.read_text(encoding="utf-8", errors="replace")

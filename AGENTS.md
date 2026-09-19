@@ -7,7 +7,7 @@
 
 ## 一、项目一句话说明
 
-**KeeTools**（中文名「**课工具**」，仓库 / 工作区名 `KeeTools`）—— 面向中小学课堂的**单文件 HTML 课堂工具集**：离线优先（U盘即插即用、断网可用），在线应急。只做工具，不做题库。全免费，AGPL-3.0 开源社区共建。
+**KeeTools**（中文名「**课工具**」，仓库 / 工作区名 `KeeTools`）—— 面向中小学课堂的 **HTML 课堂工具集（单文件优先，见 §三）**：离线优先（U盘即插即用、断网可用），在线应急。只做工具，不做题库。全免费，AGPL-3.0 开源社区共建。
 
 ---
 
@@ -119,7 +119,7 @@ python scripts/sync_shared.py
 | 网站后端 | PHP 8+，自研轻量框架 |
 | 数据库 | SQLite（WAL）+ PDO，**不做 ORM / 抽象层** |
 | 工程脚本 | **Python 3**（标准库优先，不引入 pip 依赖） |
-| 工具本体 | 纯 HTML/CSS/JS，资源内联 |
+| 工具本体 | 纯 HTML/CSS/JS，资源内联优先；大素材允许目录内相对引用（`single_file: false`） |
 | 版本管控 | Git |
 
 > ⚠️ **不要**擅自引入 Tailwind、Bootstrap、jQuery、Vue、React、Composer 依赖、npm 依赖。

@@ -33,3 +33,6 @@ jobs:
 
       - name: 图标 sprite 产物最新
         run: python scripts/icons/build_sprite.py --check
+
+      - name: 第三方素材登记同步
+        run: python scripts/gen_licenses.py --check

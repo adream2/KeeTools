@@ -1,106 +1,89 @@
 # 第三方资源许可证登记
 
-> 本项目遵循**零外部依赖**原则：运行时不得引用任何第三方域名资源。
-> 本文件登记所有**内联打包**进产出物的第三方资源及其许可证。
->
-> 最后更新：2026-09-18
+> 本文件由 `scripts/gen_licenses.py` 从 **`assets-src/third-party.json`** 自动生成，
+> **请勿手工编辑**（登记 / 修改请改 JSON 后重新生成）。
+> 前台展示版见 `/about`（同样由 JSON 自动渲染）。
 
 ---
 
 ## 登记规则
 
-新增任何第三方资源（图标 / 字体 / JS 库 / CSS 片段）时，必须：
+新增任何第三方资源（图标 / 音频 / 数据 / 字体 / JS 库）时，必须：
 
 1. 确认许可证允许商用
-2. 在本文件新增条目
+2. 在 assets-src/third-party.json 新增条目
 3. 若许可证要求署名（如 CC-BY），在产出的页面中保留声明
-4. 若来源为 npm/CDN，需一并下载到 `assets-src/` 或 `tools/_shared/` 后内联
+4. 若来源为 npm/CDN，需一并下载到 assets-src/ 或 tools/_shared/ 后内联
+5. 跑 python scripts/gen_licenses.py 重新生成 THIRD-PARTY-LICENSES.md
 
 **禁令**：
 
 - ❌ 不得引用运行时外部 URL
 - ❌ 不得使用许可证不明或禁止商用的资源
-- ❌ 不得使用带商标限制的图标集（如 `logos:`、`simple-icons:`）用于商业界面
+- ❌ 不得使用带商标限制的图标集（如 logos:、simple-icons:）用于商业界面
 
 ---
 
-## 一、图标
 
-| 图标集 | 来源 | 许可证 | 商用 | 署名要求 | 用途 |
+## 图标
+
+| 资源 | 来源 | 许可证 | 商用 | 署名要求 | 用途 |
 |---|---|---|---|---|---|
-| Lucide | Iconify `lucide:*` | ISC | ✅ | 无需（建议保留） | 网站 UI 图标 |
-| Tabler Icons | Iconify `tabler:*` | MIT | ✅ | 无需 | 网站 UI 图标 |
+| Lucide Icons | https://lucide.dev | ISC | ✅ | 无需（建议保留） | 网站 UI 图标与工具内图标，经 Iconify 按需子集化后打包为本地 SVG sprite。 |
+| Tabler Icons | https://tabler.io/icons | MIT | ✅ | 无需 | 少量网站 UI 图标，同样本地子集化打包。 |
 
-**使用方式**：通过 `scripts/icons/build_sprite.py` 按需子集化，产出 `public/assets/icons/sprite.svg`，仅包含 `assets-src/icons/icons.txt` 中声明的图标。
+> 已内置图标集明细：Lucide 以 `assets-src/icons/lucide.json`（Iconify JSON 子集，46 图标 + 4 别名）入库，获取日期 2026-09-18。
 
-**已内置图标集明细**：
+> 工具图标：位于 `tools/_shared/icons/icons.svg`（Lucide 子集手工内联，约 40 个 symbol，ISC 许可证，currentColor 跟随主题），经 `sync_shared.py` 内联进各工具 HTML，与网站 sprite 相互独立。
 
-| 图标集 | 内置形式 | 图标数 | 获取方式 | 获取日期 | 上游快照 |
+> 若后续引入 Material Symbols（Apache-2.0），需在本文件登记并在页面保留 NOTICE。
+
+---
+
+
+## 字体
+
+
+> 全程使用**系统字体栈**（定义于 `assets-src/css/tokens.css`），不引入任何字体文件。
+
+---
+
+
+## JavaScript 库
+
+
+> 全程使用原生 JS，不引入任何 JS 库。
+
+---
+
+
+## CSS 框架
+
+
+> 自写 CSS（tokens / base / components / site 四层）。
+
+---
+
+
+## 数据与素材
+
+| 资源 | 来源 | 许可证 | 商用 | 署名要求 | 用途 |
 |---|---|---|---|---|---|
-| Lucide | `assets-src/icons/lucide.json`（Iconify JSON 子集） | 46（+4 别名） | `python scripts/icons/prepare_source.py`（**唯一联网脚本**，一次性提取后入库） | 2026-09-18 | `lastModified=1789279477`（2026-09-13） |
+| 汉语拼音音节真人录音（183 个 mp3） | https://github.com/hugolpz/audio-cmn（18k-abr/syllabs/），Chen Wang 录制；原音源 shtooka/cmn | CC BY-SA | ✅ | 须署名 | tools/pinyin-chart/ 点读音频（base64 内嵌）。 |
+| 汉字笔画中位线数据（210 字） | npm hanzi-writer-data@2.0.1，派生自 Make Me a Hanzi | Arphic Public License | ✅ | 须保留许可证文本与声明 | tools/stroke-order/ 逐笔书写动画（内联，运行时不联网）。 |
 
-**工具图标**：位于 `tools/_shared/icons/icons.svg`（Lucide 子集手工内联，约 40 个 `<symbol>`，
-ISC 许可证，`currentColor` 跟随主题），经 `sync_shared.py` 内联进各工具 HTML，与网站 sprite 相互独立。
+> 署名义务：已在 `tools/pinyin-chart/README.md` 与工具内帮助弹窗注明「音频：Chen Wang 录制（audio-cmn，CC BY-SA）」。CC BY-SA 具有相同方式共享义务，音频以独立 mp3 形式内嵌、未做演绎修改（仅格式/码率经上游转换），在此登记以履行披露。
 
-### 待补充
-
-- [ ] 若后续引入 Material Symbols（Apache-2.0），需在此登记并在页面保留 NOTICE
+> `hanzi-writer-data` 的笔画中位线派生自 Make Me a Hanzi（Arphic Public License），工具内仅保留每字各笔的中位线采样点（medians），未含原始 SVG 轮廓；已在 `tools/stroke-order/index.html` 的帮助弹窗与设置抽屉注明来源与许可证。
 
 ---
 
-## 二、字体
 
-| 字体 | 来源 | 许可证 | 用途 |
-|---|---|---|---|
-| （无） | — | — | 全程使用**系统字体栈**，不引入任何字体文件 |
-
-**系统字体栈**（定义于 `assets-src/css/tokens.css`）：
-
-```css
---ff-sans: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB",
-           system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-```
-
----
-
-## 三、JavaScript 库
-
-| 库 | 版本 | 许可证 | 位置 | 用途 |
-|---|---|---|---|---|
-| （无） | — | — | — | 全程使用原生 JS，不引入任何 JS 库 |
-
----
-
-## 四、CSS 框架
-
-| 框架 | 版本 | 许可证 | 说明 |
-|---|---|---|---|
-| （无） | — | — | 自写 CSS（tokens / base / components / site） |
-
-
----
-
-## 五、数据与素材
-
-| 资源 | 来源 | 许可证 | 用途 |
-|---|---|---|---|
-| 汉语拼音音节真人录音（183 个 mp3） | github.com/hugolpz/audio-cmn（`18k-abr/syllabs/`），Chen Wang 录制 | **CC BY-SA**（仓库 README 明示；原音源 shtooka/cmn） | `tools/pinyin-chart/` 点读音频（base64 内嵌） |
-| 汉字笔画中位线数据（210 字） | npm `hanzi-writer-data@2.0.1`，派生自 Make Me a Hanzi | **Arphic Public License**（允许商用，须保留许可证文本与声明） | `tools/stroke-order/` 逐笔书写动画（内联，运行时不联网） |
-
-> 署名义务：已在 `tools/pinyin-chart/README.md` 与工具内帮助弹窗注明
-> "音频：Chen Wang 录制（audio-cmn，CC BY-SA）"。CC BY-SA 具有相同方式共享义务，
-> 音频原文以独立 mp3 形式内嵌、未做演绎修改（仅格式/码率经上游转换），在此登记以履行披露。
->
-> `hanzi-writer-data` 的笔画中位线派生自 Make Me a Hanzi（Arphic Public License），
-> 工具内仅保留每字各笔的中位线采样点（medians），未含原始 SVG 轮廓；
-> 已在 `tools/stroke-order/index.html` 的帮助弹窗与设置抽屉注明来源与许可证。
-
----
-
-## 六、审计记录
+## 审计记录
 
 | 日期 | 操作 | 说明 |
 |---|---|---|
 | 2026-09-18 | 建立登记表 | 初始登记，当前仅 Lucide + Tabler |
-| 2026-09-18 | P2 工具图标集 | `tools/_shared/icons/icons.svg` 内联 Lucide 子集（ISC）约 40 符号，供 5 个 P2 工具使用 |
-| 2026-09-19 | 关于页上线 | `/about` 面向访客展示本登记表的署名版（图标集 / 拼音音频 CC BY-SA / 笔顺数据 Arphic），新增素材时两处同步维护 |
+| 2026-09-18 | P2 工具图标集 | tools/_shared/icons/icons.svg 内联 Lucide 子集（ISC）约 40 符号 |
+| 2026-09-19 | 关于页上线 | /about 面向访客展示署名版 |
+| 2026-09-19 | 登记自动化 | 唯一真源迁移至 assets-src/third-party.json，/about 自动渲染，THIRD-PARTY-LICENSES.md 改为脚本生成 |
