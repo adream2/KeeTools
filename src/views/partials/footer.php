@@ -59,6 +59,10 @@ if ($navLinks === []) {
             <?= icon('heart') ?>支持本站
           </a>
         <?php endif; ?>
+        <ul class="site-footer-contact">
+          <li><a href="https://qm.qq.com/q/djTRxXXQNq" target="_blank" rel="noopener nofollow">QQ 群：KeeTools</a><!-- et-allow-external 社群加入链接，用户主动跳转 --></li>
+          <li><a href="https://pd.qq.com/s/fhc0uxdjn" target="_blank" rel="noopener nofollow">QQ 频道：KeeTools</a><!-- et-allow-external 社群加入链接，用户主动跳转 --></li>
+        </ul>
       </div>
 
       <nav class="site-footer-col" aria-label="页脚导航">

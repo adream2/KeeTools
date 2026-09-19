@@ -15,6 +15,18 @@ use App\Services\SiteOps;
 $footerCfg = SiteOps::footer();
 $hasFooterContact = $footerCfg['contact_email'] !== '' || $footerCfg['contact_text'] !== [];
 
+/**
+ * 渲染登记备注中的受限 Markdown（**加粗** 与 `行内代码`）。
+ * 内容先整体转义再替换，杜绝注入。
+ */
+function notice_md(string $text): string
+{
+    $escaped = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+    $escaped = preg_replace('/\*\*(.+?)\*\*/s', '<strong>$1</strong>', $escaped) ?? $escaped;
+
+    return preg_replace('/`([^`]+)`/', '<code>$1</code>', $escaped) ?? $escaped;
+}
+
 $stats = [];
 if ($toolCount > 0) {
     $stats[] = ['num' => (string) $toolCount, 'label' => '课堂工具'];
@@ -79,8 +91,7 @@ $stats[] = ['num' => '0', 'label' => '外部链接'];
   </div>
   <div class="card-body">
     <p style="color: var(--c-text-muted);">每个工具都是社区成员的作品——名单由工具元数据自动汇总，
-    你也可以成为其中一员（见<a href="https://github.com/adream2/KeeTools/blob/main/CONTRIBUTING.md"<!-- et-allow-external 项目仓库导航链接，非运行时资源 -->
-    target="_blank" rel="noopener">参与指南</a>）。</p>
+    你也可以成为其中一员（见<a href="https://github.com/adream2/KeeTools/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener"><!-- et-allow-external 项目仓库导航链接，非运行时资源 -->参与指南</a>）。</p>
     <?php if ($authors !== []): ?>
       <div class="chip-row" style="margin-bottom: 0;">
         <?php foreach ($authors as $a): ?>
@@ -127,7 +138,7 @@ $stats[] = ['num' => '0', 'label' => '外部链接'];
           </ul>
         <?php endif; ?>
         <?php foreach ($category['notes'] as $note): ?>
-          <p style="font-size: var(--fs-sm); color: var(--c-text-muted);"><?= e($note) ?></p>
+          <p style="font-size: var(--fs-sm); color: var(--c-text-muted);"><?= notice_md($note) ?></p>
         <?php endforeach; ?>
       <?php endforeach; ?>
 
@@ -149,11 +160,11 @@ $stats[] = ['num' => '0', 'label' => '外部链接'];
     <p style="color: var(--c-text-muted);">加入频道 / 群，获取工具更新通知、提需求、和其他老师交流用法（扫码加入）：</p>
     <div class="sponsor-qr-grid" style="max-width: 420px;">
       <div class="sponsor-qr-card">
-        <img src="<?= e(asset('img/qq-channel.jpg')) ?>" alt="QQ 频道二维码" loading="lazy" style="width: 100%; height: auto; object-fit: contain; border-radius: var(--r-md);">
+        <a href="https://pd.qq.com/s/fhc0uxdjn" target="_blank" rel="noopener nofollow"><!-- et-allow-external QQ 社群加入链接，用户主动跳转 --><img src="<?= e(asset('img/qq-channel.jpg')) ?>" alt="QQ 频道二维码" loading="lazy" style="width: 100%; height: auto; object-fit: contain; border-radius: var(--r-md);"></a>
         <p class="sponsor-qr-title">QQ 频道</p>
       </div>
       <div class="sponsor-qr-card">
-        <img src="<?= e(asset('img/qq-group.jpg')) ?>" alt="QQ 群二维码" loading="lazy" style="width: 100%; height: auto; object-fit: contain; border-radius: var(--r-md);">
+        <a href="https://qm.qq.com/q/djTRxXXQNq" target="_blank" rel="noopener nofollow"><!-- et-allow-external QQ 社群加入链接，用户主动跳转 --><img src="<?= e(asset('img/qq-group.jpg')) ?>" alt="QQ 群二维码" loading="lazy" style="width: 100%; height: auto; object-fit: contain; border-radius: var(--r-md);"></a>
         <p class="sponsor-qr-title">QQ 群</p>
       </div>
     </div>
