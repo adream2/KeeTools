@@ -1,0 +1,21 @@
+{
+  "id": "solar-system",
+  "title": "太阳系模型",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "八大行星轨道动画与比例对比，点击行星查看档案，天文启蒙演示。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["3-4", "5-6"],
+  "subjects": ["科学"],
+  "tags": ["科学"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}

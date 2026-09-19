@@ -1,0 +1,21 @@
+{
+  "id": "water-states",
+  "title": "水的三态",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "温度滑杆观察水的固液气三态变化，粒子运动与熔化沸腾点互动演示。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["1-2", "3-4"],
+  "subjects": ["科学"],
+  "tags": ["科学"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}

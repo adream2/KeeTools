@@ -1,0 +1,21 @@
+{
+  "id": "magnet-demo",
+  "title": "磁铁演示",
+  "version": "1.0.0",
+  "type": "experiment",
+  "description": "拖动磁铁体验同极相斥异极相吸，磁感线可视化，小学科学磁铁单元。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["1-2", "3-4"],
+  "subjects": ["科学"],
+  "tags": ["科学"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}

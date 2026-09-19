@@ -1,0 +1,21 @@
+{
+  "id": "chart-maker",
+  "title": "统计图生成器",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "输入数据即时生成条形 / 折线 / 扇形统计图，支持编辑数据与全屏展示。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["5-6"],
+  "subjects": ["数学"],
+  "tags": ["数学"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}

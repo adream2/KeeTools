@@ -1,0 +1,2889 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>座位表 / 排座位 — KeeTools 课工具</title>
+<!-- ET-META
+{"id":"seat-chart","version":"1.0.0"}
+-->
+
+<!-- 共享外壳样式（由 sync_shared.py 注入） -->
+<!-- ET:INLINE name="et-chrome-css" src="ui/et-chrome.css" type="css" -->
+<style>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * et-chrome.css — 工具通用外壳样式（顶栏 / 页脚 / 弹窗 / 按钮 / 主题）
+ *
+ * 共享样式源。改这里，然后跑：python scripts/sync_shared.py
+ * 所有类名带 et- 前缀，避免与工具自身样式冲突。
+ * 依赖：无外部资源；颜色全部为令牌变量。
+ */
+
+/* ============ 设计令牌 ============ */
+:root {
+    --et-accent: #2563eb;
+    --et-accent-weak: rgba(37, 99, 235, .14);
+    --et-bg: #f4f6fb;
+    --et-surface: #ffffff;
+    --et-surface-2: #f8fafc;
+    --et-fg: #0b1220;
+    --et-muted: #64748b;
+    --et-line: rgba(15, 23, 42, .12);
+    --et-line-strong: rgba(15, 23, 42, .22);
+    --et-glass: rgba(255, 255, 255, .85);
+    --et-shadow-md: 0 10px 28px -18px rgba(15, 23, 42, .3);
+    --et-shadow-lg: 0 24px 60px -32px rgba(15, 23, 42, .4);
+    --et-ok: #059669;
+    --et-warn: #d97706;
+    --et-err: #dc2626;
+    --et-radius: 12px;
+    --et-radius-sm: 9px;
+    --et-font: -apple-system, BlinkMacSystemFont, "Segoe UI",
+               "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+               "Noto Sans SC", sans-serif;
+    --et-mono: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace;
+}
+
+html[data-et-theme="dark"] {
+    --et-bg: #0b1120;
+    --et-surface: #111a2e;
+    --et-surface-2: #0f1729;
+    --et-fg: #f1f5f9;
+    --et-muted: #94a3b8;
+    --et-line: rgba(148, 163, 184, .18);
+    --et-line-strong: rgba(148, 163, 184, .3);
+    --et-glass: rgba(17, 26, 46, .85);
+    --et-shadow-md: 0 10px 34px -18px rgba(0, 0, 0, .8);
+    --et-shadow-lg: 0 24px 70px -30px rgba(0, 0, 0, .9);
+    --et-ok: #34d399;
+    --et-warn: #fbbf24;
+    --et-err: #f87171;
+}
+
+/* ============ 基础 ============ */
+.et-app {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    background: var(--et-bg);
+    color: var(--et-fg);
+    font-family: var(--et-font);
+    -webkit-font-smoothing: antialiased;
+    transition: background .25s, color .25s;
+}
+
+/* 极光背景：径向渐变 + 呼吸动画（edupick 品质基线，老内核也不掉帧） */
+.et-app::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(46% 40% at 20% 18%, var(--et-accent-weak), transparent 65%),
+        radial-gradient(42% 38% at 82% 24%, var(--et-accent-weak), transparent 70%),
+        radial-gradient(50% 44% at 55% 95%, rgba(16, 185, 129, .10), transparent 65%);
+    animation: et-aurora 16s ease-in-out infinite alternate;
+}
+
+@keyframes et-aurora {
+    from { opacity: .55; transform: scale(1); }
+    to { opacity: 1; transform: scale(1.06); }
+}
+
+.et-app *,
+.et-app *::before,
+.et-app *::after { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+.et-icon {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex: none;
+}
+
+/* ============ 顶栏 ============ */
+.et-topbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 20px;
+    border-bottom: 1px solid var(--et-line);
+    background: var(--et-glass);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    z-index: 20;
+}
+
+.et-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.et-brand__dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--et-accent);
+    box-shadow: 0 0 0 4px var(--et-accent-weak);
+    flex: none;
+}
+
+.et-brand__name {
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: -.01em;
+    white-space: nowrap;
+}
+
+.et-brand__sub {
+    font-size: 12.5px;
+    color: var(--et-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.et-status {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    color: var(--et-muted);
+    background: var(--et-surface-2);
+    border: 1px solid var(--et-line);
+    white-space: nowrap;
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.et-status__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--et-ok);
+    flex: none;
+    transition: background .2s;
+}
+
+.et-status[data-tone="err"] .et-status__dot { background: var(--et-err); }
+.et-status[data-tone="warn"] .et-status__dot { background: var(--et-warn); }
+
+.et-actions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.et-icon-btn {
+    display: inline-grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
+    line-height: 1;
+    border-radius: 11px;
+    border: 1px solid var(--et-line);
+    background: var(--et-surface-2);
+    color: var(--et-fg);
+    cursor: pointer;
+    transition: transform .14s, border-color .14s, color .14s, opacity .14s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.et-icon-btn:hover {
+    border-color: var(--et-accent);
+    color: var(--et-accent);
+    transform: translateY(-1px);
+}
+
+.et-icon-btn:active { transform: translateY(0); }
+.et-icon-btn.is-off { opacity: .4; }
+.et-icon-btn:focus-visible { outline: 2px solid var(--et-accent); outline-offset: 2px; }
+
+/* ============ 主区默认 ============ */
+.et-main {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: auto;
+}
+
+/* ============ 页脚（品牌回流 L2） ============ */
+.et-footer {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 16px;
+    font-size: 12px;
+    color: var(--et-muted);
+    border-top: 1px solid var(--et-line);
+    background: var(--et-glass);
+    user-select: none;
+    z-index: 20;
+}
+
+.et-footer a {
+    color: inherit;
+    text-decoration: none;
+    transition: color .14s;
+}
+
+.et-footer a:hover { color: var(--et-accent); }
+
+/* ============ 按钮 ============ */
+.et-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 16px;
+    border-radius: 11px;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    border: 1px solid var(--et-line);
+    background: var(--et-surface-2);
+    color: var(--et-fg);
+    cursor: pointer;
+    transition: transform .14s, border-color .14s, color .14s, background .14s, box-shadow .14s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.et-btn:hover {
+    border-color: var(--et-accent);
+    color: var(--et-accent);
+    transform: translateY(-1px);
+}
+
+.et-btn:active { transform: translateY(0); }
+.et-btn:focus-visible { outline: 2px solid var(--et-accent); outline-offset: 2px; }
+.et-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+.et-btn--primary {
+    background: var(--et-accent);
+    border-color: var(--et-accent);
+    color: #fff;
+    box-shadow: 0 6px 18px -8px var(--et-accent);
+}
+
+.et-btn--primary:hover { color: #fff; filter: brightness(1.08); }
+.et-btn--primary:disabled { filter: none; }
+
+.et-btn--danger:hover {
+    border-color: var(--et-err);
+    color: var(--et-err);
+}
+
+.et-btn--lg {
+    padding: 13px 26px;
+    font-size: 16px;
+    border-radius: 14px;
+}
+
+/* ============ 弹窗 ============ */
+.et-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(2, 6, 23, .55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: et-fade .18s ease;
+}
+
+.et-modal__panel {
+    width: min(680px, 94vw);
+    max-height: 86vh;
+    max-height: 86dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--et-surface);
+    border: 1px solid var(--et-line);
+    border-radius: 16px;
+    box-shadow: var(--et-shadow-lg);
+    animation: et-pop .2s cubic-bezier(.34, 1.4, .64, 1);
+    overflow: hidden;
+}
+
+.et-modal__panel--narrow { width: min(460px, 92vw); }
+.et-modal__panel--wide { width: min(900px, 94vw); }
+
+.et-modal__head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--et-line);
+    font-weight: 800;
+    font-size: 15px;
+}
+
+.et-modal__head .et-icon-btn {
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+}
+
+.et-modal__body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 18px 20px;
+}
+
+.et-modal__foot {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--et-line);
+    background: var(--et-surface-2);
+}
+
+.et-modal__foot .spacer { flex: 1; }
+
+@keyframes et-fade {
+    from { opacity: 0; }
+}
+
+@keyframes et-pop {
+    from { opacity: 0; transform: translateY(14px) scale(.97); }
+}
+
+/* ============ 轻提示（toast） ============ */
+.et-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 56px;
+    transform: translateX(-50%) translateY(10px);
+    z-index: 120;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    max-width: min(520px, 88vw);
+    padding: 11px 18px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #fff;
+    background: rgba(15, 23, 42, .92);
+    border: 1px solid rgba(148, 163, 184, .25);
+    box-shadow: var(--et-shadow-lg);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .22s, transform .22s;
+}
+
+.et-toast.is-show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.et-toast[data-tone="ok"] { background: rgba(5, 150, 105, .95); }
+.et-toast[data-tone="err"] { background: rgba(220, 38, 38, .95); }
+.et-toast[data-tone="warn"] { background: rgba(217, 119, 6, .95); }
+
+/* ============ 设置抽屉（右上角入口，edupick 交互） ============ */
+.et-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: rgba(2, 6, 23, .45);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    opacity: 0;
+    transition: opacity .2s;
+}
+
+.et-drawer-backdrop.is-open { opacity: 1; }
+
+.et-drawer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: min(400px, 92vw);
+    display: flex;
+    flex-direction: column;
+    background: var(--et-surface);
+    border-left: 1px solid var(--et-line);
+    box-shadow: var(--et-shadow-lg);
+    transform: translateX(100%);
+    transition: transform .22s cubic-bezier(.32, .72, .35, 1);
+}
+
+.et-drawer-backdrop.is-open .et-drawer { transform: translateX(0); }
+
+.et-drawer__head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 18px;
+    border-bottom: 1px solid var(--et-line);
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--et-accent);
+}
+
+.et-drawer__head .et-icon-btn {
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+}
+
+.et-drawer__body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 16px 18px 24px;
+}
+
+/* 抽屉内容通用小节（工具复用） */
+.et-drawer__body h4 {
+    margin: 18px 0 8px;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--et-muted);
+}
+
+.et-drawer__body h4:first-child { margin-top: 0; }
+
+.et-drawer__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.et-drawer__tip {
+    margin: 8px 0 0;
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--et-muted);
+}
+
+.et-drawer__tip b { color: var(--et-fg); }
+
+.et-drawer__input {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 12px;
+    border: 1px solid var(--et-line-strong);
+    border-radius: 9px;
+    background: var(--et-surface-2);
+    color: var(--et-fg);
+    font: inherit;
+    font-size: 13.5px;
+    transition: border-color .14s, box-shadow .14s;
+}
+
+.et-drawer__input:focus {
+    outline: none;
+    border-color: var(--et-accent);
+    box-shadow: 0 0 0 3px var(--et-accent-weak);
+}
+
+.et-drawer__switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--et-line);
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--et-fg);
+    cursor: pointer;
+    user-select: none;
+}
+
+.et-drawer__switch input {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--et-accent);
+    cursor: pointer;
+}
+</style>
+<!-- /ET:INLINE -->
+
+<style>
+/* ── 工具自身样式：自包含，不引用任何外部资源 ── */
+:root {
+    --seatchart-accent: #0ea5e9;
+}
+
+.seatchart-main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 24px;
+    overflow: auto;
+}
+
+.seatchart-podium {
+    flex: none;
+    width: 60%;
+    max-width: 620px;
+    padding: 7px 0;
+    text-align: center;
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: .4em;
+    text-indent: .4em;
+    color: var(--et-muted);
+    background: var(--et-surface-2);
+    border: 1px dashed var(--et-line-strong);
+    border-radius: 10px;
+    user-select: none;
+}
+
+.seatchart-podium.is-bottom { order: 9; }
+
+.seatchart-wrap {
+    width: 100%;
+    max-width: 1120px;
+    margin: auto 0;
+}
+
+.seatchart-grid {
+    display: grid;
+    grid-auto-flow: row;
+    gap: 10px;
+}
+
+.seatchart-cell {
+    position: relative;
+    height: 62px;
+    border-radius: 12px;
+    background: var(--et-surface);
+    border: 2px solid var(--et-line-strong);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--et-fg);
+    user-select: none;
+    -webkit-user-select: none;
+    transition: transform .12s, border-color .12s, box-shadow .12s;
+}
+
+.seatchart-cell:hover { border-color: var(--et-accent); }
+
+.seatchart-cell.is-empty {
+    background: transparent;
+    border-style: dashed;
+    color: var(--et-muted);
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.seatchart-cell.is-sel {
+    border-color: var(--et-accent);
+    box-shadow: 0 0 0 3px var(--et-accent-weak);
+    transform: translateY(-2px);
+}
+
+.seatchart-cell.is-mark { border-color: var(--et-accent); }
+
+.seatchart-no {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--et-muted);
+    line-height: 1;
+    opacity: .8;
+}
+
+.seatchart-mark {
+    position: absolute;
+    top: -8px;
+    left: -6px;
+    font-size: 15px;
+    line-height: 1;
+    color: var(--et-accent);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .18);
+    pointer-events: none;
+}
+
+.seatchart-spacer { visibility: hidden; height: 62px; }
+
+.seatchart-unseated {
+    flex: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    justify-content: center;
+    max-width: 1120px;
+    padding: 9px 14px;
+    border-radius: 12px;
+    background: var(--et-surface-2);
+    border: 1px solid var(--et-line);
+    font-size: 13px;
+    color: var(--et-muted);
+}
+
+.seatchart-unseated b {
+    color: var(--et-fg);
+    font-size: 13px;
+    margin-right: 2px;
+}
+
+.seatchart-chip {
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--et-surface);
+    border: 1px solid var(--et-line-strong);
+    color: var(--et-fg);
+    font-weight: 600;
+}
+
+.seatchart-hint {
+    flex: none;
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--et-muted);
+    text-align: center;
+}
+</style>
+</head>
+<body class="et-app">
+
+<header id="et-topbar"></header>
+
+<main id="et-main" class="seatchart-main">
+    <div class="seatchart-podium" id="podium">讲 台</div>
+    <div class="seatchart-wrap">
+        <div class="seatchart-grid" id="grid"></div>
+    </div>
+    <div class="seatchart-unseated" id="unseated" hidden></div>
+    <p class="seatchart-hint" id="hint">先点右上角「导入名单」导入学生，然后点击两个座位可交换。</p>
+</main>
+
+<footer id="et-footer"></footer>
+
+<!-- 图标集合（由 sync_shared.py 注入） -->
+<!-- ET:INLINE name="icons" src="icons/icons.svg" type="svg" -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <!--
+    工具用图标 symbol 集合（内联源，独立于网站 sprite）。
+
+    来源：Lucide (ISC License) 子集，手工挑选内联。
+    颜色统一 currentColor；描边样式由工具 CSS 的 .et-icon 控制：
+      .et-icon { fill:none; stroke:currentColor; stroke-width:2;
+                 stroke-linecap:round; stroke-linejoin:round; }
+
+    工具内用法：
+      <svg class="et-icon"><use href="#i-play"></use></svg>
+  -->
+
+  <symbol id="i-maximize" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
+  <symbol id="i-minimize" viewBox="0 0 24 24"><path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></symbol>
+  <symbol id="i-volume" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></symbol>
+  <symbol id="i-volume-off" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></symbol>
+  <symbol id="i-rotate" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></symbol>
+  <symbol id="i-dice" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none"/><circle cx="16" cy="8" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="8" cy="16" r="1.2" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.2" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+  <symbol id="i-timer" viewBox="0 0 24 24"><line x1="10" y1="2" x2="14" y2="2"/><line x1="12" y1="14" x2="15" y2="11"/><circle cx="12" cy="14" r="8"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z"/></symbol>
+  <symbol id="i-chevron-left" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><polyline points="12 7 12 12 15 15"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+  <symbol id="i-crown" viewBox="0 0 24 24"><path d="M2 18h20l-2-11-5 4-3-7-3 7-5-4-2 11z"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+  <symbol id="i-shuffle" viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-award" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
+  <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="10"/><line x1="10" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="14" y2="10"/><line x1="18" y1="10" x2="18" y2="10"/><line x1="7" y1="14" x2="17" y2="14"/></symbol>
+</svg>
+<!-- /ET:INLINE -->
+
+<!-- 共享逻辑（由 sync_shared.py 注入） -->
+<!-- ET:INLINE name="et-util" src="logic/et-util.js" -->
+<script>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * et-util.js — 工具通用小工具函数
+ *
+ * 共享逻辑源。改这里，然后跑：python scripts/sync_shared.py
+ * 禁止手工编辑工具 HTML 内 ET:INLINE 之间的内容。
+ *
+ * 兼容性：ES5，Win7 + 老版 Chrome / 360 可运行。
+ * 依赖：无。
+ * 全局：挂载 window.ET（单一命名空间，不污染其他全局）
+ */
+(function (global) {
+    'use strict';
+
+    var ET = global.ET || {};
+
+    /** 按 id 取元素 */
+    ET.el = function (id) {
+        return document.getElementById(id);
+    };
+
+    /** 按选择器取首个元素 */
+    ET.qs = function (selector, root) {
+        return (root || document).querySelector(selector);
+    };
+
+    /** 按选择器取全部元素，返回真数组 */
+    ET.qsa = function (selector, root) {
+        var list = (root || document).querySelectorAll(selector);
+        var out = [];
+        for (var i = 0; i < list.length; i++) {
+            out.push(list[i]);
+        }
+        return out;
+    };
+
+    /** 创建元素 */
+    ET.create = function (tag, className, text) {
+        var node = document.createElement(tag);
+        if (className) {
+            node.className = className;
+        }
+        if (text !== undefined && text !== null) {
+            node.textContent = String(text);
+        }
+        return node;
+    };
+
+    /** HTML 转义（用于把用户数据放进 HTML 字符串时） */
+    ET.escapeHtml = function (value) {
+        return String(value === undefined || value === null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    };
+
+    /** 触发自定义事件（老浏览器用 createEvent 降级） */
+    ET.emit = function (target, name, detail) {
+        var event;
+        if (typeof global.CustomEvent === 'function') {
+            event = new global.CustomEvent(name, { detail: detail });
+        } else {
+            event = document.createEvent('CustomEvent');
+            event.initCustomEvent(name, false, false, detail);
+        }
+        target.dispatchEvent(event);
+    };
+
+    /**
+     * localStorage 读写（带前缀与异常兜底）
+     * 前缀规范：et_{toolId}_
+     */
+    ET.store = function (toolId) {
+        var prefix = 'et_' + toolId + '_';
+
+        function available() {
+            try {
+                var probe = prefix + '__probe__';
+                global.localStorage.setItem(probe, '1');
+                global.localStorage.removeItem(probe);
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+
+        var ok = available();
+
+        return {
+            /** 读取，解析失败返回 fallback */
+            get: function (key, fallback) {
+                if (!ok) {
+                    return fallback;
+                }
+                try {
+                    var raw = global.localStorage.getItem(prefix + key);
+                    if (raw === null) {
+                        return fallback;
+                    }
+                    return JSON.parse(raw);
+                } catch (err) {
+                    return fallback;
+                }
+            },
+            /** 写入，失败静默（隐私模式 / 配额满） */
+            set: function (key, value) {
+                if (!ok) {
+                    return false;
+                }
+                try {
+                    global.localStorage.setItem(prefix + key, JSON.stringify(value));
+                    return true;
+                } catch (err) {
+                    return false;
+                }
+            },
+            /** 删除 */
+            remove: function (key) {
+                if (!ok) {
+                    return;
+                }
+                try {
+                    global.localStorage.removeItem(prefix + key);
+                } catch (err) {
+                    /* 静默 */
+                }
+            }
+        };
+    };
+
+    /** DOM 就绪回调（脚本在 head 内也能安全调用） */
+    ET.ready = function (callback) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', callback);
+        } else {
+            callback();
+        }
+    };
+
+    global.ET = ET;
+})(window);
+</script>
+<!-- /ET:INLINE -->
+
+<!-- ET:INLINE name="et-chrome" src="ui/et-chrome.js" -->
+<script>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * et-chrome.js — 工具通用外壳（顶栏 / 页脚 / 主题 / 全屏 / 音效 / 设置抽屉 / 帮助 / PWA）
+ *
+ * 共享逻辑源。改这里，然后跑：python scripts/sync_shared.py
+ * 依赖：et-util.js（ET.store）
+ * 兼容性：现代浏览器优先（Chrome 90+），无外部依赖。
+ * 全局：ET.Chrome
+ *
+ * 工具 HTML 约定的骨架：
+ *   <body class="et-app">
+ *     <header id="et-topbar"></header>
+ *     <main id="et-main">…工具内容…</main>
+ *     <footer id="et-footer"></footer>
+ *   </body>
+ *
+ * 用法：
+ *   var chrome = ET.Chrome.mount({
+ *     toolId: 'random-name-classic',
+ *     title: '随机点名器',
+ *     sub: '导入名单 · 课堂互动',
+ *     accent: '#e11d48',          // 可选，主题色
+ *     status: '就绪',              // 可选，初始状态
+ *     sound: true,                 // 可选，显示音效开关
+ *     help: '<div>…帮助内容…</div>', // 可选
+ *     settings: {                  // 可选，右上角「设置」抽屉（edupick 交互）
+ *       title: '名单 / 设置',
+ *       build: function (body, api) { … }  // 每次打开重建内容
+ *     },
+ *     actions: [{icon:'i-dice', label:'抽一个', onClick: fn}] // 可选
+ *   });
+ *
+ * iframe 全屏委托：工具在 iframe 内运行时，全屏按钮向父窗口发送
+ * {type:'et-fullscreen-toggle'}，由宿主页面统一 fullscreen（避免双层全屏）；
+ * 宿主应回传 {type:'et-fullscreen-change', value:bool} 同步按钮图标。
+ *
+ * 站点回流（postMessage 协议）：
+ *   工具加载后向父窗口发送 {type:'et-hello', toolId}；
+ *   宿主页面可回复 {type:'et-origin', origin:'https://…'}，
+ *   工具据此渲染页脚官网链接。也可直接提供 window.ET_SITE_ORIGIN。
+ *   收不到任何来源时页脚只显示纯文本（离线可用，必须有默认值）。
+ */
+(function (global) {
+    'use strict';
+
+    var NS_SVG = 'http://www.w3.org/2000/svg'; /* et-allow-external SVG 命名空间 */
+    var NS_XLINK = 'http://www.w3.org/1999/xlink'; /* et-allow-external SVG 命名空间 */
+
+    /* ---------- 内部工具 ---------- */
+
+    function makeIcon(id, cls) {
+        var svg = document.createElementNS(NS_SVG, 'svg');
+        svg.setAttribute('class', cls || 'et-icon');
+        var use = document.createElementNS(NS_SVG, 'use');
+        use.setAttribute('href', '#' + id);
+        use.setAttributeNS(NS_XLINK, 'xlink:href', '#' + id);
+        svg.appendChild(use);
+        return svg;
+    }
+
+    function makeBtn(icon, title, onClick) {
+        var b = document.createElement('button');
+        b.className = 'et-icon-btn';
+        b.type = 'button';
+        b.title = title;
+        b.setAttribute('aria-label', title);
+        b.appendChild(makeIcon(icon));
+        if (onClick) { b.addEventListener('click', onClick); }
+        return b;
+    }
+
+    function el(tag, cls, text) {
+        var node = document.createElement(tag);
+        if (cls) { node.className = cls; }
+        if (text !== undefined && text !== null) { node.textContent = text; }
+        return node;
+    }
+
+    /* ---------- 音效（WebAudio，无音频文件，音量按教室大屏调校） ---------- */
+
+    var audioCtx = null;
+
+    function ensureCtx() {
+        if (!audioCtx) {
+            var AC = global.AudioContext || global.webkitAudioContext;
+            if (!AC) { return null; }
+            try { audioCtx = new AC(); } catch (err) { return null; }
+        }
+        if (audioCtx.state === 'suspended') {
+            try { audioCtx.resume(); } catch (err) { /* 忽略 */ }
+        }
+        return audioCtx;
+    }
+
+    var MASTER_GAIN = 0.5; /* 整体音量层（教室设备音量 100% 也要听得清） */
+
+    function tone(ctx, freq, start, dur, gainPeak, type) {
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = type || 'triangle';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(gainPeak, start + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + dur + 0.05);
+    }
+
+    var BEEPS = {
+        tick: [[880, 0, 0.06, 0.42]],
+        ok: [[660, 0, 0.1, 0.46], [880, 0.1, 0.14, 0.46]],
+        win: [[523.25, 0, 0.16, 0.5], [659.25, 0.12, 0.16, 0.5], [783.99, 0.24, 0.16, 0.5], [1046.5, 0.36, 0.34, 0.52]],
+        err: [[220, 0, 0.22, 0.46, 'square']],
+        over: [[880, 0, 0.18, 0.5], [659.25, 0.2, 0.18, 0.5], [523.25, 0.4, 0.36, 0.5]]
+    };
+
+    function playBeep(kind) {
+        var ctx = ensureCtx();
+        if (!ctx || !BEEPS[kind]) { return; }
+        var seq = BEEPS[kind];
+        var t0 = ctx.currentTime + 0.01;
+        for (var i = 0; i < seq.length; i++) {
+            tone(ctx, seq[i][0], t0 + seq[i][1], seq[i][2], seq[i][3] * MASTER_GAIN, seq[i][4]);
+        }
+    }
+
+    /* ---------- 设置抽屉 ---------- */
+
+    function openDrawer(title, build) {
+        var backdrop = el('div', 'et-drawer-backdrop');
+        var drawer = el('aside', 'et-drawer');
+        drawer.setAttribute('role', 'dialog');
+        drawer.setAttribute('aria-label', title);
+
+        var head = el('div', 'et-drawer__head');
+        head.appendChild(makeIcon('i-sliders'));
+        head.appendChild(el('span', 'et-drawer__title', title));
+        head.appendChild(makeBtn('i-x', '关闭', close));
+        drawer.appendChild(head);
+
+        var body = el('div', 'et-drawer__body');
+        drawer.appendChild(body);
+
+        backdrop.appendChild(drawer);
+        document.body.appendChild(backdrop);
+        requestAnimationFrame(function () { backdrop.classList.add('is-open'); });
+
+        function close() {
+            backdrop.classList.remove('is-open');
+            document.removeEventListener('keydown', onKey);
+            setTimeout(function () {
+                if (backdrop.parentNode) { backdrop.parentNode.removeChild(backdrop); }
+            }, 220);
+        }
+        function onKey(ev) {
+            if (ev.key === 'Escape') { ev.stopPropagation(); close(); }
+        }
+        document.addEventListener('keydown', onKey);
+        backdrop.addEventListener('mousedown', function (ev) {
+            if (ev.target === backdrop) { close(); }
+        });
+
+        if (typeof build === 'function') { build(body, { close: close }); }
+        return { body: body, close: close };
+    }
+
+    /* ---------- 通用弹窗 / toast（同时挂模块级，供其他共享组件使用） ---------- */
+
+    function modal(mo) {
+        var backdrop = el('div', 'et-modal');
+        var panel = el('div', 'et-modal__panel' + (mo.size === 'narrow' ? ' et-modal__panel--narrow'
+            : mo.size === 'wide' ? ' et-modal__panel--wide' : ''));
+        var head = el('div', 'et-modal__head');
+        if (mo.icon) { head.appendChild(makeIcon(mo.icon)); }
+        head.appendChild(el('span', null, mo.title || ''));
+        head.appendChild(makeBtn('i-x', '关闭', close));
+        panel.appendChild(head);
+
+        var body = el('div', 'et-modal__body');
+        if (typeof mo.body === 'string') { body.innerHTML = mo.body; }
+        else if (mo.body) { body.appendChild(mo.body); }
+        panel.appendChild(body);
+
+        var foot = null;
+        if (mo.buttons && mo.buttons.length) {
+            foot = el('div', 'et-modal__foot');
+            foot.appendChild(el('span', 'spacer'));
+            mo.buttons.forEach(function (b) {
+                var btn = el('button', 'et-btn' + (b.primary ? ' et-btn--primary' : '') + (b.danger ? ' et-btn--danger' : ''), b.label);
+                btn.type = 'button';
+                btn.addEventListener('click', function () {
+                    if (b.onClick) { b.onClick(close); } else { close(); }
+                });
+                foot.appendChild(btn);
+            });
+            panel.appendChild(foot);
+        }
+
+        backdrop.appendChild(panel);
+        document.body.appendChild(backdrop);
+
+        function close() {
+            if (backdrop.parentNode) { backdrop.parentNode.removeChild(backdrop); }
+            document.removeEventListener('keydown', onKey);
+            if (mo.onClose) { mo.onClose(); }
+        }
+        function onKey(ev) {
+            if (ev.key === 'Escape') { ev.stopPropagation(); close(); }
+        }
+        document.addEventListener('keydown', onKey);
+        backdrop.addEventListener('mousedown', function (ev) {
+            if (ev.target === backdrop) { close(); }
+        });
+
+        return { panel: panel, body: body, foot: foot, close: close };
+    }
+
+    var toastEl = null;
+    var toastTimer = 0;
+
+    function toast(msg, tone) {
+        if (!toastEl) {
+            toastEl = el('div', 'et-toast');
+            document.body.appendChild(toastEl);
+        }
+        toastEl.textContent = msg;
+        toastEl.setAttribute('data-tone', tone || '');
+        void toastEl.offsetWidth;
+        toastEl.classList.add('is-show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toastEl.classList.remove('is-show'); }, 2200);
+    }
+
+    /* ---------- PWA 元数据（blob manifest，环境不支持时静默跳过） ---------- */
+
+    function installPwa(toolId, title, accent) {
+        try {
+            var theme = document.querySelector('meta[name="theme-color"]');
+            if (!theme) {
+                theme = document.createElement('meta');
+                theme.setAttribute('name', 'theme-color');
+                document.head.appendChild(theme);
+            }
+            theme.setAttribute('content', accent || '#2563eb');
+
+            var svg = '<svg xmlns="' + NS_SVG + '" viewBox="0 0 64 64">' +
+                '<rect width="64" height="64" rx="14" fill="' + (accent || '#2563eb') + '"/>' +
+                '<text x="32" y="43" font-size="32" font-weight="800" font-family="sans-serif" ' +
+                'fill="#fff" text-anchor="middle">' + (title || '课').charAt(0) + '</text></svg>';
+            var iconUri = 'data:image/svg+xml,' + encodeURIComponent(svg);
+
+            var mf = {
+                name: title || 'KeeTools 课工具',
+                short_name: title || '课工具',
+                start_url: '.',
+                display: 'standalone',
+                background_color: '#f4f6fb',
+                theme_color: accent || '#2563eb',
+                icons: [{ src: iconUri, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }]
+            };
+            var blob = new Blob([JSON.stringify(mf)], { type: 'application/manifest+json' });
+            var link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = URL.createObjectURL(blob);
+            document.head.appendChild(link);
+        } catch (err) { /* 不支持 PWA 元数据的环境静默跳过 */ }
+    }
+
+    /* ---------- 挂载 ---------- */
+
+    function mount(options) {
+        var opt = options || {};
+        var toolId = opt.toolId || 'unknown-tool';
+        var store = global.ET && global.ET.store
+            ? global.ET.store(toolId)
+            : (function () { return { get: function () { return null; }, set: function () {} }; })();
+
+        var api = { toolId: toolId, store: store };
+        var soundEnabled = store.get('sound', true) !== false;
+
+        /* 主题色 */
+        if (opt.accent) {
+            document.documentElement.style.setProperty('--et-accent', opt.accent);
+        }
+
+        installPwa(toolId, opt.title, opt.accent);
+
+        /* ---------- 主题 ---------- */
+        var theme = store.get('theme', null);
+        if (theme !== 'dark' && theme !== 'light') {
+            theme = (global.matchMedia && global.matchMedia('(prefers-color-scheme: dark)').matches)
+                ? 'dark' : 'light';
+        }
+        applyTheme(theme);
+
+        function applyTheme(t) {
+            theme = t;
+            document.documentElement.setAttribute('data-et-theme', t);
+            store.set('theme', t);
+            if (themeBtn) {
+                themeBtn.innerHTML = '';
+                themeBtn.appendChild(makeIcon(t === 'dark' ? 'i-sun' : 'i-moon'));
+                themeBtn.title = t === 'dark' ? '切换到浅色' : '切换到深色';
+            }
+        }
+
+        /* ---------- 顶栏 ---------- */
+        var topbar = document.getElementById('et-topbar');
+        var main = document.getElementById('et-main');
+        var footer = document.getElementById('et-footer');
+
+        if (!topbar) { topbar = el('header'); topbar.id = 'et-topbar'; document.body.insertBefore(topbar, document.body.firstChild); }
+        if (!main) { main = el('main'); main.id = 'et-main'; topbar.after(main); }
+        if (!footer) { footer = el('footer'); footer.id = 'et-footer'; document.body.appendChild(footer); }
+
+        topbar.className = 'et-topbar';
+        main.classList.add('et-main');
+        footer.className = 'et-footer';
+
+        /* 品牌 */
+        var brand = el('div', 'et-brand');
+        brand.appendChild(el('span', 'et-brand__dot'));
+        var nameWrap = el('div');
+        nameWrap.style.cssText = 'min-width:0;line-height:1.25';
+        nameWrap.appendChild(el('div', 'et-brand__name', opt.title || '课工具'));
+        if (opt.sub) { nameWrap.appendChild(el('div', 'et-brand__sub', opt.sub)); }
+        brand.appendChild(nameWrap);
+        topbar.appendChild(brand);
+
+        /* 状态胶囊 */
+        var statusPill = el('div', 'et-status');
+        statusPill.hidden = true;
+        statusPill.appendChild(el('span', 'et-status__dot'));
+        var statusText = el('span', null, '');
+        statusPill.appendChild(statusText);
+        topbar.appendChild(statusPill);
+
+        api.setStatus = function (text, tone) {
+            if (!text) { statusPill.hidden = true; return; }
+            statusText.textContent = text;
+            statusPill.setAttribute('data-tone', tone || 'ok');
+            statusPill.hidden = false;
+        };
+        if (opt.status) { api.setStatus(opt.status); }
+
+        /* 动作区（edupick 交互：右上角聚合设置入口） */
+        var actions = el('div', 'et-actions');
+
+        var settingsBtn = null;
+        if (opt.settings && typeof opt.settings.build === 'function') {
+            settingsBtn = makeBtn('i-sliders', opt.settings.title || '设置', function () {
+                openDrawer(opt.settings.title || '设置', function (body, drawerApi) {
+                    opt.settings.build(body, { api: api, close: drawerApi.close });
+                });
+            });
+            actions.appendChild(settingsBtn);
+        }
+
+        (opt.actions || []).forEach(function (a) {
+            var b = makeBtn(a.icon, a.label || '', a.onClick);
+            if (a.id) { b.id = a.id; }
+            actions.appendChild(b);
+        });
+
+        var soundBtn = null;
+        if (opt.sound) {
+            soundBtn = makeBtn(soundEnabled ? 'i-volume' : 'i-volume-off',
+                soundEnabled ? '关闭音效' : '开启音效', toggleSound);
+            if (!soundEnabled) { soundBtn.classList.add('is-off'); }
+            actions.appendChild(soundBtn);
+        }
+
+        if (opt.help) {
+            actions.appendChild(makeBtn('i-help', '使用说明', function () { openHelp(); }));
+        }
+
+        var themeBtn = makeBtn('', '切换主题', function () {
+            applyTheme(theme === 'dark' ? 'light' : 'dark');
+        });
+        applyTheme(theme); /* 填充图标 */
+        actions.appendChild(themeBtn);
+
+        /* 全屏按钮始终保留：iframe 内对本工具文档 requestFullscreen
+           （宿主 iframe 已声明 allow="fullscreen"），与宿主「全屏体验」等效同屏。 */
+        var fsBtn = makeBtn('i-maximize', '全屏', toggleFullscreen);
+        actions.appendChild(fsBtn);
+
+        topbar.appendChild(actions);
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            store.set('sound', soundEnabled);
+            soundBtn.innerHTML = '';
+            soundBtn.appendChild(makeIcon(soundEnabled ? 'i-volume' : 'i-volume-off'));
+            soundBtn.title = soundEnabled ? '关闭音效' : '开启音效';
+            soundBtn.classList.toggle('is-off', !soundEnabled);
+            if (soundEnabled) { api.beep('ok'); }
+        }
+
+        api.openSettings = function () {
+            if (settingsBtn) { settingsBtn.click(); }
+        };
+
+        /* ---------- 全屏（iframe 内委托宿主，避免双层全屏） ---------- */
+
+        function inIframe() {
+            try { return global.parent && global.parent !== global; } catch (err) { return true; }
+        }
+
+        function toggleFullscreen() {
+            var root = document.documentElement;
+            var fsEl = document.fullscreenElement || document.webkitFullscreenElement || null;
+            if (fsEl) {
+                (document.exitFullscreen || document.webkitExitFullscreen || function () {}).call(document);
+            } else {
+                var req = root.requestFullscreen || root.webkitRequestFullscreen;
+                if (req) { try { req.call(root); } catch (err) { /* 忽略 */ } }
+            }
+        }
+
+        function syncFsIcon(on) {
+            if (!fsBtn) { return; }
+            fsBtn.innerHTML = '';
+            fsBtn.appendChild(makeIcon(on ? 'i-minimize' : 'i-maximize'));
+            fsBtn.title = on ? '退出全屏' : '全屏';
+        }
+
+        document.addEventListener('fullscreenchange', function () {
+            syncFsIcon(!!(document.fullscreenElement || document.webkitFullscreenElement));
+        });
+        document.addEventListener('webkitfullscreenchange', function () {
+            syncFsIcon(!!(document.fullscreenElement || document.webkitFullscreenElement));
+        });
+        syncFsIcon(false);
+
+        api.toggleFullscreen = toggleFullscreen;
+
+        /* ---------- 音效 API ---------- */
+        api.beep = function (kind) {
+            if (!soundEnabled) { return; }
+            playBeep(kind);
+        };
+        api.soundOn = function () { return soundEnabled; };
+
+        api.modal = modal;
+
+        /* ---------- 帮助 ---------- */
+        function openHelp() {
+            modal({
+                title: '使用说明',
+                icon: 'i-help',
+                size: 'narrow',
+                body: opt.help,
+                buttons: [{ label: '知道了', primary: true }]
+            });
+        }
+        api.openHelp = openHelp;
+
+        /* ---------- toast ---------- */
+        api.toast = toast;
+
+        /* ---------- 页脚（L2 品牌回流，低调一行） ---------- */
+        var siteOrigin = typeof global.ET_SITE_ORIGIN === 'string' && /^https?:\/\//.test(global.ET_SITE_ORIGIN)
+            ? global.ET_SITE_ORIGIN
+            : null;
+
+        function renderFooter() {
+            footer.textContent = '';
+            footer.appendChild(el('span', null, 'KeeTools 课工具'));
+            footer.appendChild(el('span', null, '·'));
+            if (siteOrigin) {
+                var a = el('a', null, '更多课堂工具');
+                a.href = siteOrigin + '/?from=tool-footer&tool=' + encodeURIComponent(toolId);
+                a.target = '_blank';
+                a.rel = 'noopener';
+                footer.appendChild(a);
+            } else {
+                footer.appendChild(el('span', null, '更多课堂工具'));
+            }
+        }
+        renderFooter();
+
+        /* 站点来源发现：iframe 内向父窗口询问；也可由宿主直接注入 ET_SITE_ORIGIN */
+        try {
+            if (global.parent && global.parent !== global) {
+                global.parent.postMessage(JSON.stringify({ type: 'et-hello', toolId: toolId }), '*');
+            }
+        } catch (err) { /* 跨域异常忽略 */ }
+
+        global.addEventListener('message', function (ev) {
+            var data = ev.data;
+            if (typeof data === 'string') {
+                try { data = JSON.parse(data); } catch (err) { return; }
+            }
+            if (!data || typeof data !== 'object') { return; }
+
+            if (data.type === 'et-origin' && typeof data.origin === 'string' && /^https?:\/\//.test(data.origin)) {
+                siteOrigin = data.origin;
+                if (!global.ET_SITE_ORIGIN) { global.ET_SITE_ORIGIN = data.origin; }
+                renderFooter();
+            }
+            if (data.type === 'et-fullscreen-change' && typeof data.value === 'boolean') {
+                syncFsIcon(data.value);
+            }
+        });
+
+        api.el = { topbar: topbar, main: main, footer: footer, actions: actions };
+
+        /* ---------- 激光笔 / 翻页笔适配（HID 翻页键） ----------
+         * 翻页笔的上下页键在系统层等价于 PageDown / PageUp。
+         * 工具通过 opt.primary / opt.secondary 注册动作：
+         *   PageDown → primary（主操作，如开始点名 / 开始计时）
+         *   PageUp   → secondary（副操作，缺省时同 primary）
+         * 输入框聚焦或弹窗/抽屉打开时不响应，避免误触。 */
+        if (typeof opt.primary === 'function') {
+            document.addEventListener('keydown', function (ev) {
+                if (ev.key !== 'PageDown' && ev.key !== 'PageUp') { return; }
+                var tag = (document.activeElement && document.activeElement.tagName) || '';
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') { return; }
+                if (document.querySelector('.et-modal, .et-drawer-backdrop, .ws-winner')) { return; }
+                ev.preventDefault();
+                if (ev.key === 'PageDown') { opt.primary(); }
+                else if (typeof opt.secondary === 'function') { opt.secondary(); }
+                else { opt.primary(); }
+            });
+        }
+
+        return api;
+    }
+
+    global.ET = global.ET || {};
+    global.ET.Chrome = {
+        mount: mount,
+        modal: modal,
+        toast: toast,
+        beep: playBeep /* 挂载前的独立音效入口（不经过音效开关） */
+    };
+})(window);
+</script>
+<!-- /ET:INLINE -->
+
+<!-- ET:INLINE name="et-import-css" src="ui/et-import.css" type="css" -->
+<style>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * et-import.css — 通用数据导入组件样式
+ *
+ * 共享样式源。改这里，然后跑：python scripts/sync_shared.py
+ * 依赖 et-chrome.css 的令牌变量（--et-*），须先注入。
+ * 类名前缀 etimp-，避免与工具样式冲突。
+ */
+
+/* ============ 页签 ============ */
+.etimp-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+    padding: 4px;
+    border-radius: 11px;
+    background: var(--et-surface-2);
+    border: 1px solid var(--et-line);
+}
+
+.etimp-tab {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--et-muted);
+    background: transparent;
+    cursor: pointer;
+    transition: color .14s, background .14s;
+}
+
+.etimp-tab:hover { color: var(--et-fg); }
+
+.etimp-tab.is-active {
+    color: var(--et-accent);
+    background: var(--et-surface);
+    box-shadow: var(--et-shadow-md);
+}
+
+/* ============ 粘贴区 ============ */
+.etimp-textarea {
+    width: 100%;
+    min-height: 150px;
+    padding: 12px 14px;
+    border: 1px solid var(--et-line-strong);
+    border-radius: 10px;
+    background: var(--et-surface-2);
+    color: var(--et-fg);
+    font-family: var(--et-mono);
+    font-size: 13px;
+    line-height: 1.7;
+    resize: vertical;
+    transition: border-color .14s, box-shadow .14s;
+}
+
+.etimp-textarea:focus {
+    outline: none;
+    border-color: var(--et-accent);
+    box-shadow: 0 0 0 3px var(--et-accent-weak);
+}
+
+.etimp-textarea::placeholder { color: var(--et-muted); opacity: .7; }
+
+/* ============ 拖放区 ============ */
+.etimp-drop {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 150px;
+    padding: 24px;
+    border: 2px dashed var(--et-line-strong);
+    border-radius: 12px;
+    color: var(--et-muted);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .16s, background .16s, color .16s;
+}
+
+.etimp-drop:hover,
+.etimp-drop.is-over {
+    border-color: var(--et-accent);
+    color: var(--et-accent);
+    background: var(--et-accent-weak);
+}
+
+.etimp-drop .et-icon { width: 30px; height: 30px; stroke-width: 1.6; }
+.etimp-drop__main { font-size: 14px; font-weight: 700; }
+.etimp-drop__hint { font-size: 12px; }
+
+.etimp-file {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+}
+
+/* ============ 格式说明 ============ */
+.etimp-help {
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--et-surface-2);
+    border: 1px solid var(--et-line);
+    font-size: 12.5px;
+    color: var(--et-muted);
+    line-height: 1.8;
+}
+
+.etimp-help b { color: var(--et-fg); }
+.etimp-help code {
+    font-family: var(--et-mono);
+    font-size: 12px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: var(--et-accent-weak);
+    color: var(--et-accent);
+}
+
+/* ============ 解析结果 ============ */
+.etimp-result { margin-top: 14px; }
+
+.etimp-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.etimp-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--et-surface-2);
+    border: 1px solid var(--et-line);
+    color: var(--et-muted);
+}
+
+.etimp-chip--ok { color: var(--et-ok); border-color: var(--et-ok); background: rgba(5, 150, 105, .08); }
+.etimp-chip--warn { color: var(--et-warn); border-color: var(--et-warn); background: rgba(217, 119, 6, .08); }
+.etimp-chip--err { color: var(--et-err); border-color: var(--et-err); background: rgba(220, 38, 38, .08); }
+
+.etimp-table-wrap {
+    max-height: 220px;
+    overflow: auto;
+    border: 1px solid var(--et-line);
+    border-radius: 10px;
+}
+
+.etimp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+}
+
+.etimp-table th,
+.etimp-table td {
+    padding: 7px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--et-line);
+    white-space: nowrap;
+}
+
+.etimp-table th {
+    position: sticky;
+    top: 0;
+    background: var(--et-surface-2);
+    color: var(--et-muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    z-index: 1;
+}
+
+.etimp-table tr:last-child td { border-bottom: none; }
+.etimp-table td.etimp-dim { color: var(--et-muted); }
+.etimp-table td.etimp-num { font-variant-numeric: tabular-nums; }
+
+.etimp-errors {
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(220, 38, 38, .07);
+    border: 1px solid rgba(220, 38, 38, .35);
+    font-size: 12.5px;
+    color: var(--et-err);
+    line-height: 1.8;
+    max-height: 110px;
+    overflow: auto;
+}
+
+.etimp-empty {
+    padding: 14px;
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--et-muted);
+    border: 1px dashed var(--et-line);
+    border-radius: 10px;
+}
+
+/* 选项行 */
+.etimp-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+    margin-top: 12px;
+    font-size: 13px;
+}
+
+.etimp-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    color: var(--et-fg);
+    user-select: none;
+}
+
+.etimp-check input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--et-accent);
+    cursor: pointer;
+}
+</style>
+<!-- /ET:INLINE -->
+<!-- ET:INLINE name="et-import" src="ui/et-import.js" -->
+<script>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * et-import.js — 通用数据导入组件（shell 型工具的核心基建）
+ *
+ * 共享逻辑源。改这里，然后跑：python scripts/sync_shared.py
+ * 依赖：et-util.js（ET.store）、et-chrome.js（ET.Chrome.modal，弹窗宿主）
+ * 兼容性：现代浏览器（TextDecoder GBK / FileReader / Drag&Drop）。
+ * 全局：ET.Import
+ *
+ * 用法（名单模式，默认）：
+ *   ET.Import.open({
+ *     toolId: 'random-name-classic',
+ *     title: '导入名单',
+ *     columns: ['name', 'id', 'weight'],   // 允许识别的列
+ *     current: '张三\n李四',                // 可选，回填当前数据便于增改
+ *     onConfirm: function (rows, meta) { … }  // rows: [{name, id, weight}]
+ *   });
+ *
+ * 用法（自定义字段模式，词表 / 题表等非名单数据）：
+ *   ET.Import.open({
+ *     toolId: 'word-flashcard',
+ *     title: '导入单词表',
+ *     fields: [
+ *       { key: 'word', label: '单词', keys: ['单词', '英文', 'word'] },
+ *       { key: 'ipa',  label: '音标', keys: ['音标', '发音', 'phonetic'] },
+ *       { key: 'mean', label: '释义', keys: ['释义', '意思', 'meaning'] }
+ *     ],
+ *     placeholder: '…',   // 可选，覆盖粘贴框提示
+ *     help: '…',          // 可选，覆盖说明文字
+ *     onConfirm: function (rows, meta) { … }  // rows: [{word, ipa, mean}]
+ *   });
+ *   未传 fields 时行为与旧版完全一致（name / id / weight 三列）。
+ *
+ * 也提供纯解析入口（不弹窗）：
+ *   var result = ET.Import.parseText(text, { weight: true });
+ *   // result = { rows: [...], stats: { lines, valid, dupes, blanks, errors: [...] } }
+ */
+(function (global) {
+    'use strict';
+
+    /* ============ 常量 ============ */
+
+    var NAME_KEYS = ['姓名', '名字', '名称', '学生', '学员', 'name', 'student'];
+    var ID_KEYS = ['学号', '编号', '序号', '号码', 'id', 'no', 'number'];
+    var WEIGHT_KEYS = ['权重', '次数', '倍数', 'weight', 'times'];
+
+    var MAX_WEIGHT = 99;
+
+    /* ============ 解析 ============ */
+
+    function normCell(s) {
+        return String(s === undefined || s === null ? '' : s).trim();
+    }
+
+    function matchKey(cell, keys) {
+        var c = normCell(cell).toLowerCase();
+        if (!c) { return false; }
+        for (var i = 0; i < keys.length; i++) {
+            if (c === keys[i]) { return true; }
+        }
+        for (var j = 0; j < keys.length; j++) {
+            /* 中文表头常见"学生姓名"，用包含匹配 */
+            if (/[\u4e00-\u9fa5]/.test(keys[j]) && c.indexOf(keys[j]) !== -1) { return true; }
+        }
+        return false;
+    }
+
+    function isAllNumeric(arr) {
+        if (!arr.length) { return false; }
+        for (var i = 0; i < arr.length; i++) {
+            if (!/^\d{1,6}(\.\d+)?$/.test(normCell(arr[i]))) { return false; }
+        }
+        return true;
+    }
+
+    /** 引号感知的 CSV 行拆分（RFC4180 简化版，不支持跨行引号） */
+    function splitLine(line, delim) {
+        var out = [];
+        var cur = '';
+        var inQ = false;
+        for (var i = 0; i < line.length; i++) {
+            var ch = line[i];
+            if (inQ) {
+                if (ch === '"') {
+                    if (line.charAt(i + 1) === '"') { cur += '"'; i++; }
+                    else { inQ = false; }
+                } else {
+                    cur += ch;
+                }
+            } else if (ch === '"') {
+                inQ = true;
+            } else if (ch === delim) {
+                out.push(cur);
+                cur = '';
+            } else {
+                cur += ch;
+            }
+        }
+        out.push(cur);
+        return out;
+    }
+
+    function detectDelimiter(lines) {
+        var counts = { '\t': 0, ',': 0, ';': 0 };
+        for (var i = 0; i < lines.length; i++) {
+            for (var d in counts) {
+                counts[d] += lines[i].split(d).length - 1;
+            }
+        }
+        var best = '\t';
+        var bestN = -1;
+        for (var k in counts) {
+            if (counts[k] > bestN) { bestN = counts[k]; best = k; }
+        }
+        return bestN > 0 ? best : null;
+    }
+
+    /**
+     * 把"原始表格行（二维数组）"规范化为 rows。
+     * opts.weight 是否识别权重列；opts.id 是否识别学号列。
+     */
+    function tableToRows(table, opts, stats) {
+        opts = opts || {};
+        if (!table.length) { return []; }
+
+        var width = 0;
+        for (var w = 0; w < table.length; w++) {
+            width = Math.max(width, table[w].length);
+        }
+
+        /* --- 表头识别 --- */
+        var header = null;
+        var first = table[0];
+        var firstAllEmpty = true;
+        for (var c0 = 0; c0 < first.length; c0++) {
+            if (normCell(first[c0])) { firstAllEmpty = false; break; }
+        }
+        if (!firstAllEmpty) {
+            for (var c = 0; c < first.length; c++) {
+                if (matchKey(first[c], NAME_KEYS) || matchKey(first[c], WEIGHT_KEYS) || matchKey(first[c], ID_KEYS)) {
+                    header = first;
+                    table = table.slice(1);
+                    stats.blanks++; /* 表头行不算数据 */
+                    break;
+                }
+            }
+        }
+
+        /* --- 列映射 --- */
+        var map = { name: -1, id: -1, weight: -1 };
+        if (header) {
+            for (var hc = 0; hc < header.length; hc++) {
+                if (map.name < 0 && matchKey(header[hc], NAME_KEYS)) { map.name = hc; }
+                else if (opts.id && map.id < 0 && matchKey(header[hc], ID_KEYS)) { map.id = hc; }
+                else if (opts.weight && map.weight < 0 && matchKey(header[hc], WEIGHT_KEYS)) { map.weight = hc; }
+            }
+        }
+
+        var cols = table.map(function (row) { return row; });
+        function colValues(idx) {
+            return cols.map(function (r) { return normCell(r[idx]); }).filter(function (v) { return v !== ''; });
+        }
+
+        if (map.name < 0) {
+            if (width === 1) {
+                map.name = 0;
+            } else {
+                var c0 = colValues(0);
+                var c1 = colValues(1);
+                var numeric0 = isAllNumeric(c0);
+                var numeric1 = isAllNumeric(c1);
+                if (width === 2) {
+                    if (numeric0 && !numeric1) { map.id = 0; map.name = 1; }
+                    else if (numeric1 && !numeric0 && opts.weight) { map.name = 0; map.weight = 1; }
+                    else { map.name = 0; }
+                } else {
+                    /* ≥3 列：编号 | 姓名 | 权重 的经典布局 */
+                    if (numeric0) { map.id = 0; map.name = 1; } else { map.name = 0; }
+                    if (opts.weight) { map.weight = width - 1; }
+                }
+            }
+        }
+        if (map.name < 0) { map.name = 0; }
+        if (!opts.weight) { map.weight = -1; }
+        if (!opts.id) { map.id = -1; }
+
+        /* --- 逐行处理 --- */
+        var rows = [];
+        var seen = {};
+        var wantWeight = map.weight >= 0;
+
+        for (var i = 0; i < table.length; i++) {
+            var raw = table[i];
+            var lineNo = i + (header ? 2 : 1); /* 用户视角的行号（含表头） */
+            var name = map.name < raw.length ? normCell(raw[map.name]) : '';
+            var restEmpty = true;
+            for (var rc = 0; rc < raw.length; rc++) {
+                if (normCell(raw[rc])) { restEmpty = false; break; }
+            }
+            if (!name && restEmpty) { stats.blanks++; continue; }
+
+            if (!name) {
+                stats.errors.push('第 ' + lineNo + ' 行：姓名列为空，已跳过');
+                continue;
+            }
+
+            var weight = 1;
+            if (wantWeight && map.weight < raw.length) {
+                var wv = normCell(raw[map.weight]);
+                if (wv !== '') {
+                    var wn = Number(wv);
+                    if (isFinite(wn) && wn >= 1) {
+                        weight = Math.min(MAX_WEIGHT, Math.round(wn));
+                        if (weight !== wn) {
+                            stats.errors.push('第 ' + lineNo + ' 行：权重 "' + wv + '" 已取整为 ' + weight);
+                        }
+                    } else {
+                        stats.errors.push('第 ' + lineNo + ' 行：权重 "' + wv + '" 无效（需 ≥1 的数字），按 1 处理');
+                    }
+                }
+            }
+
+            var id = '';
+            if (map.id >= 0 && map.id < raw.length) {
+                id = normCell(raw[map.id]);
+            }
+
+            if (opts.dedupe !== false && seen[name]) {
+                stats.dupes++;
+                continue;
+            }
+            seen[name] = true;
+
+            rows.push({ name: name, id: id, weight: weight });
+        }
+        return rows;
+    }
+
+    /* ============ 自定义字段模式（词表 / 题表等非名单数据） ============ */
+
+    function normKeyList(field) {
+        var keys = field.keys && field.keys.length ? field.keys.slice() : [];
+        if (field.label) { keys.push(field.label); }
+        return keys;
+    }
+
+    function matchAnyKey(cell, keys) {
+        for (var i = 0; i < keys.length; i++) {
+            if (matchKey(cell, [keys[i]])) { return true; }
+        }
+        return false;
+    }
+
+    function colTaken(map, idx) {
+        for (var k in map) {
+            if (map[k] === idx) { return true; }
+        }
+        return false;
+    }
+
+    /**
+     * 把二维表格规范化为「按 fields 定义的对象数组」。
+     * fields = [{key, label, keys?}]，行对象形如 {key1: '…', key2: '…'}。
+     * 与 tableToRows 并列存在：只有显式传 fields 时才走这里，名单路径行为不变。
+     */
+    function tableToFields(table, fields, stats) {
+        if (!table.length) { return []; }
+
+        var width = 0;
+        for (var w = 0; w < table.length; w++) {
+            width = Math.max(width, table[w].length);
+        }
+
+        var keyLists = [];
+        var flat = [];
+        for (var f = 0; f < fields.length; f++) {
+            var list = normKeyList(fields[f]);
+            keyLists.push(list);
+            for (var k = 0; k < list.length; k++) { flat.push(list[k]); }
+        }
+
+        /* --- 表头识别 --- */
+        var header = null;
+        var first = table[0];
+        var hasAny = false;
+        for (var c0 = 0; c0 < first.length; c0++) {
+            if (normCell(first[c0])) { hasAny = true; break; }
+        }
+        if (hasAny) {
+            for (var c = 0; c < first.length; c++) {
+                if (matchAnyKey(first[c], flat)) {
+                    header = first;
+                    table = table.slice(1);
+                    stats.blanks++; /* 表头行不算数据 */
+                    break;
+                }
+            }
+        }
+
+        /* --- 列映射：先按表头，缺的按出现顺序补空列 --- */
+        var map = {};
+        for (var fi = 0; fi < fields.length; fi++) { map[fields[fi].key] = -1; }
+
+        if (header) {
+            for (var hc = 0; hc < header.length; hc++) {
+                for (var fj = 0; fj < fields.length; fj++) {
+                    if (map[fields[fj].key] < 0 && matchAnyKey(header[hc], keyLists[fj])) {
+                        map[fields[fj].key] = hc;
+                        break;
+                    }
+                }
+            }
+        }
+
+        var next = 0;
+        for (var fp = 0; fp < fields.length; fp++) {
+            if (map[fields[fp].key] >= 0) { continue; }
+            while (next < width && colTaken(map, next)) { next++; }
+            if (next < width) {
+                map[fields[fp].key] = next;
+                next++;
+            }
+        }
+
+        /* --- 逐行处理 --- */
+        var rows = [];
+        var seen = {};
+        var firstKey = fields[0].key;
+
+        for (var i = 0; i < table.length; i++) {
+            var raw = table[i];
+            var lineNo = i + (header ? 2 : 1);
+            var row = {};
+            var allEmpty = true;
+
+            for (var rf = 0; rf < fields.length; rf++) {
+                var col = map[fields[rf].key];
+                var val = (col >= 0 && col < raw.length) ? normCell(raw[col]) : '';
+                row[fields[rf].key] = val;
+                if (val) { allEmpty = false; }
+            }
+
+            if (allEmpty) { stats.blanks++; continue; }
+
+            if (!row[firstKey]) {
+                stats.errors.push('第 ' + lineNo + ' 行：' + (fields[0].label || '首列') + '为空，已跳过');
+                continue;
+            }
+
+            if (seen[row[firstKey]]) { stats.dupes++; continue; }
+            seen[row[firstKey]] = true;
+
+            rows.push(row);
+        }
+        return rows;
+    }
+
+    /** 统一入口：有 fields 走自定义字段，否则沿用名单路径 */
+    function buildRows(table, opts, stats) {
+        return opts.fields ? tableToFields(table, opts.fields, stats) : tableToRows(table, opts, stats);
+    }
+
+    function jsonToTableFields(json, fields) {
+        if (!Array.isArray(json)) { return []; }
+        var labels = [];
+        for (var i = 0; i < fields.length; i++) { labels.push(fields[i].label || fields[i].key); }
+        var table = [labels];
+
+        for (var r = 0; r < json.length; r++) {
+            var item = json[r];
+            var out = [];
+            if (typeof item === 'string' || typeof item === 'number') {
+                for (var c = 0; c < fields.length; c++) {
+                    out.push(c === 0 ? String(item) : '');
+                }
+            } else if (item && typeof item === 'object') {
+                for (var c2 = 0; c2 < fields.length; c2++) {
+                    var v = item[fields[c2].key];
+                    if (v === undefined || v === null) { v = item[fields[c2].label] || ''; }
+                    out.push(String(v));
+                }
+            } else {
+                continue;
+            }
+            table.push(out);
+        }
+        return table;
+    }
+
+    function jsonToTable(json) {
+        if (Array.isArray(json)) {
+            var table = [];
+            for (var i = 0; i < json.length; i++) {
+                var item = json[i];
+                if (typeof item === 'string' || typeof item === 'number') {
+                    table.push([String(item)]);
+                } else if (item && typeof item === 'object') {
+                    var name = item.name || item.姓名 || item.名字 || item.title || '';
+                    var weight = item.weight || item.权重 || item.次数 || '';
+                    var id = item.id || item.学号 || item.编号 || '';
+                    if (name !== undefined && name !== null) {
+                        table.push([String(id), String(name), String(weight)]);
+                    }
+                }
+            }
+            return table;
+        }
+        return [];
+    }
+
+    /**
+     * 纯文本解析入口。
+     * 返回 { rows, stats }；stats = { lines, valid, dupes, blanks, errors[] }
+     */
+    function parseText(text, opts) {
+        opts = opts || {};
+        var stats = { lines: 0, valid: 0, dupes: 0, blanks: 0, errors: [] };
+        var rows = [];
+
+        var trimmed = String(text || '').replace(/^\uFEFF/, '').trim();
+        if (!trimmed) {
+            return { rows: rows, stats: stats };
+        }
+
+        /* JSON 优先 */
+        if (trimmed.charAt(0) === '[' || trimmed.charAt(0) === '{') {
+            try {
+                var json = JSON.parse(trimmed);
+                var jsonTable = opts.fields ? jsonToTableFields(json, opts.fields) : jsonToTable(json);
+                rows = buildRows(jsonTable, opts, stats);
+            } catch (err) {
+                stats.errors.push('JSON 解析失败：' + err.message);
+            }
+        } else {
+            var lines = trimmed.split(/\r\n|\r|\n/);
+            while (lines.length && !lines[lines.length - 1].trim()) { lines.pop(); }
+            stats.lines = lines.length;
+
+            var delim = detectDelimiter(lines);
+            var table = [];
+            for (var i = 0; i < lines.length; i++) {
+                if (!lines[i].trim()) { continue; }
+                table.push(delim ? splitLine(lines[i], delim) : [lines[i]]);
+            }
+            rows = buildRows(table, opts, stats);
+        }
+
+        stats.valid = rows.length;
+        return { rows: rows, stats: stats };
+    }
+
+    /* ============ 文件解码 ============ */
+
+    function decodeBuffer(buffer) {
+        var bytes = new Uint8Array(buffer);
+        /* UTF-8 BOM */
+        if (bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+            return new TextDecoder('utf-8').decode(bytes.subarray(3));
+        }
+        /* UTF-16 LE BOM */
+        if (bytes[0] === 0xFF && bytes[1] === 0xFE) {
+            return new TextDecoder('utf-16le').decode(bytes.subarray(2));
+        }
+        /* 严格 UTF-8 失败 → GBK / GB18030（Excel 导出的中文 CSV 常见） */
+        try {
+            return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+        } catch (err) {
+            try { return new TextDecoder('gb18030').decode(bytes); }
+            catch (err2) { return new TextDecoder('gbk').decode(bytes); }
+        }
+    }
+
+    /* ============ 弹窗 UI ============ */
+
+    function esc(s) {
+        return String(s === undefined || s === null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function chip(label, n, tone) {
+        if (!n) { return ''; }
+        return '<span class="etimp-chip' + (tone ? ' etimp-chip--' + tone : '') + '">' + esc(label) + ' ' + n + '</span>';
+    }
+
+    function renderResult(container, result, opts) {
+        var rows = result.rows;
+        var stats = result.stats;
+        var html = '';
+
+        if (!stats.lines && !rows.length && !stats.errors.length) {
+            container.innerHTML = '<div class="etimp-empty">输入内容后这里会显示解析结果</div>';
+            return;
+        }
+
+        html += '<div class="etimp-stats">';
+        html += chip('有效', rows.length, rows.length ? 'ok' : '');
+        if (stats.dupes) { html += chip('去重', stats.dupes, 'warn'); }
+        if (stats.blanks) { html += chip('空行/表头', stats.blanks, ''); }
+        html += '</div>';
+
+        if (rows.length) {
+            html += '<div class="etimp-table-wrap"><table class="etimp-table"><thead><tr>';
+            html += '<th>#</th>';
+            if (opts.fields) {
+                for (var lc = 0; lc < opts.fields.length; lc++) {
+                    html += '<th>' + esc(opts.fields[lc].label || opts.fields[lc].key) + '</th>';
+                }
+            } else {
+                html += '<th>姓名</th>';
+                if (opts.id) { html += '<th>学号</th>'; }
+                if (opts.weight) { html += '<th>权重</th>'; }
+            }
+            html += '</tr></thead><tbody>';
+            var previewMax = Math.min(rows.length, 10);
+            for (var i = 0; i < previewMax; i++) {
+                html += '<tr><td class="etimp-dim">' + (i + 1) + '</td>';
+                if (opts.fields) {
+                    for (var fc = 0; fc < opts.fields.length; fc++) {
+                        html += '<td>' + esc(rows[i][opts.fields[fc].key] || '—') + '</td>';
+                    }
+                } else {
+                    html += '<td>' + esc(rows[i].name) + '</td>';
+                    if (opts.id) { html += '<td class="etimp-dim">' + esc(rows[i].id || '—') + '</td>'; }
+                    if (opts.weight) { html += '<td class="etimp-num">' + rows[i].weight + '</td>'; }
+                }
+                html += '</tr>';
+            }
+            html += '</tbody></table></div>';
+            if (rows.length > previewMax) {
+                html += '<div class="etimp-empty" style="margin-top:8px;border:none;padding:6px">… 共 ' + rows.length + ' 条，仅预览前 ' + previewMax + ' 条</div>';
+            }
+        } else if (!stats.errors.length) {
+            html += '<div class="etimp-empty">未解析出有效数据</div>';
+        }
+
+        if (stats.errors.length) {
+            html += '<div class="etimp-errors"><b>' + stats.errors.length + ' 处问题：</b><br>' +
+                stats.errors.slice(0, 20).map(esc).join('<br>') +
+                (stats.errors.length > 20 ? '<br>… 还有 ' + (stats.errors.length - 20) + ' 条' : '') + '</div>';
+        }
+
+        container.innerHTML = html;
+    }
+
+    function open(options) {
+        var opt = options || {};
+        var toolId = opt.toolId || 'unknown-tool';
+        var customFields = (opt.fields && opt.fields.length) ? opt.fields : null;
+        var opts = {
+            weight: customFields ? false : (opt.columns || ['name', 'weight']).indexOf('weight') !== -1,
+            id: customFields ? false : (opt.columns || []).indexOf('id') !== -1,
+            fields: customFields,
+            dedupe: true
+        };
+
+        var Chrome = global.ET && global.ET.Chrome;
+        if (!Chrome || !Chrome.modal) {
+            if (opt.onConfirm) { opt.onConfirm([], { cancelled: true }); }
+            return null;
+        }
+
+        var defaultPlaceholder = customFields
+            ? ('一行一条，按列依次填写，例如：\n' + customFields.map(function (f) {
+                return '示例' + (f.label || f.key);
+            }).join(', '))
+            : '一行一个人，支持粘贴 Excel 表格、逗号/Tab 分隔文本，例如：\n张三\n李四,2\n1,王五,3';
+
+        var defaultHelp = customFields
+            ? ('每行一条，按列依次为 <b>' + customFields.map(function (f) {
+                return esc(f.label || f.key);
+            }).join(' / ') + '</b>；支持逗号 / Tab 分隔文本、带表头的 CSV 与 JSON 数组。首列重复的行会自动去重。')
+            : ('支持 <b>纯姓名</b>（一行一个）、<b>姓名,权重</b>、<b>学号,姓名,权重</b>，' +
+                '也支持带表头的 CSV（姓名 / 学号 / 权重 列自动识别）与 JSON 数组。' +
+                (opts.weight ? '权重越大被抽中概率越高，默认 1。' : ''));
+
+        var root = document.createElement('div');
+        root.innerHTML =
+            '<div class="etimp-tabs">' +
+            '<button type="button" class="etimp-tab is-active" data-tab="paste"><b>粘贴文本</b></button>' +
+            '<button type="button" class="etimp-tab" data-tab="file">打开文件</button>' +
+            '</div>' +
+            '<div data-panel="paste">' +
+            '<textarea class="etimp-textarea" id="etimp-text" placeholder="' +
+            esc(opt.placeholder || defaultPlaceholder) + '"></textarea>' +
+            '<div class="etimp-help">' + (opt.help || defaultHelp) + '</div>' +
+            '</div>' +
+            '<div data-panel="file" hidden>' +
+            '<div class="etimp-drop" id="etimp-drop" tabindex="0">' +
+            '<span class="et-drop-icon"></span>' +
+            '<span class="etimp-drop__main">点击选择或拖入文件</span>' +
+            '<span class="etimp-drop__hint">支持 .csv / .txt / .json，自动识别 UTF-8 与 GBK 编码</span>' +
+            '<input type="file" class="etimp-file" id="etimp-file" accept=".csv,.txt,.tsv,.json,text/csv,text/plain,application/json">' +
+            '</div>' +
+            '<div class="etimp-help">Excel 请先另存为 <b>CSV</b> 再导入（文件 → 另存为 → CSV）。</div>' +
+            '</div>' +
+            '<div class="etimp-result" id="etimp-result"><div class="etimp-empty">输入内容后这里会显示解析结果</div></div>';
+
+        var body = root.firstChild ? root : root;
+        /* root 本身作为容器 */
+        var wrap = document.createElement('div');
+        while (root.firstChild) { wrap.appendChild(root.firstChild); }
+
+        var modal = global.ET.Chrome.modal({
+            title: opt.title || '导入数据',
+            icon: 'i-upload',
+            size: 'wide',
+            body: wrap,
+            buttons: [
+                { label: '取消' },
+                {
+                    label: '导入',
+                    primary: true,
+                    onClick: function (close) {
+                        if (!lastResult || !lastResult.rows.length) { return; }
+                        close();
+                        if (opt.onConfirm) {
+                            opt.onConfirm(lastResult.rows, {
+                                dupes: lastResult.stats.dupes,
+                                dedupe: opts.dedupe
+                            });
+                        }
+                    }
+                }
+            ]
+        });
+
+        var q = function (sel) { return wrap.querySelector(sel); };
+        var textEl = q('#etimp-text');
+        var resultEl = q('#etimp-result');
+        var importBtn = modal.foot.querySelector('.et-btn--primary');
+        var lastResult = null;
+
+        if (opt.current) { textEl.value = opt.current; }
+
+        function refresh() {
+            var text = textEl.value;
+            lastResult = parseText(text, opts);
+            renderResult(resultEl, lastResult, opts);
+            importBtn.disabled = !lastResult.rows.length;
+            if (lastResult.rows.length) {
+                importBtn.textContent = '导入 ' + lastResult.rows.length + ' 条';
+            } else {
+                importBtn.textContent = '导入';
+            }
+        }
+
+        var timer = 0;
+        textEl.addEventListener('input', function () {
+            clearTimeout(timer);
+            timer = setTimeout(refresh, 250);
+        });
+
+        /* 页签切换 */
+        wrap.querySelectorAll('.etimp-tab').forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                wrap.querySelectorAll('.etimp-tab').forEach(function (t) { t.classList.remove('is-active'); });
+                tab.classList.add('is-active');
+                var name = tab.getAttribute('data-tab');
+                q('[data-panel="paste"]').hidden = name !== 'paste';
+                q('[data-panel="file"]').hidden = name !== 'file';
+            });
+        });
+
+        /* 文件区 */
+        var drop = q('#etimp-drop');
+        var fileInput = q('#etimp-file');
+
+        var dropIconHost = drop.querySelector('.et-drop-icon');
+        var NS_SVG = 'http://www.w3.org/2000/svg'; /* et-allow-external SVG 命名空间 */
+        var dropSvg = document.createElementNS(NS_SVG, 'svg');
+        dropSvg.setAttribute('class', 'et-icon');
+        var dropUse = document.createElementNS(NS_SVG, 'use');
+        dropUse.setAttribute('href', '#i-upload');
+        dropSvg.appendChild(dropUse);
+        dropIconHost.appendChild(dropSvg);
+
+        drop.addEventListener('click', function () { fileInput.click(); });
+        drop.addEventListener('keydown', function (ev) {
+            if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); fileInput.click(); }
+        });
+        ['dragenter', 'dragover'].forEach(function (evName) {
+            drop.addEventListener(evName, function (ev) {
+                ev.preventDefault();
+                drop.classList.add('is-over');
+            });
+        });
+        ['dragleave', 'drop'].forEach(function (evName) {
+            drop.addEventListener(evName, function (ev) {
+                ev.preventDefault();
+                drop.classList.remove('is-over');
+            });
+        });
+        drop.addEventListener('drop', function (ev) {
+            var files = ev.dataTransfer && ev.dataTransfer.files;
+            if (files && files.length) { readFile(files[0]); }
+        });
+        fileInput.addEventListener('change', function () {
+            if (fileInput.files && fileInput.files.length) { readFile(fileInput.files[0]); }
+        });
+
+        function readFile(file) {
+            var reader = new FileReader();
+            reader.onload = function () {
+                var text = decodeBuffer(reader.result);
+                var isJson = /\.json$/i.test(file.name) ||
+                    (text.charAt(0) !== '\n' && (text.charAt(0) === '['));
+                if (isJson) {
+                    try {
+                        JSON.parse(text.trim()); /* 校验合法性，错误交给 parseText 报 */
+                    } catch (err) { /* parseText 会再次报错 */ }
+                }
+                textEl.value = text;
+                /* 切回粘贴页让用户可见内容 */
+                wrap.querySelectorAll('.etimp-tab').forEach(function (t) {
+                    t.classList.toggle('is-active', t.getAttribute('data-tab') === 'paste');
+                });
+                q('[data-panel="paste"]').hidden = false;
+                q('[data-panel="file"]').hidden = true;
+                refresh();
+                global.ET.Chrome.toast('已读取 ' + file.name, 'ok');
+            };
+            reader.onerror = function () {
+                global.ET.Chrome.toast('文件读取失败', 'err');
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        refresh();
+        setTimeout(function () { textEl.focus(); }, 60);
+
+        return modal;
+    }
+
+    global.ET = global.ET || {};
+    global.ET.Import = { open: open, parseText: parseText, decodeBuffer: decodeBuffer };
+})(window);
+</script>
+<!-- /ET:INLINE -->
+<!-- ET:INLINE name="et-stats" src="ui/et-stats.js" -->
+<script>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * et-stats.js — 使用统计模块（模块化，可整体移除）
+ *
+ * 共享逻辑源。改这里，然后跑：python scripts/sync_shared.py
+ * 依赖：无（可脱离 et-util / et-chrome 独立运行）。
+ * 全局：ET.Stats
+ *
+ * ┌────────────────────────────────────────────────────────────────┐
+ * │ 说明：本模块只做一件事——工具被打开时向上报端点发一条匿名计数。 │
+ * │ · 在线（iframe 内）：宿主页面已服务端计数，本模块不重复上报。   │
+ * │ · 离线打开（file:// / 下载单文件 / 离线包）：联网条件具备时，   │
+ * │   以 sendBeacon 上报 use_offline 事件（text/plain 免预检）。    │
+ * │ · 上报端点 = window.ET_SITE_ORIGIN（由宿主注入或离线包配置）。  │
+ * │   未配置端点时本模块完全静默，不发任何请求。                    │
+ * │ · **整个 <script> 块可安全删除**：删除后工具其余功能完全正常，  │
+ * │   且完全不再发起任何网络请求。                                  │
+ * └────────────────────────────────────────────────────────────────┘
+ */
+(function (global) {
+    'use strict';
+
+    var ET = global.ET = global.ET || {};
+
+    var Stats = {
+        /** 上报端点来源（站点绝对地址，无协议尾斜杠） */
+        endpoint: (typeof global.ET_SITE_ORIGIN === 'string' && /^https?:\/\//.test(global.ET_SITE_ORIGIN))
+            ? global.ET_SITE_ORIGIN
+            : null,
+
+        _done: {},
+
+        /**
+         * 上报一次事件（同一事件同一工具每次页面加载只报一次）。
+         * event: 'use_offline' 等；toolId: 工具 id。
+         */
+        send: function (event, toolId) {
+            if (!event || this._done[event + ':' + (toolId || '')]) { return false; }
+            if (!this.endpoint) { return false; }
+            /* iframe 内由宿主统计，避免双计 */
+            try {
+                if (global.parent && global.parent !== global) { return false; }
+            } catch (err) { return false; }
+            /* 断网时挂起，网络恢复自动补报一次 */
+            if (global.navigator && global.navigator.onLine === false) {
+                var self = this;
+                global.addEventListener('online', function () { self.send(event, toolId); }, { once: true });
+                return false;
+            }
+
+            this._done[event + ':' + (toolId || '')] = true;
+            var payload = JSON.stringify({ event: event, tool: toolId || '' });
+
+            try {
+                if (global.navigator.sendBeacon) {
+                    return global.navigator.sendBeacon(
+                        this.endpoint + '/api/track',
+                        new Blob([payload], { type: 'text/plain;charset=UTF-8' })
+                    );
+                }
+                global.fetch(this.endpoint + '/api/track', {
+                    method: 'POST',
+                    body: payload,
+                    keepalive: true,
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=UTF-8' }
+                });
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+    };
+
+    ET.Stats = Stats;
+})(window);
+</script>
+<!-- /ET:INLINE -->
+
+<!-- 使用统计：删除上方 et-stats 块即可完全不联网（模块化设计） -->
+<script>
+try { ET.Stats.send('use_offline', 'seat-chart'); } catch (e) { /* 静默 */ }
+</script>
+
+<script>
+(function () {
+    'use strict';
+
+    var TOOL_ID = 'seat-chart';
+    var store = ET.store(TOOL_ID);
+
+    var chrome = ET.Chrome.mount({
+        toolId: TOOL_ID,
+        title: '座位表 / 排座位',
+        sub: '通用 · 排座位 / 换位',
+        accent: '#0ea5e9',
+        status: '就绪',
+        sound: true,
+        primary: shuffle,
+        actions: [
+            { icon: 'i-upload', label: '导入名单', onClick: openImport },
+            { icon: 'i-shuffle', label: '随机重排', onClick: shuffle },
+            { icon: 'i-star', label: '标记座位（开/关）', id: 'btnMark', onClick: toggleMarkMode },
+            { icon: 'i-trash', label: '清空座位', onClick: clearSeats }
+        ],
+        settings: { title: '教室 / 设置', build: buildSettings },
+        help: '<div style="font-size:13.5px;line-height:2">' +
+            '<p style="margin:0 0 8px"><b>怎么用</b>：点「导入名单」粘贴学生姓名（每行一个，或 Excel 复制）→ ' +
+            '自动按行安排座位；设置里可调行数 / 列数 / 每组列数 / 讲台位置。</p>' +
+            '<p style="margin:0 0 8px"><b>换位</b>：点击一个座位选中，再点另一个座位交换位置；' +
+            '「随机重排」一键打乱全班。</p>' +
+            '<p style="margin:0 0 8px"><b>标记</b>：点 ⭐「标记座位」进入标记模式，点击座位加 / 去 ★（如近视生优先、空位）。</p>' +
+            '<p style="margin:0"><b>快捷键</b>：空格 / 翻页笔下页键 = 随机重排。数据自动保存在本机。</p></div>'
+    });
+
+    var els = {
+        grid: document.getElementById('grid'),
+        podium: document.getElementById('podium'),
+        unseated: document.getElementById('unseated'),
+        hint: document.getElementById('hint')
+    };
+
+    var state = {
+        rows: store.get('rows', 5),
+        cols: store.get('cols', 6),
+        group: store.get('group', 0),
+        podium: store.get('podium', 'top'),
+        roster: store.get('roster', []),
+        seats: store.get('seats', []),
+        marks: store.get('marks', []),
+        markMode: false,
+        sel: -1
+    };
+
+    function seatCount() { return state.rows * state.cols; }
+
+    function save() {
+        store.set('rows', state.rows);
+        store.set('cols', state.cols);
+        store.set('group', state.group);
+        store.set('podium', state.podium);
+        store.set('roster', state.roster);
+        store.set('seats', state.seats);
+        store.set('marks', state.marks);
+    }
+
+    function ensureSize() {
+        var n = seatCount();
+        if (state.seats.length !== n) {
+            var next = [];
+            for (var i = 0; i < n; i++) { next.push(state.seats[i] || ''); }
+            state.seats = next;
+        }
+        if (state.marks.length !== n) {
+            var m = [];
+            for (var j = 0; j < n; j++) { m.push(!!state.marks[j]); }
+            state.marks = m;
+        }
+    }
+
+    function unseatedNames() {
+        var seated = {};
+        for (var i = 0; i < state.seats.length; i++) {
+            if (state.seats[i]) { seated[state.seats[i]] = true; }
+        }
+        var out = [];
+        for (var k = 0; k < state.roster.length; k++) {
+            if (!seated[state.roster[k]]) { out.push(state.roster[k]); }
+        }
+        return out;
+    }
+
+    /* ---------- 渲染 ---------- */
+
+    function render() {
+        ensureSize();
+        applyPodium();
+
+        var gcols = '';
+        for (var c = 0; c < state.cols; c++) {
+            gcols += 'minmax(64px, 1fr)';
+            if (c < state.cols - 1) { gcols += ' '; }
+        }
+        els.grid.style.gridTemplateColumns = gcols;
+        els.grid.innerHTML = '';
+        var frag = document.createDocumentFragment();
+
+        for (var r = 0; r < state.rows; r++) {
+            for (var col = 0; col < state.cols; col++) {
+                if (state.group > 0 && col > 0 && col % state.group === 0) {
+                    var sp = document.createElement('div');
+                    sp.className = 'seatchart-spacer';
+                    sp.style.width = '18px';
+                    frag.appendChild(sp);
+                }
+                var idx = r * state.cols + col;
+                frag.appendChild(makeCell(idx));
+            }
+        }
+        els.grid.appendChild(frag);
+
+        var uns = unseatedNames();
+        if (state.roster.length && uns.length) {
+            els.unseated.hidden = false;
+            var chips = '<b>未安排 ' + uns.length + ' 人：</b>';
+            for (var u = 0; u < uns.length; u++) {
+                chips += '<span class="seatchart-chip">' + esc(uns[u]) + '</span>';
+            }
+            els.unseated.innerHTML = chips;
+        } else if (state.roster.length) {
+            els.unseated.hidden = false;
+            els.unseated.innerHTML = '<b>全班 ' + state.roster.length + ' 人已全部安排</b>';
+        } else {
+            els.unseated.hidden = true;
+            els.unseated.innerHTML = '';
+        }
+
+        chrome.setStatus(state.markMode ? '标记模式' : ('已安排 ' +
+            (state.roster.length - uns.length) + ' / 共 ' + state.roster.length + ' 人'),
+            state.markMode ? 'warn' : 'ok');
+        syncMarkBtn();
+    }
+
+    function makeCell(idx) {
+        var d = document.createElement('div');
+        var name = state.seats[idx];
+        d.className = 'seatchart-cell' + (name ? '' : ' is-empty') +
+            (state.marks[idx] ? ' is-mark' : '') + (state.sel === idx ? ' is-sel' : '');
+        d.setAttribute('data-idx', idx);
+        var no = document.createElement('span');
+        no.className = 'seatchart-no';
+        no.textContent = String(idx + 1);
+        d.appendChild(no);
+        var label = document.createElement('span');
+        label.textContent = name || '空位';
+        d.appendChild(label);
+        if (state.marks[idx]) {
+            var star = document.createElement('span');
+            star.className = 'seatchart-mark';
+            star.textContent = '★';
+            d.appendChild(star);
+        }
+        d.addEventListener('click', function (ev) { onCellClick(idx, ev); });
+        return d;
+    }
+
+    function applyPodium() {
+        els.podium.textContent = '讲 台';
+        els.podium.classList.toggle('is-bottom', state.podium === 'bottom');
+    }
+
+    function esc(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    /* ---------- 交互 ---------- */
+
+    function onCellClick(idx) {
+        if (state.markMode) {
+            state.marks[idx] = !state.marks[idx];
+            try { chrome.beep('tick'); } catch (e) { /* 静默 */ }
+            save();
+            render();
+            return;
+        }
+        if (!state.roster.length) {
+            chrome.toast('先点右上角「导入名单」');
+            return;
+        }
+        if (state.sel === -1) {
+            if (!state.seats[idx]) { return; }
+            state.sel = idx;
+            try { chrome.beep('tick'); } catch (e) { /* 静默 */ }
+            render();
+            return;
+        }
+        if (state.sel === idx) {
+            state.sel = -1;
+            render();
+            return;
+        }
+        var tmp = state.seats[state.sel];
+        state.seats[state.sel] = state.seats[idx];
+        state.seats[idx] = tmp;
+        state.sel = -1;
+        try { chrome.beep('ok'); } catch (e) { /* 静默 */ }
+        save();
+        render();
+    }
+
+    function toggleMarkMode() {
+        state.markMode = !state.markMode;
+        state.sel = -1;
+        chrome.toast(state.markMode ? '标记模式：点击座位加 / 去 ★' : '已退出标记模式');
+        render();
+    }
+
+    function syncMarkBtn() {
+        var b = document.getElementById('btnMark');
+        if (b) { b.classList.toggle('is-off', !state.markMode); }
+    }
+
+    function shuffle() {
+        if (!state.roster.length) { chrome.toast('先导入名单'); return; }
+        var pool = [];
+        for (var i = 0; i < state.seats.length; i++) {
+            if (state.seats[i]) { pool.push(state.seats[i]); }
+        }
+        pool = pool.concat(unseatedNames());
+        for (var p = pool.length - 1; p > 0; p--) {
+            var q = Math.floor(Math.random() * (p + 1));
+            var t = pool[p]; pool[p] = pool[q]; pool[q] = t;
+        }
+        for (var s = 0; s < state.seats.length; s++) {
+            state.seats[s] = pool[s] || '';
+        }
+        state.sel = -1;
+        try { chrome.beep('win'); } catch (e) { /* 静默 */ }
+        chrome.toast('已随机重排 ' + pool.length + ' 人');
+        save();
+        render();
+    }
+
+    function clearSeats() {
+        for (var i = 0; i < state.seats.length; i++) { state.seats[i] = ''; }
+        state.sel = -1;
+        save();
+        render();
+        chrome.toast('座位已清空（名单保留）');
+    }
+
+    /* ---------- 导入 ---------- */
+
+    function openImport() {
+        if (!globalETImport()) { return; }
+        ET.Import.open({
+            toolId: TOOL_ID,
+            title: '导入学生名单',
+            columns: ['name'],
+            current: state.roster.join('\n'),
+            onConfirm: function (rows) {
+                state.roster = [];
+                for (var i = 0; i < rows.length; i++) {
+                    if (rows[i].name) { state.roster.push(rows[i].name); }
+                }
+                autoAssign();
+                try { chrome.beep('ok'); } catch (e) { /* 静默 */ }
+                chrome.toast('已导入 ' + state.roster.length + ' 人');
+            }
+        });
+    }
+
+    function globalETImport() {
+        if (window.ET && window.ET.Import) { return true; }
+        chrome.toast('导入组件未加载');
+        return false;
+    }
+
+    function autoAssign() {
+        for (var i = 0; i < state.seats.length; i++) { state.seats[i] = ''; }
+        for (var r = 0; r < state.roster.length && r < state.seats.length; r++) {
+            state.seats[r] = state.roster[r];
+        }
+        save();
+        render();
+    }
+
+    /* ---------- 设置 ---------- */
+
+    function buildSettings(body) {
+        body.innerHTML = '';
+        var mk = function (labelText, val, min, max, onChange) {
+            var wrap = document.createElement('label');
+            wrap.style.cssText = 'display:flex;align-items:center;justify-content:space-between;' +
+                'gap:12px;padding:8px 0;font-size:14px';
+            var span = document.createElement('span');
+            span.textContent = labelText;
+            var input = document.createElement('input');
+            input.type = 'number';
+            input.min = min;
+            input.max = max;
+            input.value = val;
+            input.style.cssText = 'width:76px;padding:6px 8px;border-radius:8px;' +
+                'border:1px solid var(--et-line-strong);background:var(--et-surface-2);color:var(--et-fg)';
+            input.addEventListener('change', function () {
+                var v = parseInt(input.value, 10);
+                if (isNaN(v)) { return; }
+                onChange(Math.max(min, Math.min(max, v)));
+            });
+            wrap.appendChild(span);
+            wrap.appendChild(input);
+            body.appendChild(wrap);
+            return input;
+        };
+
+        mk('行数（排）', state.rows, 1, 12, function (v) { state.rows = v; ensureSize(); save(); render(); });
+        mk('列数（每组条）', state.cols, 1, 12, function (v) { state.cols = v; ensureSize(); save(); render(); });
+        mk('每组列数（0 不分组）', state.group, 0, 8, function (v) { state.group = v; save(); render(); });
+
+        var podWrap = document.createElement('label');
+        podWrap.style.cssText = 'display:flex;align-items:center;justify-content:space-between;' +
+            'gap:12px;padding:8px 0;font-size:14px';
+        var ps = document.createElement('span');
+        ps.textContent = '讲台位置';
+        var sel = document.createElement('select');
+        sel.style.cssText = 'padding:6px 8px;border-radius:8px;border:1px solid var(--et-line-strong);' +
+            'background:var(--et-surface-2);color:var(--et-fg)';
+        sel.innerHTML = '<option value="top">上方</option><option value="bottom">下方</option>';
+        sel.value = state.podium;
+        sel.addEventListener('change', function () {
+            state.podium = sel.value;
+            save();
+            render();
+        });
+        podWrap.appendChild(ps);
+        podWrap.appendChild(sel);
+        body.appendChild(podWrap);
+
+        var note = document.createElement('p');
+        note.style.cssText = 'margin:10px 0 0;font-size:12.5px;color:var(--et-muted);line-height:1.7';
+        note.textContent = '调整行列数后按行保留已安排的名字；「清空座位」保留名单只清空座位。';
+        body.appendChild(note);
+    }
+
+    /* ---------- 键盘 ---------- */
+
+    document.addEventListener('keydown', function (e) {
+        if (e.code === 'Space' && !isTypingTarget(e.target)) {
+            e.preventDefault();
+            shuffle();
+        }
+    });
+
+    function isTypingTarget(node) {
+        if (!node || !node.tagName) { return false; }
+        var tag = node.tagName.toUpperCase();
+        return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || node.isContentEditable === true;
+    }
+
+    /* ---------- 启动 ---------- */
+
+    ensureSize();
+    render();
+})();
+</script>
+
+</body>
+</html>

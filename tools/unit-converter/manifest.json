@@ -1,0 +1,21 @@
+{
+  "id": "unit-converter",
+  "title": "单位换算器",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "长度 / 质量 / 面积 / 体积 / 时间 / 数据单位实时互转，换算关系一目了然。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["3-4", "5-6", "7-9"],
+  "subjects": ["数学"],
+  "tags": ["数学"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}
