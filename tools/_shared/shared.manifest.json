@@ -418,5 +418,12 @@
     "et-chrome-css": "ui/et-chrome.css",
     "et-chrome": "ui/et-chrome.js",
     "et-stats": "ui/et-stats.js"
+  },
+  "report-comment": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
   }
 }

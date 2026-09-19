@@ -1,0 +1,21 @@
+{
+  "id": "report-comment",
+  "title": "评语生成器",
+  "version": "1.0.0",
+  "type": "shell",
+  "description": "输入姓名与表现特点一键生成期末评语，支持全班批量生成与 CSV 导出，全部本地完成。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["1-12"],
+  "subjects": ["通用"],
+  "tags": ["评语", "班主任", "期末", "批量生成"],
+  "family": "report-comment",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}
