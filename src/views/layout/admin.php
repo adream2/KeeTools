@@ -5,7 +5,7 @@
  * 模板变量：
  *   $content     子模板内容
  *   $pageTitle   页面标题
- *   $adminActive 侧栏激活项 key（dashboard / tools / categories / settings / system）
+ *   $adminActive 侧栏激活项 key（dashboard / tools / package / settings / system）
  */
 
 use App\Core\Session;
@@ -16,9 +16,8 @@ $flash = Session::pullFlash();
 $nav = [
     'dashboard'  => ['仪表盘', 'layout-dashboard'],
     'tools'      => ['工具管理', 'wrench'],
-    'categories' => ['分类管理', 'folder-tree'],
     'netdisks'   => ['网盘管理', 'cloud'],
-    'packages'   => ['离线包打包', 'package'],
+    'package'    => ['离线包打包', 'package'],
     'stats'      => ['统计看板', 'bar-chart-3'],
     'settings'   => ['站点设置', 'settings'],
     'system'     => ['系统信息', 'info'],
