@@ -66,6 +66,13 @@ TOOL_MARKERS = {
     "ipa-chart": ['ipachart-group'],
     "word-flashcard": ['wordflashcard-chip'],
     "probability-lab": ['probabilityl-legend__dash'],
+    "pythagorean": ['pythagorean-tile'],
+    "chem-balancer": ['chembalancer-coef'],
+    "microscope-sim": ['id="fovSpecimen"'],
+    "lever-balance": ['leverbalance-w'],
+    "light-reflection": ['id="dragHandle"'],
+    "buoyancy-lab": ['id="objRect"'],
+    "pulley-lab": ['id="rope"'],
 }
 
 CHROME_CANDIDATES = [

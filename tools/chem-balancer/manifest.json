@@ -1,0 +1,21 @@
+{
+  "id": "chem-balancer",
+  "title": "化学方程式配平器",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "内置常见反应一键配平演示，也可按元素守恒自动求解最小整数系数。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["7-9"],
+  "subjects": ["化学"],
+  "tags": ["化学"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}

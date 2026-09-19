@@ -1,0 +1,21 @@
+{
+  "id": "pulley-lab",
+  "title": "滑轮组",
+  "version": "1.0.0",
+  "type": "experiment",
+  "description": "改变绳段数探究滑轮组省力与费距离规律，绳端与重物同步动画。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["7-9"],
+  "subjects": ["物理"],
+  "tags": ["物理"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}

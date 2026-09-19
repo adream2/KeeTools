@@ -199,5 +199,54 @@
     "et-chrome-css": "ui/et-chrome.css",
     "et-chrome": "ui/et-chrome.js",
     "et-stats": "ui/et-stats.js"
+  },
+  "pythagorean": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "chem-balancer": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "microscope-sim": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "lever-balance": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "light-reflection": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "buoyancy-lab": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "pulley-lab": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-stats": "ui/et-stats.js"
   }
 }
