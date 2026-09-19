@@ -48,6 +48,21 @@ $stats[] = ['num' => '0', 'label' => '外部依赖'];
 
 <div class="card about-card">
   <div class="card-head">
+    <h2 class="card-title"><?= icon('user') ?>来自站长的话</h2>
+  </div>
+  <div class="card-body">
+    <p>这个项目由 <b>AI 辅助构建</b>，站长并非程序员出身。它的诞生很简单：一位教师朋友在课堂上
+    经常用到这类小工具，而网上的工具不是夹着广告、要注册，就是断网就废——于是有了
+    <?= e(site_name()) ?>。</p>
+    <p>开发过程中必然存在许多不足与疏漏，<b>诚恳欢迎各位专业同学提出建设性建议与修复</b>——
+    哪怕只是指出一个错别字，都是对这个项目实实在在的帮助。
+    欢迎前往 <a href="https://github.com/adream2/KeeTools" target="_blank" rel="noopener nofollow">GitHub 仓库</a><!-- et-allow-external 项目仓库导航链接，非运行时资源 -->
+    提 Issue 或参与共建。</p>
+  </div>
+</div>
+
+<div class="card about-card">
+  <div class="card-head">
     <h2 class="card-title"><?= icon('info') ?>这是什么</h2>
   </div>
   <div class="card-body">
@@ -128,17 +143,34 @@ $stats[] = ['num' => '0', 'label' => '外部依赖'];
 
 <div class="card about-card">
   <div class="card-head">
+    <h2 class="card-title"><?= icon('users') ?>交流社区</h2>
+  </div>
+  <div class="card-body">
+    <p style="color: var(--c-text-muted);">加入频道 / 群，获取工具更新通知、提需求、和其他老师交流用法（扫码加入）：</p>
+    <div class="sponsor-qr-grid" style="max-width: 420px;">
+      <div class="sponsor-qr-card">
+        <img src="<?= e(asset('img/qq-channel.jpg')) ?>" alt="QQ 频道二维码" loading="lazy" style="width: 100%; border-radius: var(--r-md);">
+        <p class="sponsor-qr-title">QQ 频道</p>
+      </div>
+      <div class="sponsor-qr-card">
+        <img src="<?= e(asset('img/qq-group.jpg')) ?>" alt="QQ 群二维码" loading="lazy" style="width: 100%; border-radius: var(--r-md);">
+        <p class="sponsor-qr-title">QQ 群</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card about-card">
+  <div class="card-head">
     <h2 class="card-title"><?= icon('heart') ?>支持与反馈</h2>
   </div>
   <div class="card-body">
-    <?php if ($hasFooterContact): ?>
-      <p>工具问题、新建工具需求或合作意向，欢迎通过页脚底部的联系方式联系我们。
-      如果这些工具帮到了你的课堂，欢迎<a href="<?= e(url('/sponsor')) ?>">支持本站</a>，
-      帮助我们把更多工具做得更好用。</p>
+    <p>所有工具<b>永久免费、无广告</b>。如果你觉得它帮到了你的课堂，欢迎<a href="<?= e(url('/sponsor')) ?>">请站长喝一杯奶茶</a>，
+    这是项目持续更新的全部动力。</p>
+    <p><?php if ($hasFooterContact): ?>
+      工具问题、新建工具需求或合作意向，欢迎通过页脚底部的联系方式联系我们。
     <?php else: ?>
-      <p>工具问题、新建工具需求或合作意向，欢迎向我们反馈；使用中遇到的一切问题都欢迎指出。
-      如果这些工具帮到了你的课堂，欢迎<a href="<?= e(url('/sponsor')) ?>">支持本站</a>，
-      帮助我们把更多工具做得更好用。</p>
-    <?php endif; ?>
+      工具问题、新建工具需求或合作意向，欢迎向我们反馈；使用中遇到的一切问题都欢迎指出。
+    <?php endif; ?></p>
   </div>
 </div>

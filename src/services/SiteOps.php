@@ -380,13 +380,20 @@ final class SiteOps
             return null;
         }
 
+        // 收款码：后台未配置时回落到内置素材（public/assets/img/），开箱即得；
+        // 站长可在后台「赞助」Tab 覆盖为自己的图片地址
+        $wechatQr = Security::safeExternalUrl(trim(Config::string('sponsor_wechat_qr')))
+            ?? '/assets/img/sponsor-wechat.png';
+        $alipayQr = Security::safeExternalUrl(trim(Config::string('sponsor_alipay_qr')))
+            ?? '/assets/img/sponsor-alipay.png';
+
         return [
             'title'     => trim(Config::string('sponsor_title')) ?: '支持课工具',
             'desc'      => trim(Config::string('sponsor_desc')),
             'cost_note' => trim(Config::string('sponsor_cost_note')),
             'note'      => trim(Config::string('sponsor_note')) ?: '赞助完全自愿，不赞助不影响任何功能的使用。',
-            'wechat_qr' => Security::safeExternalUrl(trim(Config::string('sponsor_wechat_qr'))),
-            'alipay_qr' => Security::safeExternalUrl(trim(Config::string('sponsor_alipay_qr'))),
+            'wechat_qr' => $wechatQr,
+            'alipay_qr' => $alipayQr,
             'show_footer' => Config::bool('sponsor_show_footer', true),
         ];
     }
