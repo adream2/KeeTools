@@ -39,6 +39,8 @@ final class SettingsController extends AdminController
     /** 页脚 Tab 的键 */
     private const FOOTER_KEYS = [
         'footer_brand_desc'    => '品牌描述（留空取站点口号）',
+        'footer_contact_email' => '联系邮箱（留空不显示；关于页等文案引导用户「通过页脚联系」）',
+        'footer_contact_text'  => '其他联系方式（公众号 / QQ 等，一行一条，纯文本展示）',
         'footer_copyright'     => '版权行（支持 {year} {site_name}）',
         'footer_icp_number'    => 'ICP 备案号',
         'footer_icp_url'       => 'ICP 查询链接',

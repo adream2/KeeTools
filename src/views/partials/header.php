@@ -10,7 +10,7 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 ?><header class="site-header">
   <div class="container site-header-inner">
     <a class="site-logo" href="<?= e(url('/')) ?>">
-      <span class="site-logo-mark"><?= icon('grid-2x2') ?></span>
+      <img class="site-logo-mark" src="<?= e(url('/favicon.svg')) ?>" alt="" width="32" height="32">
       <span><?= e(site_name()) ?></span>
     </a>
 
@@ -30,7 +30,6 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
                autocomplete="off" maxlength="50">
         <button class="btn btn-primary" type="submit"><?= icon('search') ?>搜索</button>
       </form>
-      <a class="btn btn-ghost btn-sm" href="<?= e(url('/admin')) ?>"><?= icon('settings') ?>后台</a>
     </div>
   </div>
 </header>

@@ -9,23 +9,29 @@
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── 主色 ───────────────────────────────────────────────── */
-  --c-primary:        #2563eb;
-  --c-primary-hover:  #1d4ed8;
-  --c-primary-active: #1e40af;
-  --c-primary-weak:   #eff6ff;
+  /* ── 主色（黑板粉笔 · 暖橙）─────────────────────────────── */
+  --c-primary:        #e07b39;
+  --c-primary-hover:  #c9662a;
+  --c-primary-active: #b05a24;
+  --c-primary-weak:   #fdf1e7;
 
-  /* ── 中性色阶 ───────────────────────────────────────────── */
-  --c-text:           #1f2937;
-  --c-text-muted:     #6b7280;
-  --c-text-light:     #9ca3af;
-  --c-text-invert:    #ffffff;
-  --c-border:         #e5e7eb;
-  --c-border-strong:  #d1d5db;
-  --c-bg:             #ffffff;
-  --c-bg-soft:        #f9fafb;
-  --c-bg-mute:        #f3f4f6;
-  --c-mask:           rgba(17, 24, 39, 0.45);
+  /* ── 中性色阶（米纸暖灰）────────────────────────────────── */
+  --c-text:           #2b2b26;
+  --c-text-muted:     #6f6d62;
+  --c-text-light:     #9a978a;
+  --c-text-invert:    #fffdf8;
+  --c-border:         #e4dfd2;
+  --c-border-strong:  #d3cbb8;
+  --c-bg:             #fffdf8;   /* 卡片 / 浮层表面 */
+  --c-bg-soft:        #faf7f0;   /* 页面底（米纸）*/
+  --c-bg-mute:        #f0ebde;   /* Hero / 强调底 */
+  --c-mask:           rgba(30, 32, 28, 0.5);
+
+  /* ── 页头专用（深板绿）──────────────────────────────────── */
+  --c-head-bg:        #243d33;
+  --c-head-border:    #1b2f28;
+  --c-head-text:      #f5f1e6;
+  --c-head-muted:     #a3b5a8;
 
   /* ── 语义色 ─────────────────────────────────────────────── */
   --c-success:        #16a34a;
@@ -71,17 +77,22 @@
   --sp-12:            48px;
   --sp-16:            64px;
 
-  /* ── 圆角 ───────────────────────────────────────────────── */
+  /* ── 圆角（黑板粉笔 · 收紧）────────────────────────────── */
   --r-sm:             4px;
-  --r-md:             8px;
-  --r-lg:             12px;
-  --r-xl:             16px;
+  --r-md:             6px;
+  --r-lg:             8px;
+  --r-xl:             12px;
   --r-full:           9999px;
 
-  /* ── 阴影 ───────────────────────────────────────────────── */
-  --sh-sm:            0 1px 2px rgba(0, 0, 0, 0.05);
-  --sh-md:            0 4px 12px rgba(0, 0, 0, 0.08);
-  --sh-lg:            0 10px 30px rgba(0, 0, 0, 0.12);
+  /* ── 阴影（暖灰投影）────────────────────────────────────── */
+  --sh-sm:            0 1px 0 rgba(43, 43, 38, 0.06);
+  --sh-md:            0 4px 14px rgba(43, 43, 38, 0.10);
+  --sh-lg:            0 10px 30px rgba(43, 43, 38, 0.14);
+
+  /* ── 装饰（标题竖条 / 标题下划线，仅 site.css 引用）──────── */
+  --deco-bar-w:       4px;
+  --deco-underline-th: 6px;
+  --deco-underline-offset: 10px;
 
   /* ── 边框宽度 ───────────────────────────────────────────── */
   --bw-1:             1px;
@@ -111,6 +122,7 @@
   --page-pad:         var(--sp-4);
   --header-h:         60px;
   --sidebar-w:        220px;
+  --admin-max:        1400px;   /* 后台内容区：数据表密集，比前台更宽 */
 
   /* ── 动效 ───────────────────────────────────────────────── */
   --tr-fast:          120ms ease;
@@ -131,16 +143,20 @@
    深色模式（预留，P5 评估后启用）
    ═══════════════════════════════════════════════════════════════ */
 [data-theme="dark"] {
-  --c-text:           #e5e7eb;
-  --c-text-muted:     #9ca3af;
-  --c-text-light:     #6b7280;
-  --c-text-invert:    #111827;
-  --c-border:         #374151;
-  --c-border-strong:  #4b5563;
-  --c-bg:             #111827;
-  --c-bg-soft:        #1f2937;
-  --c-bg-mute:        #374151;
-  --c-primary-weak:   #1e3a8a;
+  --c-text:           #e8e6dd;
+  --c-text-muted:     #a8a79b;
+  --c-text-light:     #7c7b70;
+  --c-text-invert:    #1b211d;
+  --c-border:         #3a443c;
+  --c-border-strong:  #4a564d;
+  --c-bg:             #1b211d;
+  --c-bg-soft:        #141a16;
+  --c-bg-mute:        #232a25;
+  --c-primary-weak:   #4a2f1b;
+  --c-head-bg:        #141a16;
+  --c-head-border:    #0d120e;
+  --c-head-text:      #e8e6dd;
+  --c-head-muted:     #8fa093;
   --c-mask:           rgba(0, 0, 0, 0.6);
 }
 

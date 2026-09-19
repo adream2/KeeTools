@@ -65,7 +65,8 @@ final class PortalRenderer
         if ($qrDataUri !== null) {
             $qrText = trim(Config::string('community_qr_text'));
             if ($qrText === '') {
-                $qrText = '扫码关注，获取工具更新';
+                // 与前台详情页 / 网盘中间页的默认引导文案保持一致
+                $qrText = '扫码关注，新工具上线第一时间通知';
             }
             $qrBlock = '<div class="portal-qr">'
                 . '<img src="' . $esc($qrDataUri) . '" alt="站点二维码" width="96" height="96">'

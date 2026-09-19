@@ -43,6 +43,7 @@ $keywords = trim((string) ($pageKeywords ?? ''));
 <?php endif; ?>
 <meta name="robots" content="<?= e($robots) ?>">
 <link rel="canonical" href="<?= e($canonical) ?>">
+<link rel="icon" type="image/svg+xml" href="<?= e(url('/favicon.svg')) ?>">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="<?= e(site_name()) ?>">
 <meta property="og:title" content="<?= e($title) ?>">

@@ -314,8 +314,9 @@ final class SiteOps
     /**
      * 归一化的页脚配置。
      *
-     * @return array{brand_desc: string, copyright: string, icp_number: string, icp_url: ?string,
-     *               police_number: string, police_url: ?string, statement: string}
+     * @return array{brand_desc: string, contact_email: string, contact_text: string,
+     *               copyright: string, icp_number: string, icp_url: ?string,
+     *               police_number: string, police_url: ?string, statement: string, show_sitemap: bool}
      */
     public static function footer(): array
     {
@@ -330,16 +331,33 @@ final class SiteOps
         );
 
         $icpUrl = Security::safeExternalUrl(trim(Config::string('footer_icp_url')));
+
+        // 公安联网备案：徽标须链接到全国互联网安全管理服务平台查询页。
+        // 后台未配置链接时，从备案号中提取数字自动生成（如 京公网安备 1101...号 → code=1101...）
+        $policeNumber = trim(Config::string('footer_police_number'));
         $policeUrl = Security::safeExternalUrl(trim(Config::string('footer_police_url')));
+        if ($policeUrl === null && $policeNumber !== '' && preg_match('/\d{8,}/', $policeNumber, $m) === 1) {
+            $policeUrl = 'https://beian.mps.gov.cn/#/query/webSearch?code=' . $m[0]; // et-allow-external 公安备案合规要求：徽标须链接至官方查询页，非运行时资源依赖
+        }
+
+        $contactEmail = trim(Config::string('footer_contact_email'));
+        $contactLines = array_values(array_filter(array_map(
+            static fn (string $line): string => trim($line),
+            explode("\n", str_replace("\r", '', Config::string('footer_contact_text')))
+        )));
 
         return [
             'brand_desc'    => trim(Config::string('footer_brand_desc')) ?: site_description(),
+            // 仅当是合法邮箱时才生成 mailto 链接，否则模板按纯文本降级输出
+            'contact_email' => $contactEmail,
+            'contact_text'  => $contactLines,
             'copyright'     => $copyright,
             'icp_number'    => trim(Config::string('footer_icp_number')),
             'icp_url'       => $icpUrl,
-            'police_number' => trim(Config::string('footer_police_number')),
+            'police_number' => $policeNumber,
             'police_url'    => $policeUrl,
             'statement'     => trim(Config::string('footer_statement')),
+            'show_sitemap'  => Config::bool('footer_show_sitemap', false),
         ];
     }
 
