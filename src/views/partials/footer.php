@@ -14,7 +14,7 @@ $links = SiteOps::friendLinks();
 $adSlot = SiteOps::adSlot('footer');
 $sponsor = SiteOps::sponsor();
 
-// 快捷导航：后台可配置（footer_nav），未配置回退内置导航
+// 快捷导航：后台可配置（footer_nav），未配置回退内置导航（含 QQ 社群，可在后台自定义时增删）
 $navLinks = SiteOps::footerNav();
 if ($navLinks === []) {
     $navLinks = [['label' => '全部工具', 'url' => url('/tools')]];
@@ -25,6 +25,8 @@ if ($navLinks === []) {
     if ($sponsor !== null && $sponsor['show_footer']) {
         $navLinks[] = ['label' => '支持本站', 'url' => url('/sponsor')];
     }
+    $navLinks[] = ['label' => 'QQ 群', 'url' => 'https://qm.qq.com/q/djTRxXXQNq']; // et-allow-external 社群加入链接，用户主动跳转
+    $navLinks[] = ['label' => 'QQ 频道', 'url' => 'https://pd.qq.com/s/fhc0uxdjn']; // et-allow-external 社群加入链接，用户主动跳转
     // 后台入口不暴露在前台页面上（用户定稿 2026-09-19），管理员直接访问 /admin
 }
 ?><footer class="site-footer">
@@ -70,8 +72,6 @@ if ($navLinks === []) {
                  <?= str_starts_with($item['url'], '/') ? '' : 'target="_blank" rel="noopener"' ?>><?= e($item['label']) ?></a>
             </li>
           <?php endforeach; ?>
-          <li><a href="https://qm.qq.com/q/djTRxXXQNq" target="_blank" rel="noopener nofollow">QQ 群：KeeTools</a><!-- et-allow-external 社群加入链接，用户主动跳转 --></li>
-          <li><a href="https://pd.qq.com/s/fhc0uxdjn" target="_blank" rel="noopener nofollow">QQ 频道：KeeTools</a><!-- et-allow-external 社群加入链接，用户主动跳转 --></li>
         </ul>
       </nav>
 
