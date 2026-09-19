@@ -73,6 +73,22 @@ TOOL_MARKERS = {
     "light-reflection": ['id="dragHandle"'],
     "buoyancy-lab": ['id="objRect"'],
     "pulley-lab": ['id="rope"'],
+    "seat-chart": ['class="seatchart-cell'],
+    "quiz-buzzer": ['class="quizbuzzer-team'],
+    "unit-converter": ['class="unitconv-cat'],
+    "vertical-arithmetic": ['class="vertmain-cell'],
+    "chart-maker": ['class="cmk-bar'],
+    "magnet-demo": ['class="mag-magnet'],
+    "water-states": ['class="ws-preset'],
+    "solar-system": ['ss-plabel'],
+    "dynasty-timeline": ['class="dt-block'],
+    "history-event-cards": ['class="hec-card'],
+    "lat-lon-grid": ['id="llgMap"'],
+    "map-china": ['class="mc-prov'],
+    "map-world": ['class="mw-land"'],
+    "cell-structure": ['class="cs-badge"'],
+    "blood-circulation": ['class="bc-legend"'],
+    "moon-phases": ['id="mpOrbit"'],
 }
 
 CHROME_CANDIDATES = [

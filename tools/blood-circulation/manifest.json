@@ -1,0 +1,21 @@
+{
+  "id": "blood-circulation",
+  "title": "血液循环动画",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "血液循环动画：体循环与肺循环路径演示，标注心脏四腔、血管与血液性质变化。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["7-9"],
+  "subjects": ["生物"],
+  "tags": ["生物"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}

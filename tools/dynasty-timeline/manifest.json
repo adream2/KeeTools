@@ -1,0 +1,21 @@
+{
+  "id": "dynasty-timeline",
+  "title": "朝代更替时间轴",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "中国朝代更替时间轴：按时长比例排布，点击看起止年、都城与开国君主，支持分区筛选。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["7-9"],
+  "subjects": ["历史"],
+  "tags": ["历史"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}

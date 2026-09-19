@@ -1,0 +1,21 @@
+{
+  "id": "cell-structure",
+  "title": "细胞结构标注",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "动植物细胞结构标注：点选结构看功能，含隐藏名称的识图测验与对比模式。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["7-9"],
+  "subjects": ["生物"],
+  "tags": ["生物"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}
