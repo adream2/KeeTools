@@ -1,7 +1,7 @@
 {
   "id": "clock-learning",
   "title": "时钟认识",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "fixed",
   "description": "拖动时针分针秒针认识时间，也可给时间摆指针；支持自由拨针与秒针显示。",
   "author": "KeeTools Team",

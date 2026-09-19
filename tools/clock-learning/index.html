@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>时钟认识 — KeeTools 课工具</title>
 <!-- ET-META
-{"id":"clock-learning","version":"1.1.0"}
+{"id":"clock-learning","version":"1.1.1"}
 -->
 
 <!-- 共享外壳样式（由 sync_shared.py 注入） -->
@@ -1779,6 +1779,10 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
     var target = { hour: 3, minute: 0 };             /* 本题目标时间 */
     var revealed = false;
     var dragHand = null;
+    var dragBase = { hour: 3, minute: 0, second: 0 }; /* 起手瞬间的钟面时间 */
+    var dragPrevU = null;                             /* 上一次指针角度（单位空间，求增量用） */
+    var dragUnwrapped = 0;                            /* 本次拖动累计转过的角度，跨圈不清零 → 据此进位 */
+    var dragHourOffset = 0;                           /* 时针角度需扣掉的分针偏移 */
 
     var stats = store.get('stats', { right: 0, wrong: 0 });
     if (!stats || typeof stats.right !== 'number' || typeof stats.wrong !== 'number') {
@@ -1857,17 +1861,18 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
 
     /* ---------- 时间阶梯 ---------- */
 
-    function snapMinute(m) {
-        var v = Math.round(m) % 60;
-        if (v < 0) { v += 60; }
-        if (mode === 'free') { return v; }
+    /* 连续分钟 → 吸附后的「连续」分钟（可为负或 ≥60，供进位判定使用） */
+    function snapMinuteContinuous(m) {
+        if (mode === 'free') { return Math.round(m); }
         if (prefs.level === 'hour') { return 0; }
-        if (prefs.level === 'half') {
-            if (v < 15) { return 0; }
-            return v < 45 ? 30 : 0;
-        }
-        if (prefs.level === 'five') { return (Math.round(v / 5) * 5) % 60; }
-        return v;
+        if (prefs.level === 'half') { return Math.round(m / 30) * 30; }
+        if (prefs.level === 'five') { return Math.round(m / 5) * 5; }
+        return Math.round(m);
+    }
+
+    function snapMinute(m) {
+        var v = snapMinuteContinuous(m) % 60;
+        return v < 0 ? v + 60 : v;
     }
 
     function randomTarget() {
@@ -2161,18 +2166,43 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
         return best;
     }
 
+    /* 指针角度 → 单位空间（秒 / 分 1 单位 = 6°，时 1 单位 = 30°，需扣掉分针带来的偏移） */
+    function dragUnit(hand, deg) {
+        return hand === 'hour' ? deg - dragHourOffset : deg;
+    }
+
+    /* 设定「连续分钟总数」：按难度吸附，并自动进位到时针 */
+    function setMinuteTotal(total, baseHour) {
+        var m = snapMinuteContinuous(total);
+        var addHour = Math.floor(m / 60);
+        clock.minute = m - addHour * 60;
+        clock.hour = ((baseHour + addHour) % 12 + 12) % 12;
+    }
+
     function applyDrag(deg) {
+        /* 累加指针真正转过的角度：跨过 12 点也连续，走满一圈即进位到上一级指针 */
+        var unit = (dragHand === 'hour') ? 30 : 6;
+        var u = dragUnit(dragHand, deg);
+        if (dragPrevU === null) { dragPrevU = u; }
+        var d = u - dragPrevU;
+        while (d > 180) { d -= 360; }
+        while (d < -180) { d += 360; }
+        dragPrevU = u;
+        dragUnwrapped += d;
+
+        var v = Math.round(dragUnwrapped / unit);
+
         if (dragHand === 'second') {
-            var s = Math.round(deg / 6) % 60;
-            if (s < 0) { s += 60; }
-            clock.second = s;
+            /* 秒针：每满 60 秒进位 1 分 */
+            var addMin = Math.floor(v / 60);
+            clock.second = v - addMin * 60;
+            setMinuteTotal(dragBase.minute + addMin, dragBase.hour);
         } else if (dragHand === 'minute') {
-            clock.minute = snapMinute(deg / 6);
+            /* 分针：每满 60 分进位 1 时 */
+            setMinuteTotal(v, dragBase.hour);
         } else {
-            var raw = (deg - clock.minute * 0.5) / 30;
-            var h = Math.round(raw) % 12;
-            if (h < 0) { h += 12; }
-            clock.hour = h;
+            /* 时针：钟面是 12 小时制，无上一级可进位 */
+            clock.hour = ((v % 12) + 12) % 12;
         }
         applyHands();
         renderDigital();
@@ -2193,6 +2223,11 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
             if (hand === 'second' && !useSecond()) { hand = 'minute'; }
             e.preventDefault();
             dragHand = hand;
+            /* 记录起手瞬间的时刻与偏移，拖动过程中所有值都由「起手值 + 累计转角」推出 */
+            dragBase = { hour: clock.hour, minute: clock.minute, second: clock.second || 0 };
+            dragHourOffset = clock.minute * 0.5;
+            dragPrevU = null;
+            dragUnwrapped = dragUnit(hand, deg);
             try { svgEl.setPointerCapture(e.pointerId); } catch (err) { /* 忽略 */ }
             applyDrag(deg);
         });
@@ -2208,11 +2243,13 @@ try { ET.Stats.send('use_offline', 'clock-learning'); } catch (e) { /* 静默 */
             if (!dragHand) { return; }
             try { svgEl.releasePointerCapture(e.pointerId); } catch (err) { /* 忽略 */ }
             dragHand = null;
+            dragPrevU = null;
             chrome.beep('tick');
         });
 
         svgEl.addEventListener('pointercancel', function () {
             dragHand = null;
+            dragPrevU = null;
         });
     }
 
