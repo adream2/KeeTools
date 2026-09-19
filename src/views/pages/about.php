@@ -23,7 +23,7 @@ if ($subjectCount > 0) {
     $stats[] = ['num' => (string) $subjectCount, 'label' => '学科分类'];
 }
 $stats[] = ['num' => '100%', 'label' => '免费使用'];
-$stats[] = ['num' => '0', 'label' => '外部依赖'];
+$stats[] = ['num' => '0', 'label' => '外部链接'];
 ?><nav class="breadcrumb" aria-label="面包屑">
   <a href="<?= e(url('/')) ?>">首页</a>
   <span class="breadcrumb-sep">/</span>
@@ -99,10 +99,10 @@ $stats[] = ['num' => '0', 'label' => '外部依赖'];
   </div>
   <div class="card-body about-licenses">
     <?php if (!$hasNotices): ?>
-      <p>本站坚持「零外部依赖」：所有图标、音频、数据均在构建时本地化打包，运行时不请求任何第三方资源。</p>
+      <p>本站坚持「零 CDN 依赖」：不引用任何外部链接，所有图标、音频、数据均在构建时本地化打包，确保无网条件下工具照常使用。</p>
       <p class="about-licenses-note">第三方素材登记数据暂不可用（assets-src/third-party.json 缺失或损坏）。</p>
     <?php else: ?>
-      <p>本站坚持「零外部依赖」：所有图标、音频、数据均在构建时本地化打包，运行时不请求任何第三方资源。
+      <p>本站坚持「零 CDN 依赖」：不引用任何外部链接，所有图标、音频、数据均在构建时本地化打包，确保无网条件下工具照常使用。
       以下为本站引用的第三方素材及其许可证，感谢原作者与社区（本表由
       <code>assets-src/third-party.json</code> 自动渲染，新增素材无需手改本页）：</p>
 
@@ -149,11 +149,11 @@ $stats[] = ['num' => '0', 'label' => '外部依赖'];
     <p style="color: var(--c-text-muted);">加入频道 / 群，获取工具更新通知、提需求、和其他老师交流用法（扫码加入）：</p>
     <div class="sponsor-qr-grid" style="max-width: 420px;">
       <div class="sponsor-qr-card">
-        <img src="<?= e(asset('img/qq-channel.jpg')) ?>" alt="QQ 频道二维码" loading="lazy" style="width: 100%; border-radius: var(--r-md);">
+        <img src="<?= e(asset('img/qq-channel.jpg')) ?>" alt="QQ 频道二维码" loading="lazy" style="width: 100%; height: auto; object-fit: contain; border-radius: var(--r-md);">
         <p class="sponsor-qr-title">QQ 频道</p>
       </div>
       <div class="sponsor-qr-card">
-        <img src="<?= e(asset('img/qq-group.jpg')) ?>" alt="QQ 群二维码" loading="lazy" style="width: 100%; border-radius: var(--r-md);">
+        <img src="<?= e(asset('img/qq-group.jpg')) ?>" alt="QQ 群二维码" loading="lazy" style="width: 100%; height: auto; object-fit: contain; border-radius: var(--r-md);">
         <p class="sponsor-qr-title">QQ 群</p>
       </div>
     </div>

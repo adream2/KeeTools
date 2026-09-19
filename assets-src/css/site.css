@@ -2109,9 +2109,11 @@
 }
 
 .sponsor-qr-card img {
+  display: block;
+  margin-inline: auto;
   width: calc(var(--sp-16) * 3);
   height: calc(var(--sp-16) * 3);
-  object-fit: cover;
+  object-fit: contain;
   border-radius: var(--r-md);
 }
 

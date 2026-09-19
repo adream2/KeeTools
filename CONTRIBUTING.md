@@ -49,7 +49,7 @@ python scripts/new_tool.py --id my-tool --title "我的工具" \
 - 必读：[`docs/工具开发规范.md`](docs/工具开发规范.md)、[`docs/manifest规范.md`](docs/manifest规范.md)
 - 硬约束速记：
   - 一个工具 = 一个目录，`index.html` 双击（`file://`）必须能用、断网必须能用
-  - **零外部依赖**：不引 CDN / 在线字体 / 在线图标，产出物中无非本站域名即红
+  - **零 CDN 依赖**：不引用任何外部链接（CDN / 在线字体 / 在线图标），确保无网可用；CI 产出物扫描非本站域名即红
   - 数据只存 `localStorage`，key 前缀 `et_{toolId}_`
   - 共享逻辑只改 `tools/_shared/`，跑 `python scripts/sync_shared.py` 同步
   - 升版本必须同步：`manifest.json` / `ET-META` / `CHANGELOG.md` / `updated_at`
