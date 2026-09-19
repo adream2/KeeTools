@@ -18,10 +18,8 @@ $sponsor = SiteOps::sponsor();
 $navLinks = SiteOps::footerNav();
 if ($navLinks === []) {
     $navLinks = [['label' => '全部工具', 'url' => url('/tools')]];
-    $navLinks[] = ['label' => '关于', 'url' => url('/about')];
-    if ($sponsor !== null && $sponsor['show_footer']) {
-        $navLinks[] = ['label' => '支持本站', 'url' => url('/sponsor')];
-    }
+    $navLinks[] = ['label' => '关于本站', 'url' => url('/about')];
+    // 「支持本站」不放快速导航：品牌列左侧已有同功能按钮（用户定稿 2026-09-19）
     $navLinks[] = ['label' => 'QQ 群', 'url' => 'https://qm.qq.com/q/djTRxXXQNq']; // et-allow-external 社群加入链接，用户主动跳转
     $navLinks[] = ['label' => 'QQ 频道', 'url' => 'https://pd.qq.com/s/fhc0uxdjn']; // et-allow-external 社群加入链接，用户主动跳转
     // 后台入口不暴露在前台页面上（用户定稿 2026-09-19），管理员直接访问 /admin
