@@ -1,0 +1,21 @@
+{
+  "id": "solid-rotation",
+  "title": "立体几何旋转体",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "矩形、直角三角形等平面图形绕轴旋转生成圆柱圆锥圆台球，360 度观察旋转过程。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["10-12"],
+  "subjects": ["数学"],
+  "tags": ["数学"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}

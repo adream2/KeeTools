@@ -1,0 +1,21 @@
+{
+  "id": "derivative-graph",
+  "title": "导数图像",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "输入函数即时绘制原函数与导函数图像，对比单调性与极值点，适合高中数学课堂。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["10-12"],
+  "subjects": ["数学"],
+  "tags": ["数学"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}

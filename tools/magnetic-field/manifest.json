@@ -1,0 +1,21 @@
+{
+  "id": "magnetic-field",
+  "title": "磁场磁感线",
+  "version": "1.0.0",
+  "type": "experiment",
+  "description": "模拟条形磁铁、通电直导线与螺线管的磁感线分布，拖动小磁针观察磁场方向。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["10-12"],
+  "subjects": ["物理"],
+  "tags": ["物理"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}

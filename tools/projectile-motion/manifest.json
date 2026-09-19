@@ -1,0 +1,21 @@
+{
+  "id": "projectile-motion",
+  "title": "平抛斜抛运动",
+  "version": "1.0.0",
+  "type": "experiment",
+  "description": "调整初速度与抛射角模拟平抛斜抛，实时显示轨迹、射程与最大高度，可多球对比。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["10-12"],
+  "subjects": ["物理"],
+  "tags": ["物理"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}

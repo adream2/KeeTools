@@ -1,0 +1,21 @@
+{
+  "id": "binary-converter",
+  "title": "二进制转换器",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "二进制、十进制、十六进制互转演示，逐位展开位权计算过程，支持课堂讲解。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["5-6", "7-9", "10-12"],
+  "subjects": ["信息技术"],
+  "tags": ["信息技术"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}
