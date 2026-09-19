@@ -19,9 +19,6 @@ $navLinks = SiteOps::footerNav();
 if ($navLinks === []) {
     $navLinks = [['label' => '全部工具', 'url' => url('/tools')]];
     $navLinks[] = ['label' => '关于', 'url' => url('/about')];
-    if (SiteOps::hasFriendPageContent()) {
-        $navLinks[] = ['label' => '友情链接', 'url' => url('/friend-links')];
-    }
     if ($sponsor !== null && $sponsor['show_footer']) {
         $navLinks[] = ['label' => '支持本站', 'url' => url('/sponsor')];
     }
@@ -75,22 +72,28 @@ if ($navLinks === []) {
         </ul>
       </nav>
 
-      <?php if ($links !== []): ?>
+      <?php if ($links !== [] || SiteOps::hasFriendPageContent()): ?>
         <nav class="site-footer-col site-footer-col--wide" aria-label="友情链接">
           <h2 class="site-footer-col-title">
             友情链接
             <a class="site-footer-apply" href="<?= e(url('/friend-links')) ?>">更多 →</a>
           </h2>
-          <ul class="site-footer-col-list site-footer-friends">
-            <?php foreach ($links as $link): ?>
-              <li>
-                <a href="<?= e($link['url']) ?>"
-                   <?= str_starts_with($link['url'], '/') ? '' : 'target="_blank" rel="noopener' . ($link['nofollow'] ? ' nofollow' : '') . '"' ?>>
-                  <?= e($link['name']) ?>
-                </a>
-              </li>
-            <?php endforeach; ?>
-          </ul>
+          <?php if ($links !== []): ?>
+            <ul class="site-footer-col-list site-footer-friends">
+              <?php foreach ($links as $link): ?>
+                <li>
+                  <a href="<?= e($link['url']) ?>"
+                     <?= str_starts_with($link['url'], '/') ? '' : 'target="_blank" rel="noopener' . ($link['nofollow'] ? ' nofollow' : '') . '"' ?>>
+                    <?= e($link['name']) ?>
+                  </a>
+                </li>
+              <?php endforeach; ?>
+            </ul>
+          <?php else: ?>
+            <p class="site-footer-desc">
+              暂无友链，<a href="<?= e(url('/friend-links')) ?>">申请友链</a>与我们一起成长。
+            </p>
+          <?php endif; ?>
         </nav>
       <?php endif; ?>
     </div>
