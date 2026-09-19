@@ -1,0 +1,21 @@
+{
+  "id": "stroke-order",
+  "title": "汉字笔画笔顺演示",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "210 个常用字笔顺查询：笔画数、笔顺名称序列，田字格逐步高亮演示。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["1-2", "3-4"],
+  "subjects": ["语文"],
+  "tags": ["笔顺", "笔画", "汉字书写", "田字格", "写字教学", "笔顺查询", "大屏"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}

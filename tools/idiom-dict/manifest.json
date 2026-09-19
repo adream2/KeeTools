@@ -1,0 +1,21 @@
+{
+  "id": "idiom-dict",
+  "title": "成语词典 / 接龙",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "内置常用成语词典，含释义与出处；支持按字检索与成语接龙游戏。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["3-4", "5-6"],
+  "subjects": ["语文"],
+  "tags": ["成语", "词典", "成语接龙", "释义", "出处", "语文积累", "大屏"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}

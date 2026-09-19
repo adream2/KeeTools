@@ -1,0 +1,21 @@
+{
+  "id": "ipa-chart",
+  "title": "国际音标表",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "48 个国际音标，点读发音并含例词，支持元音辅音分组与英美音切换。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["3-4", "5-6", "7-9", "10-12"],
+  "subjects": ["英语"],
+  "tags": ["国际音标", "发音", "点读", "例词", "元音辅音", "英语语音", "大屏"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}

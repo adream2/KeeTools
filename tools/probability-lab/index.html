@@ -1,0 +1,2262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>概率模拟器 — KeeTools 课工具</title>
+<!-- ET-META
+{"id":"probability-lab","version":"1.0.0"}
+-->
+
+<!-- 共享外壳样式（由 sync_shared.py 注入） -->
+<!-- ET:INLINE name="et-chrome-css" src="ui/et-chrome.css" type="css" -->
+<style>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * et-chrome.css — 工具通用外壳样式（顶栏 / 页脚 / 弹窗 / 按钮 / 主题）
+ *
+ * 共享样式源。改这里，然后跑：python scripts/sync_shared.py
+ * 所有类名带 et- 前缀，避免与工具自身样式冲突。
+ * 依赖：无外部资源；颜色全部为令牌变量。
+ */
+
+/* ============ 设计令牌 ============ */
+:root {
+    --et-accent: #2563eb;
+    --et-accent-weak: rgba(37, 99, 235, .14);
+    --et-bg: #f4f6fb;
+    --et-surface: #ffffff;
+    --et-surface-2: #f8fafc;
+    --et-fg: #0b1220;
+    --et-muted: #64748b;
+    --et-line: rgba(15, 23, 42, .12);
+    --et-line-strong: rgba(15, 23, 42, .22);
+    --et-glass: rgba(255, 255, 255, .85);
+    --et-shadow-md: 0 10px 28px -18px rgba(15, 23, 42, .3);
+    --et-shadow-lg: 0 24px 60px -32px rgba(15, 23, 42, .4);
+    --et-ok: #059669;
+    --et-warn: #d97706;
+    --et-err: #dc2626;
+    --et-radius: 12px;
+    --et-radius-sm: 9px;
+    --et-font: -apple-system, BlinkMacSystemFont, "Segoe UI",
+               "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+               "Noto Sans SC", sans-serif;
+    --et-mono: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace;
+}
+
+html[data-et-theme="dark"] {
+    --et-bg: #0b1120;
+    --et-surface: #111a2e;
+    --et-surface-2: #0f1729;
+    --et-fg: #f1f5f9;
+    --et-muted: #94a3b8;
+    --et-line: rgba(148, 163, 184, .18);
+    --et-line-strong: rgba(148, 163, 184, .3);
+    --et-glass: rgba(17, 26, 46, .85);
+    --et-shadow-md: 0 10px 34px -18px rgba(0, 0, 0, .8);
+    --et-shadow-lg: 0 24px 70px -30px rgba(0, 0, 0, .9);
+    --et-ok: #34d399;
+    --et-warn: #fbbf24;
+    --et-err: #f87171;
+}
+
+/* ============ 基础 ============ */
+.et-app {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    background: var(--et-bg);
+    color: var(--et-fg);
+    font-family: var(--et-font);
+    -webkit-font-smoothing: antialiased;
+    transition: background .25s, color .25s;
+}
+
+/* 极光背景：径向渐变 + 呼吸动画（edupick 品质基线，老内核也不掉帧） */
+.et-app::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(46% 40% at 20% 18%, var(--et-accent-weak), transparent 65%),
+        radial-gradient(42% 38% at 82% 24%, var(--et-accent-weak), transparent 70%),
+        radial-gradient(50% 44% at 55% 95%, rgba(16, 185, 129, .10), transparent 65%);
+    animation: et-aurora 16s ease-in-out infinite alternate;
+}
+
+@keyframes et-aurora {
+    from { opacity: .55; transform: scale(1); }
+    to { opacity: 1; transform: scale(1.06); }
+}
+
+.et-app *,
+.et-app *::before,
+.et-app *::after { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+.et-icon {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex: none;
+}
+
+/* ============ 顶栏 ============ */
+.et-topbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 20px;
+    border-bottom: 1px solid var(--et-line);
+    background: var(--et-glass);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    z-index: 20;
+}
+
+.et-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.et-brand__dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--et-accent);
+    box-shadow: 0 0 0 4px var(--et-accent-weak);
+    flex: none;
+}
+
+.et-brand__name {
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: -.01em;
+    white-space: nowrap;
+}
+
+.et-brand__sub {
+    font-size: 12.5px;
+    color: var(--et-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.et-status {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    color: var(--et-muted);
+    background: var(--et-surface-2);
+    border: 1px solid var(--et-line);
+    white-space: nowrap;
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.et-status__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--et-ok);
+    flex: none;
+    transition: background .2s;
+}
+
+.et-status[data-tone="err"] .et-status__dot { background: var(--et-err); }
+.et-status[data-tone="warn"] .et-status__dot { background: var(--et-warn); }
+
+.et-actions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.et-icon-btn {
+    display: inline-grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
+    line-height: 1;
+    border-radius: 11px;
+    border: 1px solid var(--et-line);
+    background: var(--et-surface-2);
+    color: var(--et-fg);
+    cursor: pointer;
+    transition: transform .14s, border-color .14s, color .14s, opacity .14s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.et-icon-btn:hover {
+    border-color: var(--et-accent);
+    color: var(--et-accent);
+    transform: translateY(-1px);
+}
+
+.et-icon-btn:active { transform: translateY(0); }
+.et-icon-btn.is-off { opacity: .4; }
+.et-icon-btn:focus-visible { outline: 2px solid var(--et-accent); outline-offset: 2px; }
+
+/* ============ 主区默认 ============ */
+.et-main {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: auto;
+}
+
+/* ============ 页脚（品牌回流 L2） ============ */
+.et-footer {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 16px;
+    font-size: 12px;
+    color: var(--et-muted);
+    border-top: 1px solid var(--et-line);
+    background: var(--et-glass);
+    user-select: none;
+    z-index: 20;
+}
+
+.et-footer a {
+    color: inherit;
+    text-decoration: none;
+    transition: color .14s;
+}
+
+.et-footer a:hover { color: var(--et-accent); }
+
+/* ============ 按钮 ============ */
+.et-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 16px;
+    border-radius: 11px;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    border: 1px solid var(--et-line);
+    background: var(--et-surface-2);
+    color: var(--et-fg);
+    cursor: pointer;
+    transition: transform .14s, border-color .14s, color .14s, background .14s, box-shadow .14s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.et-btn:hover {
+    border-color: var(--et-accent);
+    color: var(--et-accent);
+    transform: translateY(-1px);
+}
+
+.et-btn:active { transform: translateY(0); }
+.et-btn:focus-visible { outline: 2px solid var(--et-accent); outline-offset: 2px; }
+.et-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+.et-btn--primary {
+    background: var(--et-accent);
+    border-color: var(--et-accent);
+    color: #fff;
+    box-shadow: 0 6px 18px -8px var(--et-accent);
+}
+
+.et-btn--primary:hover { color: #fff; filter: brightness(1.08); }
+.et-btn--primary:disabled { filter: none; }
+
+.et-btn--danger:hover {
+    border-color: var(--et-err);
+    color: var(--et-err);
+}
+
+.et-btn--lg {
+    padding: 13px 26px;
+    font-size: 16px;
+    border-radius: 14px;
+}
+
+/* ============ 弹窗 ============ */
+.et-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(2, 6, 23, .55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: et-fade .18s ease;
+}
+
+.et-modal__panel {
+    width: min(680px, 94vw);
+    max-height: 86vh;
+    max-height: 86dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--et-surface);
+    border: 1px solid var(--et-line);
+    border-radius: 16px;
+    box-shadow: var(--et-shadow-lg);
+    animation: et-pop .2s cubic-bezier(.34, 1.4, .64, 1);
+    overflow: hidden;
+}
+
+.et-modal__panel--narrow { width: min(460px, 92vw); }
+.et-modal__panel--wide { width: min(900px, 94vw); }
+
+.et-modal__head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--et-line);
+    font-weight: 800;
+    font-size: 15px;
+}
+
+.et-modal__head .et-icon-btn {
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+}
+
+.et-modal__body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 18px 20px;
+}
+
+.et-modal__foot {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--et-line);
+    background: var(--et-surface-2);
+}
+
+.et-modal__foot .spacer { flex: 1; }
+
+@keyframes et-fade {
+    from { opacity: 0; }
+}
+
+@keyframes et-pop {
+    from { opacity: 0; transform: translateY(14px) scale(.97); }
+}
+
+/* ============ 轻提示（toast） ============ */
+.et-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 56px;
+    transform: translateX(-50%) translateY(10px);
+    z-index: 120;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    max-width: min(520px, 88vw);
+    padding: 11px 18px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #fff;
+    background: rgba(15, 23, 42, .92);
+    border: 1px solid rgba(148, 163, 184, .25);
+    box-shadow: var(--et-shadow-lg);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .22s, transform .22s;
+}
+
+.et-toast.is-show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.et-toast[data-tone="ok"] { background: rgba(5, 150, 105, .95); }
+.et-toast[data-tone="err"] { background: rgba(220, 38, 38, .95); }
+.et-toast[data-tone="warn"] { background: rgba(217, 119, 6, .95); }
+
+/* ============ 设置抽屉（右上角入口，edupick 交互） ============ */
+.et-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: rgba(2, 6, 23, .45);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    opacity: 0;
+    transition: opacity .2s;
+}
+
+.et-drawer-backdrop.is-open { opacity: 1; }
+
+.et-drawer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: min(400px, 92vw);
+    display: flex;
+    flex-direction: column;
+    background: var(--et-surface);
+    border-left: 1px solid var(--et-line);
+    box-shadow: var(--et-shadow-lg);
+    transform: translateX(100%);
+    transition: transform .22s cubic-bezier(.32, .72, .35, 1);
+}
+
+.et-drawer-backdrop.is-open .et-drawer { transform: translateX(0); }
+
+.et-drawer__head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 18px;
+    border-bottom: 1px solid var(--et-line);
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--et-accent);
+}
+
+.et-drawer__head .et-icon-btn {
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+}
+
+.et-drawer__body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 16px 18px 24px;
+}
+
+/* 抽屉内容通用小节（工具复用） */
+.et-drawer__body h4 {
+    margin: 18px 0 8px;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--et-muted);
+}
+
+.et-drawer__body h4:first-child { margin-top: 0; }
+
+.et-drawer__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.et-drawer__tip {
+    margin: 8px 0 0;
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--et-muted);
+}
+
+.et-drawer__tip b { color: var(--et-fg); }
+
+.et-drawer__input {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 12px;
+    border: 1px solid var(--et-line-strong);
+    border-radius: 9px;
+    background: var(--et-surface-2);
+    color: var(--et-fg);
+    font: inherit;
+    font-size: 13.5px;
+    transition: border-color .14s, box-shadow .14s;
+}
+
+.et-drawer__input:focus {
+    outline: none;
+    border-color: var(--et-accent);
+    box-shadow: 0 0 0 3px var(--et-accent-weak);
+}
+
+.et-drawer__switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--et-line);
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--et-fg);
+    cursor: pointer;
+    user-select: none;
+}
+
+.et-drawer__switch input {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--et-accent);
+    cursor: pointer;
+}
+</style>
+<!-- /ET:INLINE -->
+
+<style>
+/* ── 工具自身样式：自包含，不引用任何外部资源 ── */
+:root {
+    --probabilityl-accent: #0d9488;
+    --probabilityl-c1: #0ea5e9;
+    --probabilityl-c2: #f43f5e;
+    --probabilityl-c3: #22c55e;
+    --probabilityl-c4: #f59e0b;
+    --probabilityl-c5: #a855f7;
+    --probabilityl-c6: #14b8a6;
+}
+
+.probabilityl-main {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 16px 20px 20px;
+}
+
+/* ── 工具条 ── */
+.probabilityl-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.probabilityl-tabs {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 999px;
+    background: var(--et-surface-2);
+    border: 1px solid var(--et-line);
+}
+
+.probabilityl-tab {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 999px;
+    background: none;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--et-muted);
+    cursor: pointer;
+    transition: background .16s, color .16s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.probabilityl-tab:hover { color: var(--et-fg); }
+
+.probabilityl-tab.is-active {
+    background: var(--et-accent);
+    color: #fff;
+}
+
+.probabilityl-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-left: auto;
+}
+
+/* ── 卡片 ── */
+.probabilityl-card {
+    padding: 16px;
+    border: 1px solid var(--et-line);
+    border-radius: var(--et-radius);
+    background: var(--et-surface);
+    box-shadow: var(--et-shadow-md);
+}
+
+.probabilityl-grid {
+    display: grid;
+    grid-template-columns: minmax(240px, 320px) 1fr;
+    gap: 14px;
+    align-items: stretch;
+}
+
+@media (max-width: 860px) {
+    .probabilityl-grid { grid-template-columns: 1fr; }
+}
+
+/* ── 舞台：硬币 / 骰子 ── */
+.probabilityl-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    min-height: 190px;
+}
+
+.probabilityl-coin {
+    position: relative;
+    width: 118px;
+    height: 118px;
+    transform-style: preserve-3d;
+    transition: transform .5s cubic-bezier(.3, .7, .4, 1);
+}
+
+.probabilityl-coin__face {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--probabilityl-accent);
+    border: 3px solid var(--probabilityl-accent);
+    background: radial-gradient(circle at 32% 26%, var(--et-surface-2), var(--et-surface));
+    box-shadow: inset 0 0 0 6px var(--et-surface-2), var(--et-shadow-md);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+.probabilityl-coin__face--back {
+    transform: rotateY(180deg);
+    color: var(--et-warn);
+    border-color: var(--et-warn);
+}
+
+.probabilityl-die {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 6px;
+    width: 118px;
+    height: 118px;
+    padding: 12px;
+    border-radius: 20px;
+    border: 3px solid var(--probabilityl-accent);
+    background: var(--et-surface);
+    box-shadow: var(--et-shadow-md);
+}
+
+.probabilityl-die i {
+    border-radius: 50%;
+    background: transparent;
+}
+
+.probabilityl-die i.is-on { background: var(--probabilityl-accent); }
+
+.probabilityl-die.is-rolling { animation: probabilityl-shake .5s ease-in-out; }
+
+@keyframes probabilityl-shake {
+    0% { transform: rotate(0) translateY(0); }
+    25% { transform: rotate(-14deg) translateY(-11px); }
+    50% { transform: rotate(13deg) translateY(-4px); }
+    75% { transform: rotate(-6deg) translateY(-8px); }
+    100% { transform: rotate(0) translateY(0); }
+}
+
+.probabilityl-stage.is-pulse { animation: probabilityl-pulse .28s ease-out; }
+
+@keyframes probabilityl-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.probabilityl-result {
+    margin: 12px 0 0;
+    font-size: 13.5px;
+    color: var(--et-muted);
+    text-align: center;
+}
+
+.probabilityl-result b {
+    font-size: 19px;
+    color: var(--probabilityl-accent);
+}
+
+/* ── 统计表 ── */
+.probabilityl-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+}
+
+.probabilityl-table th,
+.probabilityl-table td {
+    padding: 8px 10px;
+    text-align: right;
+    border-bottom: 1px solid var(--et-line);
+    white-space: nowrap;
+}
+
+.probabilityl-table th:first-child,
+.probabilityl-table td:first-child { text-align: left; }
+
+.probabilityl-table thead th {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    color: var(--et-muted);
+}
+
+.probabilityl-table tbody tr:last-child td { border-bottom: none; }
+.probabilityl-num { font-variant-numeric: tabular-nums; }
+
+.probabilityl-dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    margin-right: 7px;
+    border-radius: 50%;
+    vertical-align: middle;
+}
+
+/* ── 曲线 ── */
+.probabilityl-chart-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.probabilityl-chart-head h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.probabilityl-chart-head span {
+    font-size: 12.5px;
+    color: var(--et-muted);
+}
+
+.probabilityl-chart {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 340px;
+}
+
+.probabilityl-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin-top: 10px;
+    font-size: 12.5px;
+    color: var(--et-muted);
+}
+
+.probabilityl-legend > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.probabilityl-legend i {
+    display: inline-block;
+    width: 14px;
+    height: 3px;
+    border-radius: 2px;
+}
+
+.probabilityl-legend i.probabilityl-legend__dash {
+    height: 0;
+    background: none;
+    border-top: 2px dashed var(--et-muted);
+}
+
+.probabilityl-note {
+    margin: 10px 0 0;
+    font-size: 12.5px;
+    line-height: 1.8;
+    color: var(--et-muted);
+}
+
+.probabilityl-note b { color: var(--et-fg); }
+
+@media (max-width: 720px) {
+    .probabilityl-main { padding: 12px; gap: 12px; }
+    .probabilityl-actions { margin-left: 0; }
+}
+</style>
+</head>
+<body class="et-app">
+
+<header id="et-topbar"></header>
+
+<main id="et-main" class="probabilityl-main">
+    <div class="probabilityl-toolbar">
+        <div class="probabilityl-tabs">
+            <button class="probabilityl-tab is-active" id="plTabCoin" type="button">抛硬币</button>
+            <button class="probabilityl-tab" id="plTabDice" type="button">掷骰子</button>
+        </div>
+        <div class="probabilityl-actions">
+            <button class="et-btn et-btn--primary" id="plOnce" type="button">
+                <svg class="et-icon"><use href="#i-play"></use></svg>
+                <span>抛 1 次</span>
+            </button>
+            <button class="et-btn" id="pl10" type="button"><span>抛 10 次</span></button>
+            <button class="et-btn" id="pl100" type="button"><span>抛 100 次</span></button>
+            <button class="et-btn" id="pl1000" type="button"><span>抛 1000 次</span></button>
+            <button class="et-btn et-btn--danger" id="plReset" type="button">
+                <svg class="et-icon"><use href="#i-rotate"></use></svg>
+                <span>重置</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="probabilityl-grid">
+        <div class="probabilityl-card">
+            <div class="probabilityl-stage" id="plStage">
+                <div class="probabilityl-coin" id="plCoin">
+                    <div class="probabilityl-coin__face probabilityl-coin__face--front">正</div>
+                    <div class="probabilityl-coin__face probabilityl-coin__face--back">反</div>
+                </div>
+                <div class="probabilityl-die" id="plDie" hidden>
+                    <i></i><i></i><i></i>
+                    <i></i><i></i><i></i>
+                    <i></i><i></i><i></i>
+                </div>
+            </div>
+            <p class="probabilityl-result" id="plResult">点击「抛 1 次」或按空格开始实验</p>
+        </div>
+
+        <div class="probabilityl-card">
+            <table class="probabilityl-table" id="plTable"></table>
+        </div>
+    </div>
+
+    <div class="probabilityl-card">
+        <div class="probabilityl-chart-head">
+            <h3>频率收敛曲线</h3>
+            <span id="plDev">当前最大偏差：—</span>
+        </div>
+        <svg class="probabilityl-chart" id="plChart" viewBox="0 0 1000 360" role="img"
+             aria-label="频率随实验次数变化的收敛曲线"></svg>
+        <div class="probabilityl-legend" id="plLegend"></div>
+        <p class="probabilityl-note">实验次数越多，频率越接近理论概率（<b>大数定律</b>）；虚线为对应结果的理论概率水平线。</p>
+    </div>
+</main>
+
+<footer id="et-footer"></footer>
+
+<!-- 图标集合（由 sync_shared.py 注入） -->
+<!-- ET:INLINE name="icons" src="icons/icons.svg" type="svg" -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <!--
+    工具用图标 symbol 集合（内联源，独立于网站 sprite）。
+
+    来源：Lucide (ISC License) 子集，手工挑选内联。
+    颜色统一 currentColor；描边样式由工具 CSS 的 .et-icon 控制：
+      .et-icon { fill:none; stroke:currentColor; stroke-width:2;
+                 stroke-linecap:round; stroke-linejoin:round; }
+
+    工具内用法：
+      <svg class="et-icon"><use href="#i-play"></use></svg>
+  -->
+
+  <symbol id="i-maximize" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
+  <symbol id="i-minimize" viewBox="0 0 24 24"><path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></symbol>
+  <symbol id="i-volume" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></symbol>
+  <symbol id="i-volume-off" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></symbol>
+  <symbol id="i-rotate" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></symbol>
+  <symbol id="i-dice" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none"/><circle cx="16" cy="8" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="8" cy="16" r="1.2" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.2" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+  <symbol id="i-timer" viewBox="0 0 24 24"><line x1="10" y1="2" x2="14" y2="2"/><line x1="12" y1="14" x2="15" y2="11"/><circle cx="12" cy="14" r="8"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z"/></symbol>
+  <symbol id="i-chevron-left" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><polyline points="12 7 12 12 15 15"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+  <symbol id="i-crown" viewBox="0 0 24 24"><path d="M2 18h20l-2-11-5 4-3-7-3 7-5-4-2 11z"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+  <symbol id="i-shuffle" viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-award" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
+  <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="10"/><line x1="10" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="14" y2="10"/><line x1="18" y1="10" x2="18" y2="10"/><line x1="7" y1="14" x2="17" y2="14"/></symbol>
+</svg>
+<!-- /ET:INLINE -->
+
+<!-- 共享逻辑（由 sync_shared.py 注入） -->
+<!-- ET:INLINE name="et-util" src="logic/et-util.js" -->
+<script>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * et-util.js — 工具通用小工具函数
+ *
+ * 共享逻辑源。改这里，然后跑：python scripts/sync_shared.py
+ * 禁止手工编辑工具 HTML 内 ET:INLINE 之间的内容。
+ *
+ * 兼容性：ES5，Win7 + 老版 Chrome / 360 可运行。
+ * 依赖：无。
+ * 全局：挂载 window.ET（单一命名空间，不污染其他全局）
+ */
+(function (global) {
+    'use strict';
+
+    var ET = global.ET || {};
+
+    /** 按 id 取元素 */
+    ET.el = function (id) {
+        return document.getElementById(id);
+    };
+
+    /** 按选择器取首个元素 */
+    ET.qs = function (selector, root) {
+        return (root || document).querySelector(selector);
+    };
+
+    /** 按选择器取全部元素，返回真数组 */
+    ET.qsa = function (selector, root) {
+        var list = (root || document).querySelectorAll(selector);
+        var out = [];
+        for (var i = 0; i < list.length; i++) {
+            out.push(list[i]);
+        }
+        return out;
+    };
+
+    /** 创建元素 */
+    ET.create = function (tag, className, text) {
+        var node = document.createElement(tag);
+        if (className) {
+            node.className = className;
+        }
+        if (text !== undefined && text !== null) {
+            node.textContent = String(text);
+        }
+        return node;
+    };
+
+    /** HTML 转义（用于把用户数据放进 HTML 字符串时） */
+    ET.escapeHtml = function (value) {
+        return String(value === undefined || value === null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    };
+
+    /** 触发自定义事件（老浏览器用 createEvent 降级） */
+    ET.emit = function (target, name, detail) {
+        var event;
+        if (typeof global.CustomEvent === 'function') {
+            event = new global.CustomEvent(name, { detail: detail });
+        } else {
+            event = document.createEvent('CustomEvent');
+            event.initCustomEvent(name, false, false, detail);
+        }
+        target.dispatchEvent(event);
+    };
+
+    /**
+     * localStorage 读写（带前缀与异常兜底）
+     * 前缀规范：et_{toolId}_
+     */
+    ET.store = function (toolId) {
+        var prefix = 'et_' + toolId + '_';
+
+        function available() {
+            try {
+                var probe = prefix + '__probe__';
+                global.localStorage.setItem(probe, '1');
+                global.localStorage.removeItem(probe);
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+
+        var ok = available();
+
+        return {
+            /** 读取，解析失败返回 fallback */
+            get: function (key, fallback) {
+                if (!ok) {
+                    return fallback;
+                }
+                try {
+                    var raw = global.localStorage.getItem(prefix + key);
+                    if (raw === null) {
+                        return fallback;
+                    }
+                    return JSON.parse(raw);
+                } catch (err) {
+                    return fallback;
+                }
+            },
+            /** 写入，失败静默（隐私模式 / 配额满） */
+            set: function (key, value) {
+                if (!ok) {
+                    return false;
+                }
+                try {
+                    global.localStorage.setItem(prefix + key, JSON.stringify(value));
+                    return true;
+                } catch (err) {
+                    return false;
+                }
+            },
+            /** 删除 */
+            remove: function (key) {
+                if (!ok) {
+                    return;
+                }
+                try {
+                    global.localStorage.removeItem(prefix + key);
+                } catch (err) {
+                    /* 静默 */
+                }
+            }
+        };
+    };
+
+    /** DOM 就绪回调（脚本在 head 内也能安全调用） */
+    ET.ready = function (callback) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', callback);
+        } else {
+            callback();
+        }
+    };
+
+    global.ET = ET;
+})(window);
+</script>
+<!-- /ET:INLINE -->
+
+<!-- ET:INLINE name="et-chrome" src="ui/et-chrome.js" -->
+<script>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * et-chrome.js — 工具通用外壳（顶栏 / 页脚 / 主题 / 全屏 / 音效 / 设置抽屉 / 帮助 / PWA）
+ *
+ * 共享逻辑源。改这里，然后跑：python scripts/sync_shared.py
+ * 依赖：et-util.js（ET.store）
+ * 兼容性：现代浏览器优先（Chrome 90+），无外部依赖。
+ * 全局：ET.Chrome
+ *
+ * 工具 HTML 约定的骨架：
+ *   <body class="et-app">
+ *     <header id="et-topbar"></header>
+ *     <main id="et-main">…工具内容…</main>
+ *     <footer id="et-footer"></footer>
+ *   </body>
+ *
+ * 用法：
+ *   var chrome = ET.Chrome.mount({
+ *     toolId: 'random-name-classic',
+ *     title: '随机点名器',
+ *     sub: '导入名单 · 课堂互动',
+ *     accent: '#e11d48',          // 可选，主题色
+ *     status: '就绪',              // 可选，初始状态
+ *     sound: true,                 // 可选，显示音效开关
+ *     help: '<div>…帮助内容…</div>', // 可选
+ *     settings: {                  // 可选，右上角「设置」抽屉（edupick 交互）
+ *       title: '名单 / 设置',
+ *       build: function (body, api) { … }  // 每次打开重建内容
+ *     },
+ *     actions: [{icon:'i-dice', label:'抽一个', onClick: fn}] // 可选
+ *   });
+ *
+ * iframe 全屏委托：工具在 iframe 内运行时，全屏按钮向父窗口发送
+ * {type:'et-fullscreen-toggle'}，由宿主页面统一 fullscreen（避免双层全屏）；
+ * 宿主应回传 {type:'et-fullscreen-change', value:bool} 同步按钮图标。
+ *
+ * 站点回流（postMessage 协议）：
+ *   工具加载后向父窗口发送 {type:'et-hello', toolId}；
+ *   宿主页面可回复 {type:'et-origin', origin:'https://…'}，
+ *   工具据此渲染页脚官网链接。也可直接提供 window.ET_SITE_ORIGIN。
+ *   收不到任何来源时页脚只显示纯文本（离线可用，必须有默认值）。
+ */
+(function (global) {
+    'use strict';
+
+    var NS_SVG = 'http://www.w3.org/2000/svg'; /* et-allow-external SVG 命名空间 */
+    var NS_XLINK = 'http://www.w3.org/1999/xlink'; /* et-allow-external SVG 命名空间 */
+
+    /* ---------- 内部工具 ---------- */
+
+    function makeIcon(id, cls) {
+        var svg = document.createElementNS(NS_SVG, 'svg');
+        svg.setAttribute('class', cls || 'et-icon');
+        var use = document.createElementNS(NS_SVG, 'use');
+        use.setAttribute('href', '#' + id);
+        use.setAttributeNS(NS_XLINK, 'xlink:href', '#' + id);
+        svg.appendChild(use);
+        return svg;
+    }
+
+    function makeBtn(icon, title, onClick) {
+        var b = document.createElement('button');
+        b.className = 'et-icon-btn';
+        b.type = 'button';
+        b.title = title;
+        b.setAttribute('aria-label', title);
+        b.appendChild(makeIcon(icon));
+        if (onClick) { b.addEventListener('click', onClick); }
+        return b;
+    }
+
+    function el(tag, cls, text) {
+        var node = document.createElement(tag);
+        if (cls) { node.className = cls; }
+        if (text !== undefined && text !== null) { node.textContent = text; }
+        return node;
+    }
+
+    /* ---------- 音效（WebAudio，无音频文件，音量按教室大屏调校） ---------- */
+
+    var audioCtx = null;
+
+    function ensureCtx() {
+        if (!audioCtx) {
+            var AC = global.AudioContext || global.webkitAudioContext;
+            if (!AC) { return null; }
+            try { audioCtx = new AC(); } catch (err) { return null; }
+        }
+        if (audioCtx.state === 'suspended') {
+            try { audioCtx.resume(); } catch (err) { /* 忽略 */ }
+        }
+        return audioCtx;
+    }
+
+    var MASTER_GAIN = 0.5; /* 整体音量层（教室设备音量 100% 也要听得清） */
+
+    function tone(ctx, freq, start, dur, gainPeak, type) {
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = type || 'triangle';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(gainPeak, start + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + dur + 0.05);
+    }
+
+    var BEEPS = {
+        tick: [[880, 0, 0.06, 0.42]],
+        ok: [[660, 0, 0.1, 0.46], [880, 0.1, 0.14, 0.46]],
+        win: [[523.25, 0, 0.16, 0.5], [659.25, 0.12, 0.16, 0.5], [783.99, 0.24, 0.16, 0.5], [1046.5, 0.36, 0.34, 0.52]],
+        err: [[220, 0, 0.22, 0.46, 'square']],
+        over: [[880, 0, 0.18, 0.5], [659.25, 0.2, 0.18, 0.5], [523.25, 0.4, 0.36, 0.5]]
+    };
+
+    function playBeep(kind) {
+        var ctx = ensureCtx();
+        if (!ctx || !BEEPS[kind]) { return; }
+        var seq = BEEPS[kind];
+        var t0 = ctx.currentTime + 0.01;
+        for (var i = 0; i < seq.length; i++) {
+            tone(ctx, seq[i][0], t0 + seq[i][1], seq[i][2], seq[i][3] * MASTER_GAIN, seq[i][4]);
+        }
+    }
+
+    /* ---------- 设置抽屉 ---------- */
+
+    function openDrawer(title, build) {
+        var backdrop = el('div', 'et-drawer-backdrop');
+        var drawer = el('aside', 'et-drawer');
+        drawer.setAttribute('role', 'dialog');
+        drawer.setAttribute('aria-label', title);
+
+        var head = el('div', 'et-drawer__head');
+        head.appendChild(makeIcon('i-sliders'));
+        head.appendChild(el('span', 'et-drawer__title', title));
+        head.appendChild(makeBtn('i-x', '关闭', close));
+        drawer.appendChild(head);
+
+        var body = el('div', 'et-drawer__body');
+        drawer.appendChild(body);
+
+        backdrop.appendChild(drawer);
+        document.body.appendChild(backdrop);
+        requestAnimationFrame(function () { backdrop.classList.add('is-open'); });
+
+        function close() {
+            backdrop.classList.remove('is-open');
+            document.removeEventListener('keydown', onKey);
+            setTimeout(function () {
+                if (backdrop.parentNode) { backdrop.parentNode.removeChild(backdrop); }
+            }, 220);
+        }
+        function onKey(ev) {
+            if (ev.key === 'Escape') { ev.stopPropagation(); close(); }
+        }
+        document.addEventListener('keydown', onKey);
+        backdrop.addEventListener('mousedown', function (ev) {
+            if (ev.target === backdrop) { close(); }
+        });
+
+        if (typeof build === 'function') { build(body, { close: close }); }
+        return { body: body, close: close };
+    }
+
+    /* ---------- 通用弹窗 / toast（同时挂模块级，供其他共享组件使用） ---------- */
+
+    function modal(mo) {
+        var backdrop = el('div', 'et-modal');
+        var panel = el('div', 'et-modal__panel' + (mo.size === 'narrow' ? ' et-modal__panel--narrow'
+            : mo.size === 'wide' ? ' et-modal__panel--wide' : ''));
+        var head = el('div', 'et-modal__head');
+        if (mo.icon) { head.appendChild(makeIcon(mo.icon)); }
+        head.appendChild(el('span', null, mo.title || ''));
+        head.appendChild(makeBtn('i-x', '关闭', close));
+        panel.appendChild(head);
+
+        var body = el('div', 'et-modal__body');
+        if (typeof mo.body === 'string') { body.innerHTML = mo.body; }
+        else if (mo.body) { body.appendChild(mo.body); }
+        panel.appendChild(body);
+
+        var foot = null;
+        if (mo.buttons && mo.buttons.length) {
+            foot = el('div', 'et-modal__foot');
+            foot.appendChild(el('span', 'spacer'));
+            mo.buttons.forEach(function (b) {
+                var btn = el('button', 'et-btn' + (b.primary ? ' et-btn--primary' : '') + (b.danger ? ' et-btn--danger' : ''), b.label);
+                btn.type = 'button';
+                btn.addEventListener('click', function () {
+                    if (b.onClick) { b.onClick(close); } else { close(); }
+                });
+                foot.appendChild(btn);
+            });
+            panel.appendChild(foot);
+        }
+
+        backdrop.appendChild(panel);
+        document.body.appendChild(backdrop);
+
+        function close() {
+            if (backdrop.parentNode) { backdrop.parentNode.removeChild(backdrop); }
+            document.removeEventListener('keydown', onKey);
+            if (mo.onClose) { mo.onClose(); }
+        }
+        function onKey(ev) {
+            if (ev.key === 'Escape') { ev.stopPropagation(); close(); }
+        }
+        document.addEventListener('keydown', onKey);
+        backdrop.addEventListener('mousedown', function (ev) {
+            if (ev.target === backdrop) { close(); }
+        });
+
+        return { panel: panel, body: body, foot: foot, close: close };
+    }
+
+    var toastEl = null;
+    var toastTimer = 0;
+
+    function toast(msg, tone) {
+        if (!toastEl) {
+            toastEl = el('div', 'et-toast');
+            document.body.appendChild(toastEl);
+        }
+        toastEl.textContent = msg;
+        toastEl.setAttribute('data-tone', tone || '');
+        void toastEl.offsetWidth;
+        toastEl.classList.add('is-show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toastEl.classList.remove('is-show'); }, 2200);
+    }
+
+    /* ---------- PWA 元数据（blob manifest，环境不支持时静默跳过） ---------- */
+
+    function installPwa(toolId, title, accent) {
+        try {
+            var theme = document.querySelector('meta[name="theme-color"]');
+            if (!theme) {
+                theme = document.createElement('meta');
+                theme.setAttribute('name', 'theme-color');
+                document.head.appendChild(theme);
+            }
+            theme.setAttribute('content', accent || '#2563eb');
+
+            var svg = '<svg xmlns="' + NS_SVG + '" viewBox="0 0 64 64">' +
+                '<rect width="64" height="64" rx="14" fill="' + (accent || '#2563eb') + '"/>' +
+                '<text x="32" y="43" font-size="32" font-weight="800" font-family="sans-serif" ' +
+                'fill="#fff" text-anchor="middle">' + (title || '课').charAt(0) + '</text></svg>';
+            var iconUri = 'data:image/svg+xml,' + encodeURIComponent(svg);
+
+            var mf = {
+                name: title || 'KeeTools 课工具',
+                short_name: title || '课工具',
+                start_url: '.',
+                display: 'standalone',
+                background_color: '#f4f6fb',
+                theme_color: accent || '#2563eb',
+                icons: [{ src: iconUri, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }]
+            };
+            var blob = new Blob([JSON.stringify(mf)], { type: 'application/manifest+json' });
+            var link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = URL.createObjectURL(blob);
+            document.head.appendChild(link);
+        } catch (err) { /* 不支持 PWA 元数据的环境静默跳过 */ }
+    }
+
+    /* ---------- 挂载 ---------- */
+
+    function mount(options) {
+        var opt = options || {};
+        var toolId = opt.toolId || 'unknown-tool';
+        var store = global.ET && global.ET.store
+            ? global.ET.store(toolId)
+            : (function () { return { get: function () { return null; }, set: function () {} }; })();
+
+        var api = { toolId: toolId, store: store };
+        var soundEnabled = store.get('sound', true) !== false;
+
+        /* 主题色 */
+        if (opt.accent) {
+            document.documentElement.style.setProperty('--et-accent', opt.accent);
+        }
+
+        installPwa(toolId, opt.title, opt.accent);
+
+        /* ---------- 主题 ---------- */
+        var theme = store.get('theme', null);
+        if (theme !== 'dark' && theme !== 'light') {
+            theme = (global.matchMedia && global.matchMedia('(prefers-color-scheme: dark)').matches)
+                ? 'dark' : 'light';
+        }
+        applyTheme(theme);
+
+        function applyTheme(t) {
+            theme = t;
+            document.documentElement.setAttribute('data-et-theme', t);
+            store.set('theme', t);
+            if (themeBtn) {
+                themeBtn.innerHTML = '';
+                themeBtn.appendChild(makeIcon(t === 'dark' ? 'i-sun' : 'i-moon'));
+                themeBtn.title = t === 'dark' ? '切换到浅色' : '切换到深色';
+            }
+        }
+
+        /* ---------- 顶栏 ---------- */
+        var topbar = document.getElementById('et-topbar');
+        var main = document.getElementById('et-main');
+        var footer = document.getElementById('et-footer');
+
+        if (!topbar) { topbar = el('header'); topbar.id = 'et-topbar'; document.body.insertBefore(topbar, document.body.firstChild); }
+        if (!main) { main = el('main'); main.id = 'et-main'; topbar.after(main); }
+        if (!footer) { footer = el('footer'); footer.id = 'et-footer'; document.body.appendChild(footer); }
+
+        topbar.className = 'et-topbar';
+        main.classList.add('et-main');
+        footer.className = 'et-footer';
+
+        /* 品牌 */
+        var brand = el('div', 'et-brand');
+        brand.appendChild(el('span', 'et-brand__dot'));
+        var nameWrap = el('div');
+        nameWrap.style.cssText = 'min-width:0;line-height:1.25';
+        nameWrap.appendChild(el('div', 'et-brand__name', opt.title || '课工具'));
+        if (opt.sub) { nameWrap.appendChild(el('div', 'et-brand__sub', opt.sub)); }
+        brand.appendChild(nameWrap);
+        topbar.appendChild(brand);
+
+        /* 状态胶囊 */
+        var statusPill = el('div', 'et-status');
+        statusPill.hidden = true;
+        statusPill.appendChild(el('span', 'et-status__dot'));
+        var statusText = el('span', null, '');
+        statusPill.appendChild(statusText);
+        topbar.appendChild(statusPill);
+
+        api.setStatus = function (text, tone) {
+            if (!text) { statusPill.hidden = true; return; }
+            statusText.textContent = text;
+            statusPill.setAttribute('data-tone', tone || 'ok');
+            statusPill.hidden = false;
+        };
+        if (opt.status) { api.setStatus(opt.status); }
+
+        /* 动作区（edupick 交互：右上角聚合设置入口） */
+        var actions = el('div', 'et-actions');
+
+        var settingsBtn = null;
+        if (opt.settings && typeof opt.settings.build === 'function') {
+            settingsBtn = makeBtn('i-sliders', opt.settings.title || '设置', function () {
+                openDrawer(opt.settings.title || '设置', function (body, drawerApi) {
+                    opt.settings.build(body, { api: api, close: drawerApi.close });
+                });
+            });
+            actions.appendChild(settingsBtn);
+        }
+
+        (opt.actions || []).forEach(function (a) {
+            var b = makeBtn(a.icon, a.label || '', a.onClick);
+            if (a.id) { b.id = a.id; }
+            actions.appendChild(b);
+        });
+
+        var soundBtn = null;
+        if (opt.sound) {
+            soundBtn = makeBtn(soundEnabled ? 'i-volume' : 'i-volume-off',
+                soundEnabled ? '关闭音效' : '开启音效', toggleSound);
+            if (!soundEnabled) { soundBtn.classList.add('is-off'); }
+            actions.appendChild(soundBtn);
+        }
+
+        if (opt.help) {
+            actions.appendChild(makeBtn('i-help', '使用说明', function () { openHelp(); }));
+        }
+
+        var themeBtn = makeBtn('', '切换主题', function () {
+            applyTheme(theme === 'dark' ? 'light' : 'dark');
+        });
+        applyTheme(theme); /* 填充图标 */
+        actions.appendChild(themeBtn);
+
+        /* 全屏按钮始终保留：iframe 内对本工具文档 requestFullscreen
+           （宿主 iframe 已声明 allow="fullscreen"），与宿主「全屏体验」等效同屏。 */
+        var fsBtn = makeBtn('i-maximize', '全屏', toggleFullscreen);
+        actions.appendChild(fsBtn);
+
+        topbar.appendChild(actions);
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            store.set('sound', soundEnabled);
+            soundBtn.innerHTML = '';
+            soundBtn.appendChild(makeIcon(soundEnabled ? 'i-volume' : 'i-volume-off'));
+            soundBtn.title = soundEnabled ? '关闭音效' : '开启音效';
+            soundBtn.classList.toggle('is-off', !soundEnabled);
+            if (soundEnabled) { api.beep('ok'); }
+        }
+
+        api.openSettings = function () {
+            if (settingsBtn) { settingsBtn.click(); }
+        };
+
+        /* ---------- 全屏（iframe 内委托宿主，避免双层全屏） ---------- */
+
+        function inIframe() {
+            try { return global.parent && global.parent !== global; } catch (err) { return true; }
+        }
+
+        function toggleFullscreen() {
+            var root = document.documentElement;
+            var fsEl = document.fullscreenElement || document.webkitFullscreenElement || null;
+            if (fsEl) {
+                (document.exitFullscreen || document.webkitExitFullscreen || function () {}).call(document);
+            } else {
+                var req = root.requestFullscreen || root.webkitRequestFullscreen;
+                if (req) { try { req.call(root); } catch (err) { /* 忽略 */ } }
+            }
+        }
+
+        function syncFsIcon(on) {
+            if (!fsBtn) { return; }
+            fsBtn.innerHTML = '';
+            fsBtn.appendChild(makeIcon(on ? 'i-minimize' : 'i-maximize'));
+            fsBtn.title = on ? '退出全屏' : '全屏';
+        }
+
+        document.addEventListener('fullscreenchange', function () {
+            syncFsIcon(!!(document.fullscreenElement || document.webkitFullscreenElement));
+        });
+        document.addEventListener('webkitfullscreenchange', function () {
+            syncFsIcon(!!(document.fullscreenElement || document.webkitFullscreenElement));
+        });
+        syncFsIcon(false);
+
+        api.toggleFullscreen = toggleFullscreen;
+
+        /* ---------- 音效 API ---------- */
+        api.beep = function (kind) {
+            if (!soundEnabled) { return; }
+            playBeep(kind);
+        };
+        api.soundOn = function () { return soundEnabled; };
+
+        api.modal = modal;
+
+        /* ---------- 帮助 ---------- */
+        function openHelp() {
+            modal({
+                title: '使用说明',
+                icon: 'i-help',
+                size: 'narrow',
+                body: opt.help,
+                buttons: [{ label: '知道了', primary: true }]
+            });
+        }
+        api.openHelp = openHelp;
+
+        /* ---------- toast ---------- */
+        api.toast = toast;
+
+        /* ---------- 页脚（L2 品牌回流，低调一行） ---------- */
+        var siteOrigin = typeof global.ET_SITE_ORIGIN === 'string' && /^https?:\/\//.test(global.ET_SITE_ORIGIN)
+            ? global.ET_SITE_ORIGIN
+            : null;
+
+        function renderFooter() {
+            footer.textContent = '';
+            footer.appendChild(el('span', null, 'KeeTools 课工具'));
+            footer.appendChild(el('span', null, '·'));
+            if (siteOrigin) {
+                var a = el('a', null, '更多课堂工具');
+                a.href = siteOrigin + '/?from=tool-footer&tool=' + encodeURIComponent(toolId);
+                a.target = '_blank';
+                a.rel = 'noopener';
+                footer.appendChild(a);
+            } else {
+                footer.appendChild(el('span', null, '更多课堂工具'));
+            }
+        }
+        renderFooter();
+
+        /* 站点来源发现：iframe 内向父窗口询问；也可由宿主直接注入 ET_SITE_ORIGIN */
+        try {
+            if (global.parent && global.parent !== global) {
+                global.parent.postMessage(JSON.stringify({ type: 'et-hello', toolId: toolId }), '*');
+            }
+        } catch (err) { /* 跨域异常忽略 */ }
+
+        global.addEventListener('message', function (ev) {
+            var data = ev.data;
+            if (typeof data === 'string') {
+                try { data = JSON.parse(data); } catch (err) { return; }
+            }
+            if (!data || typeof data !== 'object') { return; }
+
+            if (data.type === 'et-origin' && typeof data.origin === 'string' && /^https?:\/\//.test(data.origin)) {
+                siteOrigin = data.origin;
+                if (!global.ET_SITE_ORIGIN) { global.ET_SITE_ORIGIN = data.origin; }
+                renderFooter();
+            }
+            if (data.type === 'et-fullscreen-change' && typeof data.value === 'boolean') {
+                syncFsIcon(data.value);
+            }
+        });
+
+        api.el = { topbar: topbar, main: main, footer: footer, actions: actions };
+
+        /* ---------- 激光笔 / 翻页笔适配（HID 翻页键） ----------
+         * 翻页笔的上下页键在系统层等价于 PageDown / PageUp。
+         * 工具通过 opt.primary / opt.secondary 注册动作：
+         *   PageDown → primary（主操作，如开始点名 / 开始计时）
+         *   PageUp   → secondary（副操作，缺省时同 primary）
+         * 输入框聚焦或弹窗/抽屉打开时不响应，避免误触。 */
+        if (typeof opt.primary === 'function') {
+            document.addEventListener('keydown', function (ev) {
+                if (ev.key !== 'PageDown' && ev.key !== 'PageUp') { return; }
+                var tag = (document.activeElement && document.activeElement.tagName) || '';
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') { return; }
+                if (document.querySelector('.et-modal, .et-drawer-backdrop, .ws-winner')) { return; }
+                ev.preventDefault();
+                if (ev.key === 'PageDown') { opt.primary(); }
+                else if (typeof opt.secondary === 'function') { opt.secondary(); }
+                else { opt.primary(); }
+            });
+        }
+
+        return api;
+    }
+
+    global.ET = global.ET || {};
+    global.ET.Chrome = {
+        mount: mount,
+        modal: modal,
+        toast: toast,
+        beep: playBeep /* 挂载前的独立音效入口（不经过音效开关） */
+    };
+})(window);
+</script>
+<!-- /ET:INLINE -->
+
+<!-- ET:INLINE name="et-stats" src="ui/et-stats.js" -->
+<script>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * et-stats.js — 使用统计模块（模块化，可整体移除）
+ *
+ * 共享逻辑源。改这里，然后跑：python scripts/sync_shared.py
+ * 依赖：无（可脱离 et-util / et-chrome 独立运行）。
+ * 全局：ET.Stats
+ *
+ * ┌────────────────────────────────────────────────────────────────┐
+ * │ 说明：本模块只做一件事——工具被打开时向上报端点发一条匿名计数。 │
+ * │ · 在线（iframe 内）：宿主页面已服务端计数，本模块不重复上报。   │
+ * │ · 离线打开（file:// / 下载单文件 / 离线包）：联网条件具备时，   │
+ * │   以 sendBeacon 上报 use_offline 事件（text/plain 免预检）。    │
+ * │ · 上报端点 = window.ET_SITE_ORIGIN（由宿主注入或离线包配置）。  │
+ * │   未配置端点时本模块完全静默，不发任何请求。                    │
+ * │ · **整个 <script> 块可安全删除**：删除后工具其余功能完全正常，  │
+ * │   且完全不再发起任何网络请求。                                  │
+ * └────────────────────────────────────────────────────────────────┘
+ */
+(function (global) {
+    'use strict';
+
+    var ET = global.ET = global.ET || {};
+
+    var Stats = {
+        /** 上报端点来源（站点绝对地址，无协议尾斜杠） */
+        endpoint: (typeof global.ET_SITE_ORIGIN === 'string' && /^https?:\/\//.test(global.ET_SITE_ORIGIN))
+            ? global.ET_SITE_ORIGIN
+            : null,
+
+        _done: {},
+
+        /**
+         * 上报一次事件（同一事件同一工具每次页面加载只报一次）。
+         * event: 'use_offline' 等；toolId: 工具 id。
+         */
+        send: function (event, toolId) {
+            if (!event || this._done[event + ':' + (toolId || '')]) { return false; }
+            if (!this.endpoint) { return false; }
+            /* iframe 内由宿主统计，避免双计 */
+            try {
+                if (global.parent && global.parent !== global) { return false; }
+            } catch (err) { return false; }
+            /* 断网时挂起，网络恢复自动补报一次 */
+            if (global.navigator && global.navigator.onLine === false) {
+                var self = this;
+                global.addEventListener('online', function () { self.send(event, toolId); }, { once: true });
+                return false;
+            }
+
+            this._done[event + ':' + (toolId || '')] = true;
+            var payload = JSON.stringify({ event: event, tool: toolId || '' });
+
+            try {
+                if (global.navigator.sendBeacon) {
+                    return global.navigator.sendBeacon(
+                        this.endpoint + '/api/track',
+                        new Blob([payload], { type: 'text/plain;charset=UTF-8' })
+                    );
+                }
+                global.fetch(this.endpoint + '/api/track', {
+                    method: 'POST',
+                    body: payload,
+                    keepalive: true,
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=UTF-8' }
+                });
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+    };
+
+    ET.Stats = Stats;
+})(window);
+</script>
+<!-- /ET:INLINE -->
+
+<!-- 使用统计：删除上方 et-stats 块即可完全不联网（模块化设计） -->
+<script>
+try { ET.Stats.send('use_offline', 'probability-lab'); } catch (e) { /* 静默 */ }
+</script>
+
+<script>
+(function () {
+    'use strict';
+
+    var TOOL_ID = 'probability-lab';
+    var store = ET.store(TOOL_ID);
+
+    var MAX_TRIALS = 200000;   /* 曲线数据上限（内存保护） */
+    var COLORS = ['#0ea5e9', '#f43f5e', '#22c55e', '#f59e0b', '#a855f7', '#14b8a6'];
+    /* 骰子 3×3 点阵（行优先 0..8） */
+    var PIPS = {
+        1: [4],
+        2: [0, 8],
+        3: [0, 4, 8],
+        4: [0, 2, 6, 8],
+        5: [0, 2, 4, 6, 8],
+        6: [0, 2, 3, 5, 6, 8]
+    };
+
+    var state = {
+        kind: 'coin',
+        counts: [0, 0],
+        series: [],
+        total: 0,
+        spin: 0,
+        showTheory: true,
+        animate: true,
+        samples: 120
+    };
+
+    var animating = false;
+
+    var chrome = ET.Chrome.mount({
+        toolId: TOOL_ID,
+        title: '概率模拟器',
+        sub: '数学 · 频率与理论概率',
+        accent: '#0d9488',
+        status: '就绪',
+        sound: true,
+        primary: doOne,       /* 翻页笔 PageDown：做 1 次实验 */
+        secondary: resetStats, /* 翻页笔 PageUp：重置 */
+        settings: {
+            title: '设置',
+            build: function (body) { buildSettings(body); }
+        },
+        help: '<div style="font-size:13.5px;line-height:2">' +
+            '<p style="margin:0 0 8px"><b>做实验</b>：空格 / 翻页笔下页 = 做 1 次；也可点「10 / 100 / 1000 次」批量模拟。</p>' +
+            '<p style="margin:0 0 8px"><b>重置</b>：翻页笔上页，或点「重置」按钮。</p>' +
+            '<p style="margin:0 0 8px"><b>切换类型</b>：← / → 键或点顶部标签；切换会清空统计。</p>' +
+            '<p style="margin:0"><b>曲线</b>：横轴为累计实验次数，纵轴为频率；虚线为理论概率，次数越多越贴近。</p></div>'
+    });
+
+    var els = {
+        tabCoin: ET.el('plTabCoin'),
+        tabDice: ET.el('plTabDice'),
+        once: ET.el('plOnce'),
+        b10: ET.el('pl10'),
+        b100: ET.el('pl100'),
+        b1000: ET.el('pl1000'),
+        reset: ET.el('plReset'),
+        stage: ET.el('plStage'),
+        coin: ET.el('plCoin'),
+        die: ET.el('plDie'),
+        result: ET.el('plResult'),
+        table: ET.el('plTable'),
+        chart: ET.el('plChart'),
+        legend: ET.el('plLegend'),
+        dev: ET.el('plDev')
+    };
+
+    /* ── 当前实验定义 ── */
+
+    function kindSize() { return state.kind === 'coin' ? 2 : 6; }
+
+    function kindNames() {
+        if (state.kind === 'coin') { return ['正面', '反面']; }
+        return ['1 点', '2 点', '3 点', '4 点', '5 点', '6 点'];
+    }
+
+    function kindProbs() {
+        var n = kindSize();
+        var p = 1 / n;
+        var out = [];
+        for (var i = 0; i < n; i++) { out.push(p); }
+        return out;
+    }
+
+    function isTypingTarget(node) {
+        if (!node || !node.tagName) { return false; }
+        var tag = node.tagName.toUpperCase();
+        return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || node.isContentEditable === true;
+    }
+
+    function setBtnText(btn, text) {
+        var sp = btn.querySelector('span');
+        if (sp) { sp.textContent = text; } else { btn.textContent = text; }
+    }
+
+    /* ── 统计 ── */
+
+    function resetStats() {
+        if (animating) { return; }
+        var n = kindSize();
+        state.counts = [];
+        for (var i = 0; i < n; i++) { state.counts.push(0); }
+        state.series = [];
+        state.total = 0;
+        state.spin = 0;
+        if (els.coin) { els.coin.style.transform = 'rotateY(0deg)'; }
+        paintDie(1);
+        els.result.textContent = '点击「' + (state.kind === 'coin' ? '抛' : '掷')
+            + ' 1 次」或按空格开始实验';
+        renderAll();
+    }
+
+    function commit(idx) {
+        state.counts[idx] = (state.counts[idx] || 0) + 1;
+        state.series.push(idx);
+        state.total++;
+    }
+
+    function showResult(idx) {
+        els.result.innerHTML = '本次结果：<b>' + ET.escapeHtml(kindNames()[idx]) + '</b>';
+    }
+
+    /* ── 动画 ── */
+
+    function setBusy(on) {
+        els.once.disabled = on;
+        els.b10.disabled = on;
+        els.b100.disabled = on;
+        els.b1000.disabled = on;
+    }
+
+    function spinCoin(idx) {
+        state.spin += 3;
+        els.coin.style.transform = 'rotateY(' + (state.spin * 360 + (idx === 1 ? 180 : 0)) + 'deg)';
+    }
+
+    function paintDie(face) {
+        var on = PIPS[face] || [];
+        var dots = ET.qsa('i', els.die);
+        for (var i = 0; i < dots.length; i++) {
+            var hit = false;
+            for (var j = 0; j < on.length; j++) {
+                if (on[j] === i) { hit = true; break; }
+            }
+            dots[i].classList.toggle('is-on', hit);
+        }
+    }
+
+    function rollDie(idx) {
+        els.die.classList.remove('is-rolling');
+        void els.die.offsetWidth;
+        els.die.classList.add('is-rolling');
+        var timer = setInterval(function () {
+            paintDie(Math.floor(Math.random() * 6) + 1);
+        }, 60);
+        setTimeout(function () {
+            clearInterval(timer);
+            paintDie(idx + 1);
+            els.die.classList.remove('is-rolling');
+        }, 480);
+    }
+
+    function pulse() {
+        els.stage.classList.remove('is-pulse');
+        void els.stage.offsetWidth;
+        els.stage.classList.add('is-pulse');
+        setTimeout(function () { els.stage.classList.remove('is-pulse'); }, 300);
+    }
+
+    /* ── 实验 ── */
+
+    function doOne() {
+        if (animating) { return; }
+        var idx = Math.floor(Math.random() * kindSize());
+
+        if (!state.animate) {
+            commit(idx);
+            if (state.kind === 'coin') { spinCoin(idx); } else { paintDie(idx + 1); }
+            showResult(idx);
+            renderAll();
+            chrome.beep('tick');
+            return;
+        }
+
+        animating = true;
+        setBusy(true);
+        if (state.kind === 'coin') { spinCoin(idx); } else { rollDie(idx); }
+        setTimeout(function () {
+            animating = false;
+            setBusy(false);
+            commit(idx);
+            showResult(idx);
+            renderAll();
+            chrome.beep('tick');
+        }, 520);
+    }
+
+    function runBatch(n) {
+        if (animating) { return; }
+        var room = MAX_TRIALS - state.total;
+        if (room <= 0) {
+            chrome.toast('已达 ' + MAX_TRIALS + ' 次上限，请先重置', 'warn');
+            return;
+        }
+        if (n > room) { n = room; }
+        var k = kindSize();
+        var last = 0;
+        for (var i = 0; i < n; i++) {
+            var idx = Math.floor(Math.random() * k);
+            state.counts[idx]++;
+            state.series.push(idx);
+            last = idx;
+        }
+        state.total += n;
+        if (state.kind === 'coin') { spinCoin(last); } else { paintDie(last + 1); }
+        showResult(last);
+        pulse();
+        renderAll();
+        chrome.beep(n >= 1000 ? 'ok' : 'tick');
+    }
+
+    function setKind(k) {
+        if (state.kind === k) { return; }
+        state.kind = k;
+        store.set('kind', k);
+        resetStats();
+        chrome.toast(k === 'coin' ? '已切换到抛硬币' : '已切换到掷骰子');
+    }
+
+    /* ── 渲染：标签 / 统计表 / 图例 ── */
+
+    function renderTabs() {
+        var coin = state.kind === 'coin';
+        els.tabCoin.classList.toggle('is-active', coin);
+        els.tabDice.classList.toggle('is-active', !coin);
+        var v = coin ? '抛' : '掷';
+        setBtnText(els.once, v + ' 1 次');
+        setBtnText(els.b10, v + ' 10 次');
+        setBtnText(els.b100, v + ' 100 次');
+        setBtnText(els.b1000, v + ' 1000 次');
+        els.coin.hidden = !coin;
+        els.die.hidden = coin;
+    }
+
+    function renderStats() {
+        var names = kindNames();
+        var probs = kindProbs();
+        var html = '<thead><tr><th>结果</th><th>次数</th><th>频率</th><th>理论概率</th><th>偏差</th></tr></thead><tbody>';
+        for (var i = 0; i < names.length; i++) {
+            var c = state.counts[i] || 0;
+            var f = state.total ? c / state.total : 0;
+            var d = f - probs[i];
+            html += '<tr>'
+                + '<td><span class="probabilityl-dot" style="background:' + COLORS[i % COLORS.length] + '"></span>'
+                + ET.escapeHtml(names[i]) + '</td>'
+                + '<td class="probabilityl-num">' + c + '</td>'
+                + '<td class="probabilityl-num">' + f.toFixed(4) + '</td>'
+                + '<td class="probabilityl-num">' + probs[i].toFixed(4) + '</td>'
+                + '<td class="probabilityl-num">' + (d >= 0 ? '+' : '-') + Math.abs(d).toFixed(4) + '</td>'
+                + '</tr>';
+        }
+        els.table.innerHTML = html + '</tbody>';
+    }
+
+    function maxDeviation() {
+        if (!state.total) { return null; }
+        var probs = kindProbs();
+        var max = 0;
+        for (var i = 0; i < probs.length; i++) {
+            var f = (state.counts[i] || 0) / state.total;
+            var d = Math.abs(f - probs[i]);
+            if (d > max) { max = d; }
+        }
+        return max;
+    }
+
+    function renderLegend() {
+        var names = kindNames();
+        var probs = kindProbs();
+        var html = '';
+        for (var i = 0; i < names.length; i++) {
+            html += '<span><i style="background:' + COLORS[i % COLORS.length] + '"></i>'
+                + ET.escapeHtml(names[i]) + '（理论 ' + probs[i].toFixed(3) + '）</span>';
+        }
+        if (state.showTheory) {
+            html += '<span><i class="probabilityl-legend__dash"></i>理论概率虚线</span>';
+        }
+        els.legend.innerHTML = html;
+    }
+
+    /* ── 渲染：曲线 ── */
+
+    /** 采样点：最多 maxPts 个，频率用全量数据计算 */
+    function sampleRows(maxPts) {
+        var N = state.total;
+        var k = kindSize();
+        if (!N) { return []; }
+
+        var idxs = [];
+        if (N <= maxPts) {
+            for (var i = 1; i <= N; i++) { idxs.push(i); }
+        } else {
+            for (var j = 0; j < maxPts; j++) {
+                var v = Math.round(1 + j * (N - 1) / (maxPts - 1));
+                if (!idxs.length || idxs[idxs.length - 1] !== v) { idxs.push(v); }
+            }
+            if (idxs[idxs.length - 1] !== N) { idxs.push(N); }
+        }
+
+        var counts = [];
+        for (var c = 0; c < k; c++) { counts.push(0); }
+        var rows = [];
+        var ptr = 0;
+        for (var t = 1; t <= N; t++) {
+            counts[state.series[t - 1]]++;
+            if (ptr < idxs.length && idxs[ptr] === t) {
+                var f = [];
+                for (var c2 = 0; c2 < k; c2++) { f.push(counts[c2] / t); }
+                rows.push({ n: t, f: f });
+                ptr++;
+            }
+        }
+        return rows;
+    }
+
+    function xTicks(N) {
+        if (N <= 0) { return [0]; }
+        var out = [];
+        var seen = {};
+        for (var i = 0; i <= 4; i++) {
+            var v = Math.round(N * i / 4);
+            if (!seen[v]) { seen[v] = 1; out.push(v); }
+        }
+        return out;
+    }
+
+    function renderChart() {
+        var W = 1000, H = 360;
+        var padL = 68, padR = 24, padT = 20, padB = 46;
+        var iw = W - padL - padR;
+        var ih = H - padT - padB;
+        var N = state.total;
+        var k = kindSize();
+        var probs = kindProbs();
+
+        function px(n) { return N > 0 ? padL + (n / N) * iw : padL; }
+        function py(f) { return padT + ih - f * ih; }
+
+        var s = [];
+
+        /* 横向网格 + 纵轴刻度 */
+        var yt = [0, 0.25, 0.5, 0.75, 1];
+        for (var y = 0; y < yt.length; y++) {
+            var gy = py(yt[y]);
+            s.push('<line x1="' + padL + '" y1="' + gy + '" x2="' + (padL + iw) + '" y2="' + gy
+                + '" stroke="var(--et-line)" stroke-width="1"/>');
+            s.push('<text x="' + (padL - 12) + '" y="' + (gy + 5) + '" text-anchor="end" font-size="13"'
+                + ' fill="var(--et-muted)">' + yt[y].toFixed(2) + '</text>');
+        }
+
+        /* 坐标轴 */
+        s.push('<line x1="' + padL + '" y1="' + padT + '" x2="' + padL + '" y2="' + (padT + ih)
+            + '" stroke="var(--et-line-strong)" stroke-width="1.5"/>');
+        s.push('<line x1="' + padL + '" y1="' + (padT + ih) + '" x2="' + (padL + iw) + '" y2="' + (padT + ih)
+            + '" stroke="var(--et-line-strong)" stroke-width="1.5"/>');
+
+        /* 横轴刻度 */
+        var xt = xTicks(N);
+        for (var t = 0; t < xt.length; t++) {
+            var gx = px(xt[t]);
+            s.push('<line x1="' + gx + '" y1="' + (padT + ih) + '" x2="' + gx + '" y2="' + (padT + ih + 6)
+                + '" stroke="var(--et-line-strong)" stroke-width="1.5"/>');
+            s.push('<text x="' + gx + '" y="' + (padT + ih + 25) + '" text-anchor="middle" font-size="13"'
+                + ' fill="var(--et-muted)">' + xt[t] + '</text>');
+        }
+        s.push('<text x="' + padL + '" y="' + (padT - 6) + '" font-size="12" fill="var(--et-muted)">频率</text>');
+        s.push('<text x="' + (padL + iw) + '" y="' + (H - 8) + '" text-anchor="end" font-size="12"'
+            + ' fill="var(--et-muted)">实验次数</text>');
+
+        /* 理论概率虚线 */
+        if (state.showTheory) {
+            for (var p = 0; p < k; p++) {
+                var ty = py(probs[p]);
+                s.push('<line x1="' + padL + '" y1="' + ty + '" x2="' + (padL + iw) + '" y2="' + ty
+                    + '" stroke="' + COLORS[p % COLORS.length] + '" stroke-width="1.5"'
+                    + ' stroke-dasharray="7 6" opacity=".5"/>');
+            }
+        }
+
+        /* 频率折线 */
+        var rows = sampleRows(state.samples);
+        for (var c = 0; c < k; c++) {
+            if (!rows.length) { break; }
+            var col = COLORS[c % COLORS.length];
+            if (rows.length === 1) {
+                s.push('<circle cx="' + px(rows[0].n).toFixed(1) + '" cy="' + py(rows[0].f[c]).toFixed(1)
+                    + '" r="3.5" fill="' + col + '"/>');
+                continue;
+            }
+            var pts = [];
+            for (var r = 0; r < rows.length; r++) {
+                pts.push(px(rows[r].n).toFixed(1) + ',' + py(rows[r].f[c]).toFixed(1));
+            }
+            s.push('<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + col
+                + '" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>');
+        }
+
+        els.chart.innerHTML = s.join('');
+    }
+
+    function renderAll() {
+        renderTabs();
+        renderStats();
+        renderLegend();
+        renderChart();
+        var dev = maxDeviation();
+        els.dev.textContent = '当前最大偏差：' + (dev === null ? '—' : dev.toFixed(4));
+        if (!state.total) {
+            chrome.setStatus('待开始实验', 'warn');
+        } else if (dev !== null && dev <= 0.02) {
+            chrome.setStatus('共 ' + state.total + ' 次 · 已很接近理论值', 'ok');
+        } else {
+            chrome.setStatus('共 ' + state.total + ' 次', 'ok');
+        }
+    }
+
+    /* ── 设置抽屉 ── */
+
+    function buildSettings(body) {
+        var coin = state.kind === 'coin';
+        body.innerHTML =
+            '<h4>实验类型</h4>' +
+            '<div class="et-drawer__row">' +
+                '<button class="et-btn' + (coin ? ' et-btn--primary' : '') + '" id="plSetCoin" type="button">抛硬币</button>' +
+                '<button class="et-btn' + (coin ? '' : ' et-btn--primary') + '" id="plSetDice" type="button">掷骰子</button>' +
+            '</div>' +
+            '<p class="et-drawer__tip">切换类型会清空当前统计与曲线。</p>' +
+            '<h4>显示</h4>' +
+            '<label class="et-drawer__switch"><span>显示理论概率虚线</span>' +
+                '<input type="checkbox" id="plSetTheory"' + (state.showTheory ? ' checked' : '') + '></label>' +
+            '<label class="et-drawer__switch"><span>显示动画</span>' +
+                '<input type="checkbox" id="plSetAnim"' + (state.animate ? ' checked' : '') + '></label>' +
+            '<h4>曲线采样点数</h4>' +
+            '<select class="et-drawer__input" id="plSetSamples">' +
+                '<option value="60">少（最多 60 个点）</option>' +
+                '<option value="120">中（最多 120 个点）</option>' +
+                '<option value="200">多（最多 200 个点）</option>' +
+            '</select>' +
+            '<p class="et-drawer__tip">采样只影响曲线画点数量，频率始终按<b>全量数据</b>计算。</p>' +
+            '<h4>统计</h4>' +
+            '<div class="et-drawer__row">' +
+                '<button class="et-btn et-btn--danger" id="plSetReset" type="button">重置统计</button>' +
+            '</div>' +
+            '<p class="et-drawer__tip">当前共 <b>' + state.total + '</b> 次实验；上限 ' + MAX_TRIALS + ' 次。</p>';
+
+        var q = function (id) { return body.querySelector('#' + id); };
+
+        q('plSetCoin').addEventListener('click', function () {
+            setKind('coin');
+            buildSettings(body);
+        });
+        q('plSetDice').addEventListener('click', function () {
+            setKind('dice');
+            buildSettings(body);
+        });
+        q('plSetTheory').addEventListener('change', function (e) {
+            state.showTheory = e.target.checked;
+            store.set('showTheory', state.showTheory);
+            renderAll();
+            chrome.toast(state.showTheory ? '已显示理论概率虚线' : '已隐藏理论概率虚线');
+        });
+        q('plSetAnim').addEventListener('change', function (e) {
+            state.animate = e.target.checked;
+            store.set('animate', state.animate);
+            chrome.toast(state.animate ? '已开启动画' : '已关闭动画');
+        });
+        var sel = q('plSetSamples');
+        sel.value = String(state.samples);
+        sel.addEventListener('change', function (e) {
+            state.samples = parseInt(e.target.value, 10) || 120;
+            store.set('samples', state.samples);
+            renderChart();
+            chrome.toast('采样点数：' + state.samples);
+        });
+        q('plSetReset').addEventListener('click', function () {
+            resetStats();
+            buildSettings(body);
+            chrome.toast('统计已重置');
+        });
+    }
+
+    /* ── 事件绑定 ── */
+
+    els.tabCoin.addEventListener('click', function () { setKind('coin'); });
+    els.tabDice.addEventListener('click', function () { setKind('dice'); });
+    els.once.addEventListener('click', doOne);
+    els.b10.addEventListener('click', function () { runBatch(10); });
+    els.b100.addEventListener('click', function () { runBatch(100); });
+    els.b1000.addEventListener('click', function () { runBatch(1000); });
+    els.reset.addEventListener('click', resetStats);
+
+    document.addEventListener('keydown', function (e) {
+        if (isTypingTarget(e.target)) { return; }
+        if (document.querySelector('.et-modal, .et-drawer-backdrop')) { return; }
+
+        if (e.code === 'Space' || e.key === ' ') {
+            e.preventDefault();
+            if (e.target && typeof e.target.blur === 'function') { e.target.blur(); }
+            doOne();
+        } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            setKind(state.kind === 'coin' ? 'dice' : 'coin');
+        } else if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            setKind(state.kind === 'coin' ? 'dice' : 'coin');
+        }
+    });
+
+    /* ── 初始化（统计与曲线不跨刷新保留） ── */
+
+    state.kind = store.get('kind', 'coin') === 'dice' ? 'dice' : 'coin';
+    state.showTheory = store.get('showTheory', true) !== false;
+    state.animate = store.get('animate', true) !== false;
+    var savedSamples = parseInt(store.get('samples', 120), 10);
+    state.samples = (savedSamples === 60 || savedSamples === 200) ? savedSamples : 120;
+
+    resetStats();
+})();
+</script>
+
+</body>
+</html>

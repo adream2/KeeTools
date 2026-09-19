@@ -1,0 +1,21 @@
+{
+  "id": "pick-lottery",
+  "title": "抽签 / 抽题器",
+  "version": "1.0.0",
+  "type": "shell",
+  "description": "导入题目或任务清单，逐个随机抽取，已抽自动标记，支持重置。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["1-12"],
+  "subjects": ["通用"],
+  "tags": ["抽签", "抽题", "随机抽取", "不重复", "课堂互动", "题号", "大屏"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}

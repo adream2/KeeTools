@@ -1,0 +1,21 @@
+{
+  "id": "geometry-builder",
+  "title": "几何图形构建器",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "网格上拖点、连线、成面，实时计算周长与面积，内置常用图形模板。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["3-4", "5-6"],
+  "subjects": ["数学"],
+  "tags": ["几何图形", "周长", "面积", "网格作图", "图形模板", "图形与几何", "大屏"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-19",
+  "updated_at": "2026-09-19"
+}
