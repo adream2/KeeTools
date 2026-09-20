@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>二进制转换器 — KeeTools 课工具</title>
 <!-- ET-META
-{"id":"binary-converter","version":"1.0.0"}
+{"id":"binary-converter","version":"1.1.0"}
 -->
 
 <!-- 共享外壳样式（由 sync_shared.py 注入） -->
@@ -62,6 +62,13 @@ html[data-et-theme="dark"] {
 }
 
 /* ============ 基础 ============ */
+
+/* body 作为外壳时必须清掉浏览器默认 8px 外边距，
+   否则 iframe 预览中文档会比视口高 16px（底部白边 + 多余滚动） */
+body.et-app {
+    margin: 0;
+}
+
 .et-app {
     position: relative;
     isolation: isolate;
@@ -542,24 +549,28 @@ html[data-et-theme="dark"] {
     --bc-accent: #4338ca;
 }
 
+/* 主区：水平 + 垂直自适应居中；内容超高时 margin:auto 归零、正常滚动，不裁切 */
 .bc-main {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
     display: flex;
-    flex-direction: column;
-    gap: 14px;
-    padding: 14px 24px 12px;
-    align-items: center;
+    padding: 16px clamp(12px, 2.5vw, 32px);
 }
 
+/* 网格卡片流：宽屏自动两列铺满，窄屏退化为单列 */
 .bc-col {
     width: 100%;
-    max-width: 860px;
-    display: flex;
-    flex-direction: column;
+    max-width: 1280px;
+    margin: auto;
+    display: grid;
     gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(min(430px, 100%), 1fr));
+    align-content: safe center;
 }
+
+/* 需要通栏的卡片 */
+.bc-span-full { grid-column: 1 / -1; }
 
 .bc-card {
     background: var(--et-card);
@@ -593,13 +604,13 @@ html[data-et-theme="dark"] {
     font-weight: 600;
 }
 .bc-field input, .bc-field select {
-    font: 700 18px/1.4 ui-monospace, Consolas, monospace;
+    font: 700 clamp(18px, 1.1vw + 10px, 26px)/1.4 ui-monospace, Consolas, monospace;
     padding: 8px 12px;
     border: 2px solid var(--et-line);
     border-radius: 8px;
     background: var(--et-bg, transparent);
     color: var(--et-fg);
-    width: 190px;
+    width: clamp(170px, 15vw, 240px);
     outline: none;
 }
 .bc-field input:focus, .bc-field select:focus {
@@ -632,14 +643,14 @@ html[data-et-theme="dark"] {
     margin-bottom: 2px;
 }
 .bc-chip code {
-    font: 700 17px/1.4 ui-monospace, Consolas, monospace;
+    font: 700 clamp(17px, 1vw + 10px, 24px)/1.4 ui-monospace, Consolas, monospace;
     color: var(--bc-accent);
     word-break: break-all;
 }
 
 /* 位权展开 */
 .bc-expand {
-    font: 600 15px/2 ui-monospace, Consolas, monospace;
+    font: 600 clamp(15px, .95vw + 9px, 22px)/2 ui-monospace, Consolas, monospace;
     color: var(--et-fg);
     word-break: break-all;
 }
@@ -652,7 +663,7 @@ html[data-et-theme="dark"] {
 /* 灯板 */
 .bc-lamps {
     display: flex;
-    gap: 8px;
+    gap: clamp(2px, .5vw, 8px);
     flex-wrap: wrap;
     justify-content: center;
 }
@@ -663,14 +674,14 @@ html[data-et-theme="dark"] {
     gap: 6px;
     cursor: pointer;
     user-select: none;
-    padding: 8px 6px;
+    padding: 8px 2px;
     border-radius: 10px;
     transition: background .15s;
 }
 .bc-lamp:hover { background: rgba(127,127,127,.08); }
 .bc-bulb {
-    width: 46px;
-    height: 46px;
+    width: clamp(38px, 3.4vw, 62px);
+    height: clamp(38px, 3.4vw, 62px);
     border-radius: 50%;
     border: 3px solid var(--et-line);
     background: rgba(127,127,127,.1);
@@ -682,7 +693,7 @@ html[data-et-theme="dark"] {
     box-shadow: 0 0 14px rgba(220,38,38,.5);
 }
 .bc-lamp .bc-bit {
-    font: 800 17px/1 ui-monospace, monospace;
+    font: 800 clamp(17px, 1vw + 10px, 24px)/1 ui-monospace, monospace;
     color: var(--et-fg);
 }
 .bc-lamp .bc-w {
@@ -709,7 +720,7 @@ html[data-et-theme="dark"] {
     font-size: 16px;
 }
 .bc-quiz-q {
-    font: 800 20px/1.4 ui-monospace, Consolas, monospace;
+    font: 800 clamp(20px, 1.3vw + 10px, 32px)/1.4 ui-monospace, Consolas, monospace;
     color: var(--et-fg);
 }
 .bc-quiz-input {
@@ -730,6 +741,63 @@ html[data-et-theme="dark"] {
     color: var(--et-muted);
 }
 .bc-quiz-score b { color: var(--bc-accent); }
+
+/* 方法说明卡（教学） */
+.bc-methods {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+}
+.bc-method {
+    background: rgba(127,127,127,.06);
+    border-radius: 10px;
+    padding: 10px 14px;
+}
+.bc-method h4 {
+    margin: 0 0 6px;
+    font-size: 13.5px;
+    color: var(--bc-accent);
+}
+.bc-method p {
+    margin: 4px 0;
+    font-size: 13px;
+    line-height: 1.9;
+}
+.bc-method code {
+    font: 700 13px ui-monospace, Consolas, monospace;
+    color: var(--bc-accent);
+}
+.bc-weights-row {
+    font: 700 clamp(14px, .7vw + 9px, 19px) ui-monospace, Consolas, monospace;
+    letter-spacing: 2px;
+    color: var(--et-fg);
+}
+.bc-method small {
+    color: var(--et-muted);
+}
+
+/* 除 2 取余演示 */
+.bc-div-steps {
+    font: 600 clamp(14px, .85vw + 9px, 20px)/2 ui-monospace, Consolas, monospace;
+    color: var(--et-fg);
+}
+.bc-div-steps .bc-div-r {
+    color: #dc2626;
+    font-weight: 800;
+}
+.bc-div-steps .bc-div-last {
+    color: var(--et-muted);
+}
+.bc-div-read {
+    margin: 8px 0 0;
+    font-size: 14px;
+    color: var(--et-muted);
+}
+.bc-div-read code {
+    font: 800 clamp(16px, 1vw + 9px, 24px) ui-monospace, Consolas, monospace;
+    color: var(--bc-accent);
+    word-break: break-all;
+}
 </style>
 </head>
 <body class="et-app">
@@ -739,7 +807,7 @@ html[data-et-theme="dark"] {
 <main id="et-main" class="bc-main">
     <div class="bc-col">
 
-        <div class="bc-card">
+        <div class="bc-card bc-span-full">
             <h3>进制转换（输入任意一栏，其余自动换算）</h3>
             <div class="bc-conv-row">
                 <div class="bc-field">
@@ -765,9 +833,39 @@ html[data-et-theme="dark"] {
             <div class="bc-results" id="results"></div>
         </div>
 
+        <div class="bc-card bc-span-full">
+            <h3>怎么转？——两种方法与诀窍</h3>
+            <div class="bc-methods">
+                <div class="bc-method">
+                    <h4>二进制 → 十进制：按权相加</h4>
+                    <p>记住 8 个位权（从左到右依次 ×2）：</p>
+                    <p class="bc-weights-row">128 · 64 · 32 · 16 · 8 · 4 · 2 · 1</p>
+                    <p>把「1」下面的数加起来就行。<b>诀窍：看到 1 就加，看到 0 就跳过。</b></p>
+                    <p><small>例：11001010 → 128+64+8+2 = 202</small></p>
+                </div>
+                <div class="bc-method">
+                    <h4>十进制 → 二进制 方法一：减大数法</h4>
+                    <p>从最大的位权 128 开始往下减：<b>够减记 1 并减掉，不够记 0</b>，减到 1 为止。</p>
+                    <p><small>例：202 → −128剩74(1) → −64剩10(1) → 32不够(0) → 16不够(0) → −8剩2(1) → 4不够(0) → −2剩0(1) → 1不够(0) → 11001010</small></p>
+                </div>
+                <div class="bc-method">
+                    <h4>十进制 → 二进制 方法二：除 2 取余</h4>
+                    <p>不断除以 2、记下余数，直到商为 0，<b>余数倒着读</b>。</p>
+                    <p>口诀：<b>除 2 取余，倒序排列。</b></p>
+                    <p><small>配合右 / 下方的「除 2 取余演示」逐步观察，与本工具任意输入联动。</small></p>
+                </div>
+                <div class="bc-method">
+                    <h4>十六 / 八进制诀窍：分组直换</h4>
+                    <p>二进制<b>每 4 位一组</b>对应 1 位十六进制（8→1000，F→1111）；<b>每 3 位一组</b>对应 1 位八进制。分组查表互换，不用乘除。</p>
+                    <p><small>例：11001010 → 1100 1010 → C A → 0xCA</small></p>
+                </div>
+            </div>
+        </div>
+
         <div class="bc-card">
-            <h3>位权展开（二进制 → 十进制）</h3>
-            <div class="bc-expand" id="expand"></div>
+            <h3>除 2 取余演示（随上方数值自动更新）</h3>
+            <div class="bc-div-steps" id="divSteps"></div>
+            <p class="bc-div-read" id="divRead"></p>
         </div>
 
         <div class="bc-card">
@@ -776,7 +874,12 @@ html[data-et-theme="dark"] {
             <p class="bc-lamp-sum" id="lampSum"></p>
         </div>
 
-        <div class="bc-card">
+        <div class="bc-card bc-span-full">
+            <h3>位权展开（二进制 → 十进制）</h3>
+            <div class="bc-expand" id="expand"></div>
+        </div>
+
+        <div class="bc-card bc-span-full">
             <h3>课堂练习（十进制 → 二进制）</h3>
             <div class="bc-quiz-row">
                 <span>把</span>
@@ -1660,11 +1763,15 @@ try { ET.Stats.send('use_offline', 'binary-converter'); } catch (e) { /* 静默 
             title: '设置',
             build: function (body) {
                 body.innerHTML = '<p style="font-size:13.5px;line-height:2;color:var(--et-muted)">' +
-                    '转换范围为 0 ~ 65535（16 位以内）。空格 / 翻页笔下页键 = 练习下一题。</p>';
+                    '转换范围为 0 ~ 65535（16 位以内）。空格 / 翻页笔下页键 = 练习下一题。' +
+                    '宽屏下卡片自动两列铺满，字号随屏幕大小缩放。</p>';
             }
         },
         help: '<div style="font-size:13.5px;line-height:2">' +
             '<p style="margin:0 0 8px"><b>进制转换</b>：在任意一栏输入，其余进制实时换算；骰子按钮随机出数。</p>' +
+            '<p style="margin:0 0 8px"><b>方法与诀窍</b>：卡片区内置四种通俗方法——按权相加（见 1 就加）、' +
+            '减大数法（从 128 往下够减记 1）、除 2 取余（余数倒序读）、十六/八进制分组直换（4 位 / 3 位一组）。</p>' +
+            '<p style="margin:0 0 8px"><b>除 2 取余演示</b>：展示当前数值不断除 2 的每一步与余数，红色为余数，最后倒序读出二进制。</p>' +
             '<p style="margin:0 0 8px"><b>位权展开</b>：展示「按权展开求和」的完整计算过程，红色位是 1 的有效位。</p>' +
             '<p style="margin:0 0 8px"><b>灯板</b>：每盏灯代表一位，点亮 = 1；灯下标注位权 2⁷…2⁰。可演示 255、128 等特殊值。</p>' +
             '<p style="margin:0"><b>练习</b>：随机十进制数转二进制，适合全班抢答。</p></div>'
@@ -1677,6 +1784,8 @@ try { ET.Stats.send('use_offline', 'binary-converter'); } catch (e) { /* 静默 
         inOct: document.getElementById('inOct'),
         results: document.getElementById('results'),
         expand: document.getElementById('expand'),
+        divSteps: document.getElementById('divSteps'),
+        divRead: document.getElementById('divRead'),
         lamps: document.getElementById('lamps'),
         lampSum: document.getElementById('lampSum'),
         quizQ: document.getElementById('quizQ'),
@@ -1744,6 +1853,7 @@ try { ET.Stats.send('use_offline', 'binary-converter'); } catch (e) { /* 静默 
         }
         renderChips(val);
         renderExpand(val);
+        renderDivSteps(val);
         if (val !== null) { setLampsFromValue(val); }
         updating = false;
     }
@@ -1831,6 +1941,45 @@ try { ET.Stats.send('use_offline', 'binary-converter'); } catch (e) { /* 静默 
         els.expand.appendChild(sum);
     }
 
+    /* ════════ 除 2 取余演示 ════════ */
+
+    function renderDivSteps(val) {
+        while (els.divSteps.firstChild) { els.divSteps.removeChild(els.divSteps.firstChild); }
+        els.divRead.textContent = '';
+        if (val === null || val === undefined) {
+            els.divSteps.textContent = '输入数字后显示除 2 取余的完整过程。';
+            return;
+        }
+        if (val === 0) {
+            els.divSteps.textContent = '0 的二进制就是 0。';
+            return;
+        }
+        var remainders = [];
+        var n = val;
+        while (n > 0) {
+            var q = Math.floor(n / 2);
+            var r = n % 2;
+            remainders.push(r);
+            var row = document.createElement('div');
+            row.textContent = n + ' \u00f7 2 = ' + q + ' \u2026\u2026\u4f59 ';
+            var rs = document.createElement('span');
+            rs.className = 'bc-div-r';
+            rs.textContent = String(r);
+            row.appendChild(rs);
+            els.divSteps.appendChild(row);
+            n = q;
+        }
+        var last = document.createElement('div');
+        last.className = 'bc-div-last';
+        last.textContent = '商为 0，停止。把余数从下往上（倒序）读出来：';
+        els.divSteps.appendChild(last);
+        var code = document.createElement('code');
+        code.textContent = remainders.slice().reverse().join('');
+        els.divRead.textContent = '';
+        els.divRead.appendChild(document.createTextNode('倒序读 \u2192 '));
+        els.divRead.appendChild(code);
+    }
+
     /* ════════ 灯板 ════════ */
 
     function buildLamps() {
@@ -1862,6 +2011,7 @@ try { ET.Stats.send('use_offline', 'binary-converter'); } catch (e) { /* 静默 
                     store.set('value', v);
                     renderChips(v);
                     renderExpand(v);
+                    renderDivSteps(v);
                     updating = false;
                 });
                 lamp.dataset.idx = String(idx);
@@ -1898,12 +2048,13 @@ try { ET.Stats.send('use_offline', 'binary-converter'); } catch (e) { /* 静默 
 
     /* ════════ 练习 ════════ */
 
-    function nextQuiz() {
+    function nextQuiz(focus) {
         quiz.answer = Math.floor(Math.random() * 256);
         els.quizQ.textContent = String(quiz.answer);
         els.quizIn.value = '';
         els.quizIn.classList.remove('is-right', 'is-wrong');
-        els.quizIn.focus();
+        /* 仅用户主动出题时聚焦；首屏聚焦会把页面滚到练习区 */
+        if (focus !== false) { els.quizIn.focus(); }
     }
 
     function checkQuiz() {
@@ -1959,7 +2110,7 @@ try { ET.Stats.send('use_offline', 'binary-converter'); } catch (e) { /* 静默 
     if (savedVal === null) { savedVal = 202; }
     els.inDec.value = String(savedVal);
     updateResults('inDec', String(savedVal));
-    nextQuiz();
+    nextQuiz(false);
 })();
 </script>
 

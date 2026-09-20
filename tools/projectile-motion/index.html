@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>平抛斜抛运动 — KeeTools 课工具</title>
 <!-- ET-META
-{"id":"projectile-motion","version":"1.0.0"}
+{"id":"projectile-motion","version":"1.0.1"}
 -->
 
 <!-- 共享外壳样式（由 sync_shared.py 注入） -->
@@ -62,6 +62,13 @@ html[data-et-theme="dark"] {
 }
 
 /* ============ 基础 ============ */
+
+/* body 作为外壳时必须清掉浏览器默认 8px 外边距，
+   否则 iframe 预览中文档会比视口高 16px（底部白边 + 多余滚动） */
+body.et-app {
+    margin: 0;
+}
+
 .et-app {
     position: relative;
     isolation: isolate;
@@ -1558,7 +1565,10 @@ try { ET.Stats.send('use_offline', 'projectile-motion'); } catch (e) { /* 静默
         help: '<div style="font-size:13.5px;line-height:2">' +
             '<p style="margin:0 0 8px"><b>怎么用</b>：选平抛 / 斜抛，调初速度、抛射角、初始高度，按「发射」；' +
             '紫红色虚线为理论轨迹，圆点为实际模拟位置（两者应重合）。</p>' +
-            '<p style="margin:0 0 8px"><b>读数</b>：左上实时显示 t、x、y、vx、vy；右上给出理论射程、最大高度与飞行时间。</p>' +
+            '<p style="margin:0 0 8px"><b>速度矢量</b>：球上三支箭头为速度分解——' +
+            '<b style="color:#22c55e">绿色 vx</b>（水平分速度）、<b style="color:#f59e0b">橙色 vy</b>（竖直分速度）、' +
+            '<b style="color:#dc2626">红色 v</b>（合速度），箭头长度随滑块设置的初速度自适应，旁附实时数值。</p>' +
+            '<p style="margin:0 0 8px"><b>读数</b>：左上实时显示 t、x、y、vx、vy、v；右上给出理论射程、最大高度与飞行时间。</p>' +
             '<p style="margin:0 0 8px"><b>对比实验</b>：连续发射多次（不点清除），可叠加对比不同初速度 / 角度的轨迹。</p>' +
             '<p style="margin:0"><b>要点</b>：平抛 = 水平匀速 + 竖直自由落体；45° 射程最远；互余角度射程相等。</p></div>'
     });
@@ -1584,7 +1594,8 @@ try { ET.Stats.send('use_offline', 'projectile-motion'); } catch (e) { /* 静默
     function cssVar(name) {
         return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     }
-    function isDark() { return document.body.classList.contains('et-dark'); }
+    /* 主题由共享外壳写在 <html data-et-theme> 上（不是 body 类名） */
+    function isDark() { return document.documentElement.getAttribute('data-et-theme') === 'dark'; }
 
     function toPx(wx, wy) {
         var w = cv.clientWidth, h = cv.clientHeight;
@@ -1695,13 +1706,8 @@ try { ET.Stats.send('use_offline', 'projectile-motion'); } catch (e) { /* 静默
             ctx.beginPath(); ctx.arc(bp.x, bp.y, 8, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#fff';
             ctx.beginPath(); ctx.arc(bp.x - 2.5, bp.y - 2.5, 2.5, 0, Math.PI * 2); ctx.fill();
-            /* 速度矢量分解 */
-            var vLen = 0.9;
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = '#22c55e';
-            arrow(bp.x, bp.y, bp.x + sim.vx * vLen, bp.y, '#22c55e');           /* 水平分量 */
-            arrow(bp.x, bp.y, bp.x, bp.y - sim.vy * vLen, '#f59e0b');           /* 竖直分量 */
-            arrow(bp.x, bp.y, bp.x + sim.vx * vLen, bp.y - sim.vy * vLen, '#dc2626'); /* 合速度 */
+            /* 速度矢量分解（长度自适应 + 数值标签） */
+            velocityVectors(bp.x, bp.y, sim.vx, sim.vy);
         }
 
         /* 落点与最高点标注 */
@@ -1729,7 +1735,8 @@ try { ET.Stats.send('use_offline', 'projectile-motion'); } catch (e) { /* 静默
                 'x  = ' + sim.x.toFixed(1) + ' m\n' +
                 'y  = ' + Math.max(sim.y, 0).toFixed(1) + ' m\n' +
                 'vx = ' + sim.vx.toFixed(1) + ' m/s\n' +
-                'vy = ' + sim.vy.toFixed(1) + ' m/s';
+                'vy = ' + sim.vy.toFixed(1) + ' m/s\n' +
+                'v  = ' + Math.sqrt(sim.vx * sim.vx + sim.vy * sim.vy).toFixed(1) + ' m/s';
         } else {
             els.readout.textContent = '按「发射」或空格开始';
         }
@@ -1752,16 +1759,152 @@ try { ET.Stats.send('use_offline', 'projectile-motion'); } catch (e) { /* 静默
         }
     }
 
-    function arrow(x1, y1, x2, y2, color) {
-        var ang = Math.atan2(y2 - y1, x2 - x1);
+    /* ── 矢量箭头 ────────────────────────────────────────────────
+       自适应长度方案：合速度箭头固定在 90~170px（随画布尺寸缩放），
+       分量按真实比例分配，箭头长度不再随初速度变小而缩水。 */
+
+    var TAG_FONT = '700 12.5px ui-monospace, Consolas, monospace';
+
+    function tagWidth(text) {
+        ctx.save();
+        ctx.font = TAG_FONT;
+        var tw = ctx.measureText(text).width;
+        ctx.restore();
+        return tw + 13;   /* 含左右内边距 */
+    }
+
+    function roundedBox(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+    }
+
+    /** 带底衬的数值标签：anchorX = left|center|right，anchorY = top|middle|bottom */
+    function vectorTag(ax, ay, text, color, anchorX, anchorY) {
+        var cw = cv.clientWidth, chh = cv.clientHeight;
+        ctx.save();
+        ctx.font = TAG_FONT;
+        var tw = ctx.measureText(text).width;
+        var padX = 6, boxH = 19;
+        var bw = tw + padX * 2;
+        var bx = anchorX === 'center' ? ax - bw / 2 : anchorX === 'right' ? ax - bw : ax;
+        var by = anchorY === 'middle' ? ay - boxH / 2 : anchorY === 'bottom' ? ay - boxH : ay;
+        bx = Math.max(4, Math.min(bx, cw - bw - 4));
+        by = Math.max(4, Math.min(by, chh - boxH - 4));
+        ctx.fillStyle = isDark() ? 'rgba(15,23,42,.85)' : 'rgba(255,255,255,.92)';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        roundedBox(bx, by, bw, boxH, 6);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, bx + padX, by + boxH / 2 + 0.5);
+        ctx.restore();
+    }
+
+    function arrow(x1, y1, x2, y2, color, width) {
+        var dx = x2 - x1, dy = y2 - y1;
+        var len = Math.sqrt(dx * dx + dy * dy);
+        if (len < 1) { return; }
+        var ang = Math.atan2(dy, dx);
+        var head = Math.max(8, Math.min(16, len * 0.32));
+        var lw = width || 2.5;
+        /* 与轨迹/网格交叠时的底衬光晕，保证箭头始终看得清 */
+        var halo = isDark() ? 'rgba(11,17,32,.75)' : 'rgba(255,255,255,.85)';
+        var sx = x2 - Math.cos(ang) * head * 0.9;
+        var sy = y2 - Math.sin(ang) * head * 0.9;
+        var h1x = x2 - head * Math.cos(ang - 0.42), h1y = y2 - head * Math.sin(ang - 0.42);
+        var h2x = x2 - head * Math.cos(ang + 0.42), h2y = y2 - head * Math.sin(ang + 0.42);
+
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(x1, y1); ctx.lineTo(sx, sy);
+        ctx.moveTo(x2, y2); ctx.lineTo(h1x, h1y); ctx.lineTo(h2x, h2y);
+        ctx.closePath();
+
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = halo;
+        ctx.fillStyle = halo;
+        ctx.lineWidth = lw + 3.5;
+        ctx.stroke();
+        ctx.fill();
+
+        ctx.lineJoin = 'miter';
         ctx.strokeStyle = color;
         ctx.fillStyle = color;
-        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.lineWidth = lw;
+        ctx.stroke();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function velocityVectors(ox, oy, vx, vy) {
+        var speed = Math.sqrt(vx * vx + vy * vy);
+        if (speed < 0.05) { return; }
+        var cw = cv.clientWidth, chh = cv.clientHeight;
+        var M = 40;   /* 画布内边距：箭头与标签不顶边 */
+
+        /* 像素比例 k：合速度箭头约 90~170px，随后按可用空间收缩 */
+        var target = Math.max(90, Math.min(170, Math.min(cw, chh) * 0.3));
+        var k = target / speed;
+        if (vx > 1e-6) { k = Math.min(k, (cw - M - ox) / vx); }
+        if (vy > 1e-6) { k = Math.min(k, (oy - M) / vy); }
+        else if (vy < -1e-6) { k = Math.min(k, (chh - M - oy) / (-vy)); }
+        k = Math.max(k, 10 / speed);
+
+        var lx = vx * k, ly = vy * k;      /* lx≥0，ly 上正下负（屏幕像素） */
+        var tx = ox + lx, ty = oy - ly;
+        var cX = '#22c55e', cY = '#f59e0b', cV = '#dc2626';
+
+        /* 平行四边形分解辅助线 */
+        ctx.save();
+        ctx.setLineDash([5, 5]);
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = isDark() ? 'rgba(148,163,184,.65)' : 'rgba(100,116,139,.5)';
         ctx.beginPath();
-        ctx.moveTo(x2, y2);
-        ctx.lineTo(x2 - 8 * Math.cos(ang - 0.4), y2 - 8 * Math.sin(ang - 0.4));
-        ctx.lineTo(x2 - 8 * Math.cos(ang + 0.4), y2 - 8 * Math.sin(ang + 0.4));
-        ctx.closePath(); ctx.fill();
+        ctx.moveTo(ox + lx, oy); ctx.lineTo(tx, ty);
+        ctx.moveTo(ox, oy - ly); ctx.lineTo(tx, ty);
+        ctx.stroke();
+        ctx.restore();
+
+        /* 分量短于 12px 不画（数值标签仍给出真实大小），避免看不清的碎点 */
+        if (lx >= 12) { arrow(ox, oy, ox + lx, oy, cX, 2.5); }
+        if (Math.abs(ly) >= 12) { arrow(ox, oy, ox, oy - ly, cY, 2.5); }
+        arrow(ox, oy, tx, ty, cV, 3);
+
+        /* 数值标签：优先放在不压轨迹、不压地面的一侧 */
+        if (lx >= 12) {
+            var roomBelow = oy + 7 + 19 <= chh - view.groundY - 2;
+            vectorTag(ox + lx / 2, roomBelow ? oy + 7 : oy - 7,
+                'vx=' + vx.toFixed(1), cX, 'center', roomBelow ? 'top' : 'bottom');
+        }
+        if (Math.abs(ly) >= 12) {
+            var vyTxt = 'vy=' + vy.toFixed(1);
+            if (ox - tagWidth(vyTxt) > 6) {
+                vectorTag(ox - 9, oy - ly / 2, vyTxt, cY, 'right', 'middle');
+            } else if (ly > 0) {
+                vectorTag(ox, oy - ly - 7, vyTxt, cY, 'center', 'bottom');
+            } else {
+                vectorTag(ox, oy - ly + 7, vyTxt, cY, 'center', 'top');
+            }
+        }
+        var vTxt = 'v=' + speed.toFixed(1);
+        var toRight = tx + 9 + tagWidth(vTxt) <= cw - 4;
+        /* vy≈0 时合速度与 vx 共线，标签抬到箭头上方避让 */
+        var nearFlat = Math.abs(ly) < 12;
+        vectorTag(toRight ? tx + 9 : tx - 9, nearFlat ? ty - 10 : ty, vTxt, cV,
+            toRight ? 'left' : 'right', nearFlat ? 'bottom' : 'middle');
     }
 
     /* ════════ 模拟 ════════ */
@@ -1875,6 +2018,12 @@ try { ET.Stats.send('use_offline', 'projectile-motion'); } catch (e) { /* 静默
         else { fitView(); }
         draw();
     });
+
+    /* 切换深浅色后重绘（Canvas 颜色不随 CSS 自动更新） */
+    try {
+        var themeObserver = new MutationObserver(function () { draw(); });
+        themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-et-theme'] });
+    } catch (err) { /* 老内核忽略 */ }
 
     /* 初始化 */
     els.v0.value = state.v0; els.v0Val.textContent = state.v0 + ' m/s';

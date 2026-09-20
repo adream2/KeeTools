@@ -1,0 +1,22 @@
+{
+  "id": "early-reading",
+  "title": "早读检测",
+  "version": "1.0.0",
+  "type": "shell",
+  "description": "按音量判断班级是否在朗读，统计朗读时长与达标率，结束后出早读报告，帮老师看清早读质量。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["1-12"],
+  "subjects": ["通用"],
+  "tags": ["早读", "朗读", "音量检测", "课堂管理", "报告"],
+  "requires": ["microphone"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-20",
+  "updated_at": "2026-09-20"
+}

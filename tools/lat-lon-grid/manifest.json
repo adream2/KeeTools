@@ -1,9 +1,9 @@
 {
   "id": "lat-lon-grid",
   "title": "经纬网定位",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "fixed",
-  "description": "经纬网定位：拖动定位点读经纬度，判断半球、纬度带与温度带，含定位练习。",
+  "description": "经纬网定位：叠加七大洲示意轮廓，拖动定位点读经纬度，判断半球、纬度带与温度带，含定位练习。",
   "author": "KeeTools Team",
   "entry": "index.html",
   "single_file": true,
@@ -17,5 +17,5 @@
   "screen": "large",
   "stats_enabled": true,
   "created_at": "2026-09-19",
-  "updated_at": "2026-09-19"
+  "updated_at": "2026-09-20"
 }

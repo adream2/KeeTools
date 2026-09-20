@@ -1,9 +1,9 @@
 {
   "id": "water-states",
   "title": "水的三态",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "fixed",
-  "description": "温度滑杆观察水的固液气三态变化，粒子运动与熔化沸腾点互动演示。",
+  "description": "烧杯场景演示水的固液气三态：冰晶块、水的流动与水面、水蒸气飞散，含温度计与三态对比。",
   "author": "KeeTools Team",
   "entry": "index.html",
   "single_file": true,

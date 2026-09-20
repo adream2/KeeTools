@@ -1,0 +1,22 @@
+{
+  "id": "noise-meter",
+  "title": "噪音计",
+  "version": "1.0.0",
+  "type": "shell",
+  "description": "用麦克风实时测教室音量，超阈值变色并提醒，记录峰值、平均值与超标次数，适合大屏监督自习纪律。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["1-12"],
+  "subjects": ["通用"],
+  "tags": ["噪音", "音量", "课堂纪律", "自习", "大屏"],
+  "requires": ["microphone"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-20",
+  "updated_at": "2026-09-20"
+}

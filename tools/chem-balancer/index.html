@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>化学方程式配平器 — KeeTools 课工具</title>
 <!-- ET-META
-{"id":"chem-balancer","version":"1.0.0"}
+{"id":"chem-balancer","version":"1.1.0"}
 -->
 
 <!-- 共享外壳样式（由 sync_shared.py 注入） -->
@@ -62,6 +62,13 @@ html[data-et-theme="dark"] {
 }
 
 /* ============ 基础 ============ */
+
+/* body 作为外壳时必须清掉浏览器默认 8px 外边距，
+   否则 iframe 预览中文档会比视口高 16px（底部白边 + 多余滚动） */
+body.et-app {
+    margin: 0;
+}
+
 .et-app {
     position: relative;
     isolation: isolate;
@@ -547,12 +554,26 @@ html[data-et-theme="dark"] {
     min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    padding: 16px 22px 20px;
+    gap: clamp(12px, 1.6vh, 18px);
+    padding: clamp(12px, 2vh, 22px) clamp(16px, 2.6vw, 44px) clamp(14px, 2.2vh, 24px);
     overflow-y: auto;
-    max-width: 1080px;
+    max-width: 1720px;
     width: 100%;
     margin: 0 auto;
+}
+
+/* 宽屏左右双栏：左题目 / 右核对+成绩+知识点 */
+.chembalancer-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.75fr) minmax(300px, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.chembalancer-side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .chembalancer-bar {
@@ -606,21 +627,21 @@ html[data-et-theme="dark"] {
     background: var(--et-surface);
     border: 1px solid var(--et-line);
     border-radius: var(--et-radius);
-    padding: 22px 26px 18px;
+    padding: clamp(18px, 2.4vh, 30px) clamp(20px, 2.4vw, 40px) clamp(14px, 2vh, 22px);
     box-shadow: var(--et-shadow-md);
 }
 
 .chembalancer-type {
-    font-size: 12.5px;
+    font-size: clamp(12.5px, 1vw, 14px);
     font-weight: 700;
     letter-spacing: .12em;
     color: var(--et-accent);
-    margin-bottom: 12px;
+    margin-bottom: clamp(10px, 1.6vh, 16px);
 }
 
 .chembalancer-eq {
     font-family: var(--et-mono);
-    font-size: clamp(20px, 3vw, 30px);
+    font-size: clamp(24px, 3.4vw, 46px);
     font-weight: 700;
     color: var(--et-fg);
     display: flex;
@@ -641,7 +662,7 @@ html[data-et-theme="dark"] {
 .chembalancer-coef {
     width: 2.6ch;
     font-family: var(--et-mono);
-    font-size: .92em;
+    font-size: 1em;
     font-weight: 800;
     text-align: center;
     color: var(--et-fg);
@@ -710,17 +731,23 @@ html[data-et-theme="dark"] {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-top: 18px;
+    margin-top: clamp(14px, 2.2vh, 22px);
+}
+
+.chembalancer-actions .et-btn {
+    padding: 12px 22px;
+    font-size: clamp(14px, 1.1vw, 16px);
 }
 
 .chembalancer-verdict {
     margin-top: 14px;
-    font-size: 15px;
+    font-size: clamp(15px, 1.2vw, 17px);
     font-weight: 700;
-    padding: 10px 14px;
+    padding: 12px 16px;
     border-radius: var(--et-radius-sm);
     background: var(--et-surface-2);
     border: 1px solid var(--et-line);
+    line-height: 1.7;
 }
 
 .chembalancer-verdict[data-tone="ok"] {
@@ -735,22 +762,16 @@ html[data-et-theme="dark"] {
     background: rgba(220, 38, 38, .07);
 }
 
-.chembalancer-cards {
-    display: grid;
-    grid-template-columns: 1.6fr 1fr;
-    gap: 14px;
-}
-
 .chembalancer-card {
     background: var(--et-surface);
     border: 1px solid var(--et-line);
     border-radius: var(--et-radius);
-    padding: 14px 16px;
+    padding: clamp(14px, 1.8vh, 20px) clamp(15px, 1.4vw, 20px);
 }
 
 .chembalancer-card h3 {
     margin: 0 0 10px;
-    font-size: 12.5px;
+    font-size: 13px;
     color: var(--et-muted);
     font-weight: 700;
     letter-spacing: .1em;
@@ -767,9 +788,9 @@ html[data-et-theme="dark"] {
     align-items: center;
     gap: 7px;
     font-family: var(--et-mono);
-    font-size: 14px;
+    font-size: clamp(14px, 1vw, 16px);
     font-weight: 700;
-    padding: 5px 11px;
+    padding: 5px 12px;
     border-radius: 999px;
     background: var(--et-surface-2);
     border: 1px solid var(--et-line);
@@ -786,19 +807,58 @@ html[data-et-theme="dark"] {
 }
 
 .chembalancer-score {
-    font-size: 14px;
+    font-size: clamp(14px, 1.05vw, 16px);
     line-height: 2;
     color: var(--et-fg);
 }
 
 .chembalancer-score b {
-    font-size: 19px;
+    font-size: clamp(19px, 1.4vw, 23px);
     color: var(--et-accent);
     font-variant-numeric: tabular-nums;
 }
 
-@media (max-width: 760px) {
-    .chembalancer-cards { grid-template-columns: 1fr; }
+/* ── 配平知识点卡 ── */
+.chembalancer-kbtype {
+    padding: 10px 13px;
+    border-radius: 10px;
+    background: var(--et-accent-weak);
+    border-left: 4px solid var(--et-accent);
+    font-size: 13.8px;
+    line-height: 1.8;
+    color: var(--et-fg);
+}
+
+.chembalancer-kbtype b { color: var(--et-accent); }
+
+.kb-h4 {
+    margin: 14px 0 5px;
+    font-size: 13.8px;
+    font-weight: 800;
+    color: var(--et-fg);
+}
+
+.kb-p {
+    margin: 0;
+    font-size: 13.4px;
+    line-height: 1.9;
+    color: var(--et-muted);
+}
+
+.kb-p b { color: var(--et-fg); }
+
+.kb-ol {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 13.4px;
+    line-height: 1.9;
+    color: var(--et-muted);
+}
+
+.kb-ol b { color: var(--et-fg); }
+
+@media (max-width: 980px) {
+    .chembalancer-grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -824,35 +884,51 @@ html[data-et-theme="dark"] {
         </div>
     </div>
 
-    <div class="chembalancer-eqcard">
-        <div class="chembalancer-type" id="eqType">化合反应</div>
-        <div class="chembalancer-eq" id="eq"></div>
-        <div class="chembalancer-actions">
-            <button class="et-btn et-btn--primary" id="btnCheck" type="button">
-                <svg class="et-icon"><use href="#i-check"></use></svg>
-                <span>检查配平</span>
-            </button>
-            <button class="et-btn" id="btnHint" type="button">
-                <svg class="et-icon"><use href="#i-sparkles"></use></svg>
-                <span>提示一个</span>
-            </button>
-            <button class="et-btn" id="btnReveal" type="button">
-                <svg class="et-icon"><use href="#i-eye"></use></svg>
-                <span>显示答案</span>
-            </button>
+    <div class="chembalancer-grid">
+        <div class="chembalancer-eqcard">
+            <div class="chembalancer-type" id="eqType">化合反应</div>
+            <div class="chembalancer-eq" id="eq"></div>
+            <div class="chembalancer-actions">
+                <button class="et-btn et-btn--primary" id="btnCheck" type="button">
+                    <svg class="et-icon"><use href="#i-check"></use></svg>
+                    <span>检查配平</span>
+                </button>
+                <button class="et-btn" id="btnHint" type="button">
+                    <svg class="et-icon"><use href="#i-sparkles"></use></svg>
+                    <span>提示一个</span>
+                </button>
+                <button class="et-btn" id="btnReveal" type="button">
+                    <svg class="et-icon"><use href="#i-eye"></use></svg>
+                    <span>显示答案</span>
+                </button>
+            </div>
+            <div class="chembalancer-verdict" id="verdict" hidden></div>
         </div>
-        <div class="chembalancer-verdict" id="verdict" hidden></div>
-    </div>
 
-    <div class="chembalancer-cards">
-        <div class="chembalancer-card">
-            <h3>元素守恒核对（配平后的正确答案）</h3>
-            <div class="chembalancer-atoms" id="atoms"></div>
-        </div>
-        <div class="chembalancer-card">
-            <h3>练习成绩</h3>
-            <div class="chembalancer-score" id="score"></div>
-        </div>
+        <aside class="chembalancer-side">
+            <div class="chembalancer-card">
+                <h3>元素守恒核对（配平后的正确答案）</h3>
+                <div class="chembalancer-atoms" id="atoms"></div>
+            </div>
+            <div class="chembalancer-card">
+                <h3>练习成绩</h3>
+                <div class="chembalancer-score" id="score"></div>
+            </div>
+            <div class="chembalancer-card chembalancer-kb">
+                <h3>配平知识点</h3>
+                <div class="chembalancer-kbtype" id="kbType"></div>
+                <div class="kb-h4">为什么要配平——质量守恒定律</div>
+                <p class="kb-p">参加化学反应的各物质<b>质量总和</b>，等于反应后生成的各物质质量总和。微观原因：反应前后原子的<b>种类、数目、质量</b>都不变——这就是配平的依据。</p>
+                <div class="kb-h4">三种常用配平方法</div>
+                <ol class="kb-ol">
+                    <li><b>最小公倍数法</b>：找两边原子数相差最大的元素求最小公倍数，再推其余系数。如 P + O₂ → P₂O₅：左 O 是 2、右 O 是 5，最小公倍数 10，先定 O₂ 配 5、P₂O₅ 配 2，再推 P 配 4。</li>
+                    <li><b>奇数配偶法</b>：某元素一边总是奇数、另一边是偶数时，把奇数一方乘 2。如 H₂ + O₂ → H₂O，先把 H₂O 配 2，再推其他系数。</li>
+                    <li><b>观察法</b>：从组成最复杂的化学式入手。如 Al + H₂SO₄ → Al₂(SO₄)₃ + H₂：先把 SO₄ 根整体看，定 Al₂(SO₄)₃ 为 1，推 Al 为 2、H₂SO₄ 为 3、H₂ 为 3。</li>
+                </ol>
+                <div class="kb-h4">化学计量数（系数）的意义</div>
+                <p class="kb-p">系数比 = <b>微粒个数比</b>。2H₂ + O₂ = 2H₂O 表示每 2 个氢分子与 1 个氧分子反应生成 2 个水分子。系数必须是<b>最简整数比</b>——填 2、4、2 虽然守恒，但不是配平结果。</p>
+            </div>
+        </aside>
     </div>
 </main>
 
@@ -1784,6 +1860,15 @@ try { ET.Stats.send('use_offline', 'chem-balancer'); } catch (e) { /* 静默 */ 
 
     var CATS = ['全部', '化合反应', '分解反应', '燃烧与还原', '置换反应', '复分解反应'];
 
+    /* 反应类型动态讲解（随题更新） */
+    var KB_TYPES = {
+        '化合反应': '多变一：A + B → AB。反应物多种、生成物一种。',
+        '分解反应': '一变多：AB → A + B。反应物一种、生成物多种。',
+        '置换反应': '单换单：A + BC → AC + B。反应物和生成物中都有单质。',
+        '复分解反应': '两两交换成分：AB + CD → AD + CB。生成物中常有沉淀、气体或水。',
+        '燃烧与还原': '专题：可燃物在 O₂ 中燃烧，以及 C / CO / H₂ 夺取金属氧化物中氧的还原反应。'
+    };
+
     var chrome = ET.Chrome.mount({
         toolId: TOOL_ID,
         title: '化学方程式配平器',
@@ -1812,7 +1897,8 @@ try { ET.Stats.send('use_offline', 'chem-balancer'); } catch (e) { /* 静默 */ 
         btnReveal: document.getElementById('btnReveal'),
         verdict: document.getElementById('verdict'),
         atoms: document.getElementById('atoms'),
-        score: document.getElementById('score')
+        score: document.getElementById('score'),
+        kbType: document.getElementById('kbType')
     };
 
     var score = { done: store.get('done', 0), right: store.get('right', 0) };
@@ -1928,6 +2014,9 @@ try { ET.Stats.send('use_offline', 'chem-balancer'); } catch (e) { /* 静默 */ 
 
         els.eq.innerHTML = html;
         els.eqType.textContent = item[2] + '　·　在方框内填最小整数系数';
+        if (els.kbType) {
+            els.kbType.innerHTML = '<b>' + item[2] + '</b> · ' + (KB_TYPES[item[2]] || '');
+        }
         els.verdict.hidden = true;
         revealed = [];
 

@@ -1,9 +1,9 @@
 {
   "id": "map-china",
   "title": "中国地图",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "fixed",
-  "description": "中国省级行政区拼块地图：点击看简称、省会、面积与人口，附分区着色与速记表。",
+  "description": "中国省级行政区真实轮廓地图：点击省份看简称、省会、面积与人口，附分区着色与速记练习。",
   "author": "KeeTools Team",
   "entry": "index.html",
   "single_file": true,
@@ -17,5 +17,5 @@
   "screen": "large",
   "stats_enabled": true,
   "created_at": "2026-09-19",
-  "updated_at": "2026-09-19"
+  "updated_at": "2026-09-20"
 }

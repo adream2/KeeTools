@@ -1,0 +1,21 @@
+{
+  "id": "exam-seat-print",
+  "title": "考试座位表打印",
+  "version": "1.0.0",
+  "type": "shell",
+  "description": "导入考生名单自动分考场排座，一键打印考场座位总表、桌面座位贴条与考场签到表，A4 分页所见即所得。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["1-12"],
+  "subjects": ["通用"],
+  "tags": ["考试", "考场", "座位", "打印", "考务"],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-20",
+  "updated_at": "2026-09-20"
+}

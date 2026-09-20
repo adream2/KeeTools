@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>导数图像 — KeeTools 课工具</title>
 <!-- ET-META
-{"id":"derivative-graph","version":"1.0.0"}
+{"id":"derivative-graph","version":"1.0.1"}
 -->
 
 <!-- 共享外壳样式（由 sync_shared.py 注入） -->
@@ -62,6 +62,13 @@ html[data-et-theme="dark"] {
 }
 
 /* ============ 基础 ============ */
+
+/* body 作为外壳时必须清掉浏览器默认 8px 外边距，
+   否则 iframe 预览中文档会比视口高 16px（底部白边 + 多余滚动） */
+body.et-app {
+    margin: 0;
+}
+
 .et-app {
     position: relative;
     isolation: isolate;
@@ -1623,8 +1630,9 @@ try { ET.Stats.send('use_offline', 'derivative-graph'); } catch (e) { /* 静默 
         return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     }
 
+    /* 主题由共享外壳写在 <html data-et-theme> 上（不是 body 类名） */
     function isDark() {
-        return document.body.classList.contains('et-dark');
+        return document.documentElement.getAttribute('data-et-theme') === 'dark';
     }
 
     function worldToScreen(x, y) {
@@ -1873,6 +1881,12 @@ try { ET.Stats.send('use_offline', 'derivative-graph'); } catch (e) { /* 静默 
     els.chkMono.addEventListener('change', draw);
     els.chkExtrema.addEventListener('change', draw);
     window.addEventListener('resize', draw);
+
+    /* 切换深浅色后重绘（Canvas 颜色不随 CSS 自动更新） */
+    try {
+        var themeObserver = new MutationObserver(function () { draw(); });
+        themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-et-theme'] });
+    } catch (err) { /* 老内核忽略 */ }
 
     /* ── Chrome 外壳 ── */
     var chrome = ET.Chrome.mount({

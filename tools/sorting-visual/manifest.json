@@ -1,7 +1,7 @@
 {
   "id": "sorting-visual",
   "title": "排序算法可视化",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "fixed",
   "description": "冒泡、选择、插入、快排等算法动态演示，逐帧比较交换过程与比较次数统计。",
   "author": "KeeTools Team",
@@ -17,5 +17,5 @@
   "screen": "large",
   "stats_enabled": true,
   "created_at": "2026-09-19",
-  "updated_at": "2026-09-19"
+  "updated_at": "2026-09-20"
 }

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>水的三态 — KeeTools 课工具</title>
 <!-- ET-META
-{"id":"water-states","version":"1.0.0"}
+{"id":"water-states","version":"1.1.0"}
 -->
 
 <!-- 共享外壳样式（由 sync_shared.py 注入） -->
@@ -62,6 +62,13 @@ html[data-et-theme="dark"] {
 }
 
 /* ============ 基础 ============ */
+
+/* body 作为外壳时必须清掉浏览器默认 8px 外边距，
+   否则 iframe 预览中文档会比视口高 16px（底部白边 + 多余滚动） */
+body.et-app {
+    margin: 0;
+}
+
 .et-app {
     position: relative;
     isolation: isolate;
@@ -547,22 +554,23 @@ html[data-et-theme="dark"] {
     min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 14px 24px 12px;
+    gap: 10px;
+    padding: 12px 22px 10px;
     overflow: auto;
 }
 
+/* ===== 温度控制 ===== */
 .ws-temp-row {
     flex: none;
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
 }
 
 .ws-temp-val {
     flex: none;
-    width: 190px;
-    font-size: clamp(38px, 4.6vw, 58px);
+    width: 168px;
+    font-size: clamp(32px, 4vw, 50px);
     font-weight: 900;
     font-variant-numeric: tabular-nums;
     color: var(--et-fg);
@@ -571,18 +579,29 @@ html[data-et-theme="dark"] {
 }
 
 .ws-temp-val small {
-    font-size: .45em;
+    font-size: .42em;
     color: var(--et-muted);
     font-weight: 700;
 }
 
-.ws-slider {
+.ws-slider-wrap {
+    position: relative;
     flex: 1;
+    min-width: 0;
+    padding-bottom: 17px;
+}
+
+.ws-slider {
+    display: block;
+    width: 100%;
     height: 12px;
     -webkit-appearance: none;
     appearance: none;
     border-radius: 999px;
-    background: linear-gradient(90deg, #93c5fd, #7dd3fc, #fca5a5, #f87171);
+    /* 渐变按物理温度对齐：13.3% = 0 °C，80% = 100 °C */
+    background: linear-gradient(90deg,
+        #bfdbfe 0%, #93c5fd 8%, #7dd3fc 13.3%,
+        #38bdf8 40%, #fbbf24 68%, #f97316 80%, #ef4444 100%);
     outline: none;
     cursor: pointer;
 }
@@ -608,21 +627,48 @@ html[data-et-theme="dark"] {
     cursor: grab;
 }
 
-.ws-presets {
+.ws-marks {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 16px;
+}
+
+.ws-marks span {
+    position: absolute;
+    transform: translateX(-50%);
+    font-size: 11.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    color: var(--et-muted);
+}
+
+.ws-marks span:first-child { color: #0ea5e9; }
+.ws-marks span:last-child { color: #f97316; }
+
+/* ===== 预设 + 自动演示 ===== */
+.ws-ctrl-row {
     flex: none;
     display: flex;
+    align-items: center;
+    gap: 10px;
     flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
+}
+
+.ws-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
 }
 
 .ws-preset {
-    padding: 7px 14px;
+    padding: 7px 13px;
     border-radius: 999px;
     border: 2px solid var(--et-line-strong);
     background: var(--et-surface);
     color: var(--et-fg);
-    font-size: 13.5px;
+    font-size: 13px;
     font-weight: 700;
     cursor: pointer;
     transition: border-color .13s, background .13s, color .13s;
@@ -636,16 +682,42 @@ html[data-et-theme="dark"] {
     color: #fff;
 }
 
+.ws-play {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 2px solid var(--et-accent);
+    background: var(--et-surface);
+    color: var(--et-accent);
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background .14s, color .14s;
+}
+
+.ws-play:hover { background: var(--et-accent-weak); }
+
+.ws-play.is-on {
+    background: var(--et-accent);
+    color: #fff;
+}
+
+/* ===== 场景 + 信息面板 ===== */
 .ws-body {
-    flex: 1;
-    min-height: 0;
+    flex: 1 0 auto;
+    min-height: 302px;
     display: flex;
-    gap: 16px;
+    align-items: stretch;
+    gap: 14px;
 }
 
 .ws-canvas-wrap {
-    flex: 1.5;
+    flex: 1.6;
     min-width: 0;
+    min-height: 302px;
     border-radius: 16px;
     border: 1px solid var(--et-line);
     background: var(--et-surface);
@@ -662,59 +734,165 @@ html[data-et-theme="dark"] {
     position: absolute;
     top: 12px;
     left: 14px;
-    padding: 5px 14px;
+    padding: 6px 16px;
     border-radius: 999px;
     font-size: 15px;
     font-weight: 800;
     color: #fff;
     background: var(--ws-state, var(--et-accent));
+    box-shadow: 0 6px 18px -10px rgba(2, 6, 23, .7);
+    transition: background .3s;
 }
 
 .ws-info {
-    flex: 1;
-    min-width: 260px;
+    flex: 1 1 300px;
+    min-width: 272px;
+    max-width: 372px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 9px;
 }
 
 .ws-card {
     border-radius: 14px;
     border: 1px solid var(--et-line);
     background: var(--et-surface);
-    padding: 13px 16px;
+    padding: 12px 14px;
+}
+
+.ws-card__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
 }
 
 .ws-card h3 {
     margin: 0 0 6px;
-    font-size: 15.5px;
+    font-size: 15px;
     font-weight: 800;
     color: var(--et-accent);
 }
 
+.ws-card__head h3 { margin: 0; }
+
+.ws-tag {
+    margin-left: auto;
+    flex: none;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #fff;
+    background: var(--ws-state, var(--et-accent));
+    transition: background .3s;
+}
+
 .ws-card p {
     margin: 0;
-    font-size: 13.8px;
-    line-height: 1.8;
+    font-size: 13.4px;
+    line-height: 1.78;
     color: var(--et-fg);
 }
 
+.ws-card p b { color: var(--et-accent); }
+
+.ws-card__tip {
+    margin-top: 7px;
+    font-size: 11.5px;
+    color: var(--et-muted);
+}
+
+/* 三态对比表 */
+.ws-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+}
+
+.ws-table th,
+.ws-table td {
+    padding: 6px 3px;
+    text-align: center;
+    border-bottom: 1px solid var(--et-line);
+    white-space: nowrap;
+}
+
+.ws-table thead th {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--et-muted);
+}
+
+.ws-table tbody th {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--et-fg);
+}
+
+.ws-table tbody tr {
+    cursor: pointer;
+    transition: background .14s;
+}
+
+.ws-table tbody tr:hover { background: var(--et-surface-2); }
+
+.ws-table tbody tr.is-on { background: var(--et-accent-weak); }
+.ws-table tbody tr.is-on th { color: var(--et-accent); }
+
+.ws-table tbody tr:last-child th,
+.ws-table tbody tr:last-child td { border-bottom: none; }
+
+.ws-yes { color: var(--et-ok); font-weight: 700; }
+.ws-no { color: var(--et-warn); font-weight: 700; }
+
+/* 三态变化清单 */
 .ws-cycle {
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    font-size: 13.5px;
-    line-height: 1.6;
+    gap: 4px;
+    font-size: 13px;
+    line-height: 1.5;
 }
 
-.ws-cycle b { color: var(--et-accent); }
+.ws-cycle > span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    color: var(--et-muted);
+    transition: background .16s, color .16s;
+}
+
+.ws-cycle > span b { color: var(--et-fg); font-weight: 800; }
+.ws-cycle > span em {
+    margin-left: auto;
+    font-style: normal;
+    font-size: 11.5px;
+    white-space: nowrap;
+}
+
+.ws-cycle > span.is-on {
+    background: var(--et-accent-weak);
+    color: var(--et-accent);
+}
+
+.ws-cycle > span.is-on b { color: var(--et-accent); }
 
 .ws-hint {
     flex: none;
     margin: 0;
     text-align: center;
-    font-size: 13px;
+    font-size: 12.5px;
     color: var(--et-muted);
+}
+
+@media (max-width: 880px) {
+    .ws-body { flex-direction: column; }
+    .ws-canvas-wrap { min-height: 260px; }
+    .ws-info { max-width: none; }
+    .ws-temp-val { width: 112px; }
 }
 </style>
 </head>
@@ -725,32 +903,59 @@ html[data-et-theme="dark"] {
 <main id="et-main" class="ws-main">
     <div class="ws-temp-row">
         <div class="ws-temp-val"><span id="tempNum">25</span><small> °C</small></div>
-        <input class="ws-slider" id="tempSlider" type="range" min="-20" max="130" step="1" value="25" aria-label="温度滑杆">
+        <div class="ws-slider-wrap">
+            <input class="ws-slider" id="tempSlider" type="range" min="-20" max="130" step="1" value="25"
+                   aria-label="温度滑杆：−20 至 130 摄氏度">
+            <div class="ws-marks" aria-hidden="true">
+                <span style="left:13.33%">0 °C 冰点</span>
+                <span style="left:80%">100 °C 沸点</span>
+            </div>
+        </div>
     </div>
 
-    <div class="ws-presets" id="presets"></div>
+    <div class="ws-ctrl-row">
+        <div class="ws-presets" id="presets"></div>
+        <button class="ws-play" id="autoBtn" type="button" aria-label="自动升温演示">
+            <span id="autoLabel">自动升温</span>
+        </button>
+    </div>
 
     <div class="ws-body">
         <div class="ws-canvas-wrap">
-            <canvas id="sim" width="860" height="460"></canvas>
+            <canvas id="sim" width="900" height="480"
+                    aria-label="水的三态模拟：烧杯中的冰、水与水蒸气"></canvas>
             <div class="ws-state-badge" id="stateBadge">液态（水）</div>
         </div>
         <aside class="ws-info">
             <div class="ws-card">
-                <h3 id="stateTitle">水的特点</h3>
+                <div class="ws-card__head">
+                    <h3 id="stateTitle">水的特点</h3>
+                    <span class="ws-tag" id="stateTag">液态</span>
+                </div>
                 <p id="stateDesc"></p>
             </div>
             <div class="ws-card">
-                <h3>三态转化（标准大气压）</h3>
-                <div class="ws-cycle">
-                    <span>冰 → 水：<b>熔化</b>（0 °C）　水 → 冰：<b>凝固</b></span>
-                    <span>水 → 水蒸气：<b>汽化 / 蒸发</b>（100 °C 沸腾）</span>
-                    <span>水蒸气 → 水：<b>液化</b></span>
+                <h3>三态对比（同一杯水）</h3>
+                <table class="ws-table">
+                    <thead>
+                        <tr><th>状态</th><th>形状</th><th>体积</th><th>分子</th></tr>
+                    </thead>
+                    <tbody id="compareBody"></tbody>
+                </table>
+                <div class="ws-card__tip">点一行可跳到该状态</div>
+            </div>
+            <div class="ws-card">
+                <h3>三态之间的变化</h3>
+                <div class="ws-cycle" id="cycleList">
+                    <span data-k="melt">冰 → 水　<b>熔化</b><em>0 °C</em></span>
+                    <span data-k="freeze">水 → 冰　<b>凝固</b><em>0 °C</em></span>
+                    <span data-k="vapor">水 → 水蒸气　<b>汽化</b><em>100 °C</em></span>
+                    <span data-k="condense">水蒸气 → 水　<b>液化</b><em>降温</em></span>
                 </div>
             </div>
         </aside>
     </div>
-    <p class="ws-hint" id="hint">拖动温度滑杆或点预设温度 · 空格 / 翻页笔 = 升温 5 °C</p>
+    <p class="ws-hint" id="hint">拖动温度滑杆 · 空格 / 翻页笔 = 升温 5 °C · 点右侧表格可跳到某个状态</p>
 </main>
 
 <footer id="et-footer"></footer>
@@ -1605,77 +1810,102 @@ try { ET.Stats.send('use_offline', 'water-states'); } catch (e) { /* 静默 */ }
     var TOOL_ID = 'water-states';
     var store = ET.store(TOOL_ID);
 
-    var chrome = ET.Chrome.mount({
-        toolId: TOOL_ID,
-        title: '水的三态',
-        sub: '科学 · 固液气变化',
-        accent: '#0284c7',
-        status: '就绪',
-        sound: true,
-        primary: heatUp,
-        help: '<div style="font-size:13.5px;line-height:2">' +
-            '<p style="margin:0 0 8px"><b>怎么用</b>：拖动温度滑杆（−20 °C ~ 130 °C），' +
-            '观察水分子（小圆点）的排列与运动变化：<b>固态排列整齐只振动、液态贴近可流动、气态四散飞舞</b>。</p>' +
-            '<p style="margin:0 0 8px"><b>关键温度</b>：0 °C 冰水混合物（熔化 / 凝固），' +
-            '100 °C 沸腾（剧烈汽化）——都是标准大气压下的数值。</p>' +
-            '<p style="margin:0"><b>快捷键</b>：空格 / 翻页笔下页键 = 升温 5 °C。</p></div>'
-    });
-
-    var els = {
-        tempNum: document.getElementById('tempNum'),
-        slider: document.getElementById('tempSlider'),
-        presets: document.getElementById('presets'),
-        stateBadge: document.getElementById('stateBadge'),
-        stateTitle: document.getElementById('stateTitle'),
-        stateDesc: document.getElementById('stateDesc'),
-        hint: document.getElementById('hint'),
-        canvas: document.getElementById('sim')
-    };
-
-    var PRESETS = [
-        { t: -10, label: '❄ −10 °C 冰' },
-        { t: 0, label: '0 °C 冰水混合物' },
-        { t: 25, label: '25 °C 常温' },
-        { t: 100, label: '100 °C 沸腾' },
-        { t: 115, label: '115 °C 水蒸气' }
-    ];
-
-    var STATE_INFO = {
+    /* ============ 状态与文案 ============ */
+    var ZONES = {
         solid: {
-            name: '固态（冰）',
-            color: '#60a5fa',
-            title: '冰的特点',
-            desc: '水分子<b>排列整齐固定</b>，只能在原位轻微振动，所以冰有固定的形状和体积，摸起来硬邦邦。'
+            name: '固态 · 冰',
+            tag: '固态',
+            color: '#3b82f6',
+            title: '冰（固态）',
+            desc: '水分子被“锁”在整齐的格子位置上，只能在原地振动。所以冰<b>有固定的形状</b>，也有固定的体积，放进什么杯子都不会变样。'
         },
         melt: {
             name: '冰水混合物',
-            color: '#38bdf8',
-            title: '正在熔化 / 凝固（0 °C）',
-            desc: '0 °C 是冰的<b>熔点</b>：冰开始变成水（熔化），水也开始结冰（凝固），两者可以同时存在。'
+            tag: '冰 + 水',
+            color: '#0ea5e9',
+            title: '熔化 / 凝固（0 °C）',
+            desc: '0 °C 是冰的<b>熔点</b>：冰一边熔化、水一边凝固，两种状态同时存在，温度一直停在 0 °C 不再上升——直到冰全部化完。'
         },
         liquid: {
-            name: '液态（水）',
+            name: '液态 · 水',
+            tag: '液态',
             color: '#0284c7',
-            title: '水的特点',
-            desc: '水分子<b>挨得较近但可以滑动</b>，没有固定形状、随容器变化，有一定的体积——会流动，能浇花、能喝。'
+            title: '水（液态）',
+            desc: '水分子挨在一起、可以互相滑动，但还互相拉着。所以水<b>没有固定的形状</b>（倒进什么容器就是什么形状），<b>体积却是固定的</b>。'
         },
         boil: {
             name: '沸腾（100 °C）',
+            tag: '水 + 水蒸气',
             color: '#f97316',
-            title: '正在沸腾',
-            desc: '100 °C 是水的<b>沸点</b>：水的内部和表面同时发生剧烈汽化，大量气泡冒出，水快速变成水蒸气。'
+            title: '正在沸腾（100 °C）',
+            desc: '100 °C 是水的<b>沸点</b>：水的内部和表面同时剧烈汽化，大量气泡从杯底冒上来。沸腾时温度也停在 100 °C 不变。'
         },
         gas: {
-            name: '气态（水蒸气）',
-            color: '#ef4444',
-            title: '水蒸气的特点',
-            desc: '水分子<b>四处飞散、运动很快</b>，没有固定形状也没有固定体积，会充满整个空间——看不见摸不着。'
+            name: '气态 · 水蒸气',
+            tag: '气态',
+            color: '#8b5cf6',
+            title: '水蒸气（气态）',
+            desc: '水分子飞散开来，间距很大、运动很快。水蒸气<b>没有固定的形状，也没有固定的体积</b>，会充满整个空间——所以看不见摸不着。'
         }
     };
 
-    var state = {
-        t: store.get('t', 25)
+    var PRESETS = [
+        { t: -10, label: '冰 −10 °C' },
+        { t: 0, label: '冰水混合物 0 °C' },
+        { t: 25, label: '水 25 °C' },
+        { t: 100, label: '沸腾 100 °C' },
+        { t: 120, label: '水蒸气 120 °C' }
+    ];
+
+    /* 三态物性对比（表头列序：形状 / 体积 / 分子） */
+    var COMPARE = [
+        {
+            key: 'solid', label: '冰', t: -10,
+            cells: [{ text: '固定', yes: true }, { text: '固定', yes: true }, { text: '排列整齐', yes: true }]
+        },
+        {
+            key: 'liquid', label: '水', t: 25,
+            cells: [{ text: '不固定', yes: false }, { text: '固定', yes: true }, { text: '互相滑动', yes: true }]
+        },
+        {
+            key: 'gas', label: '水蒸气', t: 120,
+            cells: [{ text: '不固定', yes: false }, { text: '不固定', yes: false }, { text: '四处飞散', yes: false }]
+        }
+    ];
+
+    /* 各状态下高亮的对比行 */
+    var ROW_ACTIVE = {
+        solid: ['solid'],
+        melt: ['solid', 'liquid'],
+        liquid: ['liquid'],
+        boil: ['liquid'],
+        gas: ['gas']
     };
+
+    /* 停在临界温度时"正在进行"的过程 */
+    var ZONE_TRANS = { melt: ['melt', 'freeze'], boil: ['vapor'] };
+
+    /* 跨过状态时闪烁提示的变化过程 */
+    var FLASH_TRANS = {
+        'solid>melt': 'melt', 'melt>liquid': 'melt', 'solid>liquid': 'melt',
+        'liquid>melt': 'freeze', 'melt>solid': 'freeze', 'liquid>solid': 'freeze',
+        'liquid>boil': 'vapor', 'boil>gas': 'vapor', 'liquid>gas': 'vapor',
+        'gas>boil': 'condense', 'boil>liquid': 'condense', 'gas>liquid': 'condense'
+    };
+
+    var TRANS_TIP = {
+        'solid>melt': '0 °C · 冰点：冰开始熔化',
+        'liquid>melt': '0 °C · 冰点：水开始凝固',
+        'melt>liquid': '冰全部化完，温度才会继续升高',
+        'melt>solid': '水全部结冰，温度才会继续下降',
+        'liquid>boil': '100 °C · 沸点：内部和表面同时剧烈汽化',
+        'boil>gas': '水全部变成水蒸气',
+        'boil>liquid': '降温 · 水蒸气液化回水',
+        'gas>boil': '降温 · 水蒸气液化回水'
+    };
+
+    var state = { t: 25 };
+    var zone = 'liquid';
 
     function zoneOf(t) {
         if (t < 0) { return 'solid'; }
@@ -1685,201 +1915,199 @@ try { ET.Stats.send('use_offline', 'water-states'); } catch (e) { /* 静默 */ }
         return 'gas';
     }
 
-    /* ---------- 粒子模拟 ---------- */
+    /* ============ DOM ============ */
+    var els = {
+        tempNum: document.getElementById('tempNum'),
+        slider: document.getElementById('tempSlider'),
+        presets: document.getElementById('presets'),
+        stateBadge: document.getElementById('stateBadge'),
+        stateTag: document.getElementById('stateTag'),
+        stateTitle: document.getElementById('stateTitle'),
+        stateDesc: document.getElementById('stateDesc'),
+        compareBody: document.getElementById('compareBody'),
+        cycleList: document.getElementById('cycleList'),
+        autoBtn: document.getElementById('autoBtn'),
+        autoLabel: document.getElementById('autoLabel'),
+        canvas: document.getElementById('sim')
+    };
 
-    var ctx = els.canvas.getContext('2d');
-    var CW = els.canvas.width, CH = els.canvas.height;
-    var N = 42;
-    var parts = [];
-    var zone = null;
+    var trs = [];
+    var transTimer = 0;
+    var flashKey = null;
+    var auto = { on: false, acc: 0 };
 
-    function initParts() {
-        parts = [];
-        for (var i = 0; i < N; i++) {
-            parts.push({
-                x: CW / 2 + (Math.random() - 0.5) * CW * 0.5,
-                y: CH / 2 + (Math.random() - 0.5) * CH * 0.5,
-                vx: 0, vy: 0, ph: Math.random() * Math.PI * 2,
-                hx: 0, hy: 0
+    var chrome = ET.Chrome.mount({
+        toolId: TOOL_ID,
+        title: '水的三态',
+        sub: '科学 · 固液气变化',
+        accent: '#0284c7',
+        status: '就绪',
+        sound: true,
+        primary: heatUp,
+        secondary: coolDown,
+        help: '<div style="font-size:13.5px;line-height:2">' +
+            '<p style="margin:0 0 8px"><b>怎么用</b>：拖动温度滑杆（−20 °C ~ 130 °C）或点预设温度。' +
+            '左边温度计显示当前温度，<b>0 °C 与 100 °C 画了刻度线</b>，杯底火焰表示正在加热。</p>' +
+            '<p style="margin:0 0 8px"><b>三种状态看什么</b>：<br>' +
+            '· <b>冰</b>：有棱面的冰块，分子排成整齐的格子、只原地振动 → 形状固定、体积固定；<br>' +
+            '· <b>水</b>：有清楚的水面，随杯子变形，分子挨在一起互相滑动 → 形状不固定、体积固定；<br>' +
+            '· <b>水蒸气</b>：没有水面，分子带着拖尾飞散、跑出杯口 → 形状体积都不固定，会充满整个空间。</p>' +
+            '<p style="margin:0 0 8px"><b>两个关键温度</b>：0 °C 是冰的熔点（熔化与凝固同时进行），' +
+            '100 °C 是水的沸点（内部和表面同时汽化）——都是标准大气压下的数值。</p>' +
+            '<p style="margin:0"><b>快捷键</b>：空格 / 翻页笔下页 = 升温 5 °C，翻页笔上页 = 降温 5 °C。</p></div>'
+    });
+
+    /* ============ 面板渲染 ============ */
+
+    function buildCompareTable() {
+        els.compareBody.innerHTML = '';
+        COMPARE.forEach(function (row) {
+            var tr = document.createElement('tr');
+            tr.setAttribute('data-state', row.key);
+            tr.setAttribute('data-t', row.t);
+            var th = document.createElement('th');
+            th.textContent = row.label;
+            tr.appendChild(th);
+            row.cells.forEach(function (cell) {
+                var td = document.createElement('td');
+                td.textContent = cell.text;
+                td.className = cell.yes ? 'ws-yes' : 'ws-no';
+                tr.appendChild(td);
             });
+            tr.addEventListener('click', function () {
+                if (auto.on) { toggleAuto(); }
+                setTemp(row.t);
+                try { chrome.beep('tick'); } catch (err) { /* 静默 */ }
+            });
+            els.compareBody.appendChild(tr);
+        });
+        trs = ET.qsa('tr', els.compareBody);
+    }
+
+    function paintTrans(z) {
+        var ongoing = ZONE_TRANS[z] || [];
+        var items = els.cycleList.children;
+        for (var i = 0; i < items.length; i++) {
+            var key = items[i].getAttribute('data-k');
+            var on = ongoing.indexOf(key) !== -1 || key === flashKey;
+            items[i].classList.toggle('is-on', on);
         }
     }
 
-    function layoutSolid() {
-        var cols = 7, rows = 6;
-        var gx = CW / 2 - (cols - 1) * 34 / 2;
-        var gy = CH / 2 - (rows - 1) * 34 / 2;
-        var k = 0;
-        for (var r = 0; r < rows; r++) {
-            for (var c = 0; c < cols; c++) {
-                if (k >= parts.length) { break; }
-                parts[k].hx = gx + c * 34;
-                parts[k].hy = gy + r * 34;
-                k++;
-            }
+    function setTransition(prev, z) {
+        flashKey = FLASH_TRANS[prev + '>' + z] || null;
+        if (transTimer) { clearTimeout(transTimer); transTimer = 0; }
+        if (flashKey) {
+            transTimer = setTimeout(function () {
+                transTimer = 0;
+                flashKey = null;
+                paintTrans(zone);
+            }, 3600);
         }
+        paintTrans(z);
     }
 
-    function tick() {
-        var z = zoneOf(state.t);
-        var info = STATE_INFO[z];
-
-        /* 状态切换时重排目标 */
-        if (z !== zone) {
-            zone = z;
-            if (z === 'solid') { layoutSolid(); }
-            for (var i = 0; i < parts.length; i++) {
-                var sp = z === 'gas' ? 2.6 : z === 'liquid' ? 0.9 : 0;
-                var a = Math.random() * Math.PI * 2;
-                parts[i].vx = Math.cos(a) * sp;
-                parts[i].vy = Math.sin(a) * sp;
-            }
-            applyInfo(z, info);
-        }
-
-        var t = state.t;
-        var w = els.canvas.width, h = els.canvas.height;
-        ctx.clearRect(0, 0, w, h);
-
-        /* 容器 */
-        ctx.strokeStyle = 'rgba(100,116,139,.35)';
-        ctx.lineWidth = 2;
-        roundRect(ctx, 14, 14, w - 28, h - 28, 16);
-        ctx.stroke();
-
-        var now = Date.now() / 1000;
-        var speedScale = z === 'liquid' ? (0.55 + Math.max(0, t) / 100) : 1;
-
-        for (var k = 0; k < parts.length; k++) {
-            var p = parts[k];
-            if (z === 'solid') {
-                p.x = p.hx + Math.sin(now * 3.2 + p.ph) * 2.2;
-                p.y = p.hy + Math.cos(now * 2.7 + p.ph) * 2.2;
-            } else if (z === 'melt' || z === 'boil') {
-                /* 过渡态：底部或整体抖动更强 */
-                var shake = z === 'boil' ? 6 : 3.5;
-                p.x += (Math.random() - 0.5) * shake;
-                p.y += (Math.random() - 0.5) * shake;
-                if (z === 'boil' && Math.random() < 0.02) {
-                    p.vy = -(1.5 + Math.random() * 2.5);
-                }
-                p.vx *= 0.98;
-                p.x += p.vx;
-                p.y += p.vy;
-                p.vy *= 0.98;
-            } else {
-                p.x += p.vx * speedScale;
-                p.y += p.vy * speedScale;
-                if (p.x < 34 || p.x > w - 34) { p.vx *= -1; p.x = Math.max(34, Math.min(w - 34, p.x)); }
-                if (p.y < 34 || p.y > h - 34) { p.vy *= -1; p.y = Math.max(34, Math.min(h - 34, p.y)); }
-            }
-            p.x = Math.max(30, Math.min(w - 30, p.x));
-            p.y = Math.max(30, Math.min(h - 30, p.y));
-        }
-
-        /* 键连线（固态 / 液态） */
-        if (z === 'solid' || z === 'melt') {
-            ctx.strokeStyle = 'rgba(2,132,199,.35)';
-            ctx.lineWidth = 1.5;
-            for (var a = 0; a < parts.length; a++) {
-                for (var b2 = a + 1; b2 < parts.length; b2++) {
-                    var dx = parts[a].x - parts[b2].x;
-                    var dy = parts[a].y - parts[b2].y;
-                    if (dx * dx + dy * dy < 46 * 46) {
-                        ctx.beginPath();
-                        ctx.moveTo(parts[a].x, parts[a].y);
-                        ctx.lineTo(parts[b2].x, parts[b2].y);
-                        ctx.stroke();
-                    }
-                }
-            }
-        }
-
-        /* 粒子 */
-        var radius = z === 'gas' ? 7 : 9;
-        for (var m = 0; m < parts.length; m++) {
-            var q = parts[m];
-            ctx.beginPath();
-            ctx.arc(q.x, q.y, radius, 0, Math.PI * 2);
-            ctx.fillStyle = info.color;
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(255,255,255,.65)';
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-        }
-
-        requestAnimationFrame(tick);
-    }
-
-    function roundRect(c, x, y, w, h, r) {
-        c.beginPath();
-        c.moveTo(x + r, y);
-        c.arcTo(x + w, y, x + w, y + h, r);
-        c.arcTo(x + w, y + h, x, y + h, r);
-        c.arcTo(x, y + h, x, y, r);
-        c.arcTo(x, y, x + w, y, r);
-        c.closePath();
-    }
-
-    function applyInfo(z, info) {
+    function applyInfo(z) {
+        var info = ZONES[z];
         els.stateBadge.textContent = info.name;
         els.stateBadge.style.setProperty('--ws-state', info.color);
+        els.stateTag.textContent = info.tag;
+        els.stateTag.style.setProperty('--ws-state', info.color);
         els.stateTitle.textContent = info.title;
         els.stateDesc.innerHTML = info.desc;
-        var presets = els.presets.children;
-        for (var i = 0; i < presets.length; i++) {
-            presets[i].classList.toggle('is-on', parseInt(presets[i].getAttribute('data-t'), 10) === state.t);
+
+        var act = ROW_ACTIVE[z] || [];
+        for (var i = 0; i < trs.length; i++) {
+            trs[i].classList.toggle('is-on', act.indexOf(trs[i].getAttribute('data-state')) !== -1);
         }
+        paintTrans(z);
     }
-
-    /* ---------- 温度控制 ---------- */
-
-    function setTemp(t, silent) {
-        var old = state.t;
-        state.t = Math.max(-20, Math.min(130, Math.round(t)));
-        els.slider.value = state.t;
-        els.tempNum.textContent = state.t;
-        store.set('t', state.t);
-        if (zoneOf(state.t) !== zoneOf(old)) {
-            try { chrome.beep('ok'); } catch (e) { /* 静默 */ }
-            if (!silent) {
-                var z = zoneOf(state.t);
-                chrome.setStatus(STATE_INFO[z].name, 'ok');
-            }
-        }
-        /* 粒子行为在 tick 内按 zone 自动切换；preset 高亮同步 */
-        var presets = els.presets.children;
-        for (var i = 0; i < presets.length; i++) {
-            presets[i].classList.toggle('is-on', parseInt(presets[i].getAttribute('data-t'), 10) === state.t);
-        }
-    }
-
-    function heatUp() { setTemp(state.t + 5); }
 
     function buildPresets() {
         els.presets.innerHTML = '';
-        PRESETS.forEach(function (p) {
+        PRESETS.forEach(function (item) {
             var b = document.createElement('button');
             b.type = 'button';
             b.className = 'ws-preset';
-            b.setAttribute('data-t', p.t);
-            b.textContent = p.label;
+            b.setAttribute('data-t', item.t);
+            b.textContent = item.label;
+            if (item.t === 0 || item.t === 100) { b.title = '关键温度：' + item.t + ' °C'; }
             b.addEventListener('click', function () {
-                setTemp(p.t);
-                try { chrome.beep('tick'); } catch (e) { /* 静默 */ }
+                if (auto.on) { toggleAuto(); }
+                setTemp(item.t);
+                try { chrome.beep('tick'); } catch (err) { /* 静默 */ }
             });
             els.presets.appendChild(b);
         });
     }
 
-    els.slider.addEventListener('input', function () { setTemp(parseInt(els.slider.value, 10)); });
-
-    document.addEventListener('keydown', function (e) {
-        if (e.code === 'Space' && !isTypingTarget(e.target)) {
-            e.preventDefault();
-            heatUp();
+    function syncPresets() {
+        var list = els.presets.children;
+        for (var i = 0; i < list.length; i++) {
+            list[i].classList.toggle('is-on', parseInt(list[i].getAttribute('data-t'), 10) === state.t);
         }
-    });
+    }
+
+    /* ============ 温度 ============ */
+
+    function setTemp(t, silent) {
+        var old = state.t;
+        var next = Math.max(-20, Math.min(130, Math.round(t)));
+        state.t = next;
+        els.slider.value = next;
+        els.tempNum.textContent = next;
+        store.set('t', next);
+        syncPresets();
+
+        var prev = zoneOf(old);
+        var z = zoneOf(next);
+        if (prev === z) { return; }
+
+        zone = z;
+        applyInfo(z);
+        if (silent) { return; }
+
+        try { chrome.beep('ok'); } catch (err) { /* 静默 */ }
+        chrome.setStatus(ZONES[z].name, 'ok');
+        setTransition(prev, z);
+
+        var tip = TRANS_TIP[prev + '>' + z];
+        if (tip) {
+            try { chrome.toast(tip, z === 'melt' ? 'ok' : z === 'boil' ? 'warn' : ''); } catch (err) { /* 静默 */ }
+        }
+    }
+
+    function heatUp() {
+        if (auto.on) { toggleAuto(); }
+        setTemp(state.t + 5);
+    }
+
+    function coolDown() {
+        if (auto.on) { toggleAuto(); }
+        setTemp(state.t - 5);
+    }
+
+    function toggleAuto() {
+        auto.on = !auto.on;
+        auto.acc = 0;
+        els.autoBtn.classList.toggle('is-on', auto.on);
+        els.autoLabel.textContent = auto.on ? '暂停演示' : '自动升温';
+        if (auto.on) {
+            if (state.t >= 130) { setTemp(-20); }
+            chrome.setStatus('自动升温演示中…', 'warn');
+        } else {
+            chrome.setStatus(ZONES[zone].name, 'ok');
+        }
+    }
+
+    function stepAuto(dt) {
+        auto.acc += dt;
+        while (auto.acc >= 0.16) {
+            auto.acc -= 0.16;
+            if (state.t >= 130) { toggleAuto(); return; }
+            setTemp(state.t + 1);
+        }
+    }
 
     function isTypingTarget(node) {
         if (!node || !node.tagName) { return false; }
@@ -1887,20 +2115,747 @@ try { ET.Stats.send('use_offline', 'water-states'); } catch (e) { /* 静默 */ }
         return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || node.isContentEditable === true;
     }
 
+    els.slider.addEventListener('input', function () {
+        if (auto.on) { toggleAuto(); }
+        setTemp(parseInt(els.slider.value, 10));
+    });
+
+    els.autoBtn.addEventListener('click', function () { toggleAuto(); });
+
+    document.addEventListener('keydown', function (ev) {
+        if (ev.code === 'Space' && !isTypingTarget(ev.target)) {
+            ev.preventDefault();
+            heatUp();
+        }
+    });
+
+    /* ---------- 画布场景 ----------
+     * 每帧按 <html data-et-theme> 取色，所以主题切换（含 et-chrome 的按钮）
+     * 下一帧即自动生效，不需要 MutationObserver。
+     */
+
+    var canvas = els.canvas;
+    var ctx = (canvas && canvas.getContext) ? canvas.getContext('2d') : null;
+    var CW = canvas ? canvas.width : 900;
+    var CH = canvas ? canvas.height : 480;
+
+    var BX0 = 296, BX1 = 624, BY0 = 106, BY1 = 408;    /* 烧杯外框 */
+    var IX0 = 302, IX1 = 618, IY0 = 112, IY1 = 402;    /* 烧杯内腔 */
+    var CX = (BX0 + BX1) / 2;
+
+    var T_CX = 92, T_TOP = 138, T_BOT = 392, T_HALF = 7, T_BULB = 15;
+
+    var LATTICE_MAX = 24, FREE_MAX = 34, MIST_MAX = 18;
+    var TAU = Math.PI * 2;
+    var FONT = '700 13px "Microsoft YaHei", "PingFang SC", system-ui, -apple-system, sans-serif';
+
+    var PAL_LIGHT = {
+        glass: 'rgba(100,116,139,.5)',
+        glassHi: 'rgba(255,255,255,.85)',
+        tickSoft: 'rgba(100,116,139,.35)',
+        waterTop: 'rgba(125,211,252,.5)',
+        waterBottom: 'rgba(2,132,199,.6)',
+        surface: 'rgba(186,230,253,.95)',
+        overTint: 'rgba(56,189,248,.2)',
+        iceTop: 'rgba(232,248,255,.95)',
+        iceBottom: 'rgba(125,211,252,.7)',
+        iceEdge: 'rgba(14,165,233,.9)',
+        facet: 'rgba(255,255,255,.75)',
+        bond: 'rgba(56,189,248,.65)',
+        o: '#2563eb',
+        h: '#f2f9ff',
+        atomEdge: 'rgba(15,23,42,.28)',
+        trail: 'rgba(148,163,184,.55)',
+        bubble: 'rgba(255,255,255,.8)',
+        mistRgb: '148,163,184',
+        labelBg: 'rgba(255,255,255,.95)',
+        labelFg: '#0b1220',
+        labelLine: 'rgba(15,23,42,.1)',
+        tube: 'rgba(203,213,225,.75)',
+        tubeLine: 'rgba(100,116,139,.7)',
+        shadow: 'rgba(15,23,42,.09)',
+        burner: '#cbd5e1'
+    };
+
+    var PAL_DARK = {
+        glass: 'rgba(148,163,184,.5)',
+        glassHi: 'rgba(226,232,240,.2)',
+        tickSoft: 'rgba(148,163,184,.4)',
+        waterTop: 'rgba(56,189,248,.42)',
+        waterBottom: 'rgba(2,132,199,.6)',
+        surface: 'rgba(186,230,253,.85)',
+        overTint: 'rgba(56,189,248,.16)',
+        iceTop: 'rgba(186,230,253,.8)',
+        iceBottom: 'rgba(56,189,248,.5)',
+        iceEdge: 'rgba(125,211,252,.9)',
+        facet: 'rgba(255,255,255,.45)',
+        bond: 'rgba(125,211,252,.55)',
+        o: '#60a5fa',
+        h: '#e2e8f0',
+        atomEdge: 'rgba(2,6,23,.5)',
+        trail: 'rgba(203,213,225,.35)',
+        bubble: 'rgba(226,232,240,.7)',
+        mistRgb: '226,232,240',
+        labelBg: 'rgba(15,23,42,.95)',
+        labelFg: '#f1f5f9',
+        labelLine: 'rgba(148,163,184,.25)',
+        tube: 'rgba(51,65,85,.85)',
+        tubeLine: 'rgba(148,163,184,.6)',
+        shadow: 'rgba(0,0,0,.4)',
+        burner: '#475569'
+    };
+
+    function pal() {
+        return document.documentElement.getAttribute('data-et-theme') === 'dark' ? PAL_DARK : PAL_LIGHT;
+    }
+
+    /* 各状态的目标形态（帧间缓动，切换时冰会"化"、水会"涨"） */
+    var TARGETS = {
+        solid: { iceH: 152, iceW: 196, waterDepth: 0, haze: 0, speed: 0.35, boil: 0, floatAmt: 0 },
+        melt: { iceH: 84, iceW: 124, waterDepth: 108, haze: 0, speed: 0.8, boil: 0, floatAmt: 1 },
+        liquid: { iceH: 0, iceW: 0, waterDepth: 168, haze: 0, speed: 1, boil: 0, floatAmt: 0 },
+        boil: { iceH: 0, iceW: 0, waterDepth: 168, haze: 0.7, speed: 1.7, boil: 1, floatAmt: 0 },
+        gas: { iceH: 0, iceW: 0, waterDepth: 0, haze: 1, speed: 2.6, boil: 0, floatAmt: 0 }
+    };
+
+    var cur = { iceH: 0, iceW: 0, waterDepth: 168, haze: 0, speed: 1, boil: 0, floatAmt: 0 };
+
+    var lattice = [];   /* 冰晶格里的水分子（位置固定） */
+    var free = [];      /* 水 / 水蒸气里自由运动的水分子 */
+    var bubbles = [];
+    var mists = [];
+    var sprite = null;
+    var spriteKey = null;
+
+    function initParticles() {
+        var i, a;
+        lattice = [];
+        for (i = 0; i < LATTICE_MAX; i++) {
+            lattice.push({
+                hx: CX, hy: IY1 - 70, px: CX, py: IY1 - 70,
+                ang: 0.5, ph: Math.random() * TAU
+            });
+        }
+        free = [];
+        for (i = 0; i < FREE_MAX; i++) {
+            a = Math.random() * TAU;
+            free.push({
+                /* 气态起手就散布在整个空间；液态时首帧会被水面包围盒约束住 */
+                x: zone === 'gas'
+                    ? 84 + Math.random() * (CW - 168)
+                    : CX + (Math.random() - 0.5) * 240,
+                y: zone === 'gas'
+                    ? 54 + Math.random() * (CH - 150)
+                    : IY1 - 40 - Math.random() * 120,
+                vx: Math.cos(a), vy: Math.sin(a),
+                ang: Math.random() * TAU,
+                spin: (Math.random() - 0.5) * 0.05,
+                ph: Math.random() * TAU
+            });
+        }
+        bubbles = [];
+        mists = [];
+    }
+
+    function easeAll(dt) {
+        var tg = TARGETS[zone] || TARGETS.liquid;
+        var k = 1 - Math.pow(0.0012, Math.min(dt, 0.1));
+        for (var key in tg) {
+            if (!Object.prototype.hasOwnProperty.call(tg, key)) { continue; }
+            var d = tg[key] - cur[key];
+            cur[key] = Math.abs(d) < 0.05 ? tg[key] : cur[key] + d * k;
+        }
+    }
+
+    function surfaceY() { return IY1 - cur.waterDepth; }
+
+    function iceRect() {
+        var h = cur.iceH, w = cur.iceW;
+        var sy = surfaceY();
+        var bottom = IY1 - cur.floatAmt * Math.max(0, IY1 - sy - 0.7 * h);
+        return { x: CX - w / 2, y: bottom - h, w: w, h: h };
+    }
+
+    function waveY(x, now, amp) {
+        return surfaceY()
+            + Math.sin(x * 0.022 + now * 1.7) * amp
+            + Math.sin(x * 0.05 - now * 2.6) * amp * 0.42;
+    }
+
+    function roundRectPath(c, x, y, w, h, r) {
+        var rr = Math.min(r, w / 2, h / 2);
+        c.beginPath();
+        c.moveTo(x + rr, y);
+        c.arcTo(x + w, y, x + w, y + h, rr);
+        c.arcTo(x + w, y + h, x, y + h, rr);
+        c.arcTo(x, y + h, x, y, rr);
+        c.arcTo(x, y, x + w, y, rr);
+        c.closePath();
+    }
+
+    function clipInner(c) {
+        c.beginPath();
+        c.moveTo(IX0, IY0);
+        c.lineTo(IX0, IY1 - 16);
+        c.quadraticCurveTo(IX0, IY1, IX0 + 16, IY1);
+        c.lineTo(IX1 - 16, IY1);
+        c.quadraticCurveTo(IX1, IY1, IX1, IY1 - 16);
+        c.lineTo(IX1, IY0);
+        c.closePath();
+        c.clip();
+    }
+
+    /* 一个水分子：1 个氧原子 + 2 个氢原子 */
+    function drawMolecule(c, x, y, ang, r, p, alpha) {
+        var d = r * 1.32;
+        var ax = x + Math.cos(ang - 0.95) * d, ay = y + Math.sin(ang - 0.95) * d;
+        var bx = x + Math.cos(ang + 0.95) * d, by = y + Math.sin(ang + 0.95) * d;
+        c.globalAlpha = alpha;
+        c.strokeStyle = p.atomEdge;
+        c.lineWidth = 1;
+        c.fillStyle = p.h;
+        c.beginPath(); c.arc(ax, ay, r * 0.5, 0, TAU); c.fill(); c.stroke();
+        c.beginPath(); c.arc(bx, by, r * 0.5, 0, TAU); c.fill(); c.stroke();
+        c.beginPath(); c.arc(x, y, r, 0, TAU);
+        c.fillStyle = p.o;
+        c.fill();
+        c.stroke();
+        c.globalAlpha = 1;
+    }
+
+    /* ---------- 场景分层绘制 ---------- */
+
+    function drawGround(p) {
+        ctx.beginPath();
+        ctx.ellipse(CX, 462, 152, 9, 0, 0, TAU);
+        ctx.fillStyle = p.shadow;
+        ctx.fill();
+    }
+
+    /* 加热火焰：只在 30 °C 以上出现，温度越高火越旺（火苗顶到杯底） */
+    function drawHeat(p, now) {
+        roundRectPath(ctx, CX - 118, 432, 236, 18, 9);
+        ctx.fillStyle = p.burner;
+        ctx.fill();
+
+        var heat = Math.max(0, Math.min(1, (state.t - 30) / 95));
+        if (heat <= 0.02) { return; }
+        var hMax = 6 + heat * 20;
+        for (var i = 0; i < 7; i++) {
+            var fx = CX - 84 + i * 28;
+            var flick = 0.78 + 0.16 * Math.sin(now * 7 + i * 1.9) + 0.1 * Math.sin(now * 13 + i * 0.7);
+            var hh = hMax * flick;
+            var g = ctx.createLinearGradient(0, 432, 0, 432 - hh);
+            g.addColorStop(0, 'rgba(253,224,71,.95)');
+            g.addColorStop(0.55, 'rgba(251,146,60,.85)');
+            g.addColorStop(1, 'rgba(239,68,68,.12)');
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.moveTo(fx - 9, 432);
+            ctx.quadraticCurveTo(fx - 11, 432 - hh * 0.6, fx, 432 - hh);
+            ctx.quadraticCurveTo(fx + 11, 432 - hh * 0.6, fx + 9, 432);
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+
+    /* 水体：形状随烧杯（这是"形状不固定、体积固定"的关键视觉） */
+    function waterWavePath(now, amp) {
+        ctx.beginPath();
+        ctx.moveTo(IX0, waveY(IX0, now, amp));
+        for (var x = IX0 + 6; x <= IX1; x += 6) { ctx.lineTo(x, waveY(x, now, amp)); }
+    }
+
+    function waterAmp() {
+        return 1.3 + Math.min(3, Math.max(0, (state.t - 20) * 0.02)) + cur.boil * 4.5;
+    }
+
+    function drawWaterBody(p, now) {
+        if (cur.waterDepth < 1) { return; }
+        var amp = waterAmp();
+        ctx.save();
+        clipInner(ctx);
+        waterWavePath(now, amp);
+        ctx.lineTo(IX1, IY1);
+        ctx.lineTo(IX0, IY1);
+        ctx.closePath();
+        var wg = ctx.createLinearGradient(0, surfaceY(), 0, IY1);
+        wg.addColorStop(0, p.waterTop);
+        wg.addColorStop(1, p.waterBottom);
+        ctx.fillStyle = wg;
+        ctx.fill();
+        ctx.restore();
+
+        /* 水面线 */
+        waterWavePath(now, amp);
+        ctx.strokeStyle = p.surface;
+        ctx.lineWidth = 2.2;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        ctx.lineCap = 'butt';
+    }
+
+    /* 沉在水下的部分隔水看会偏水色 */
+    function drawSubmerged(p, now) {
+        if (cur.waterDepth < 2 || cur.iceH < 2) { return; }
+        ctx.save();
+        clipInner(ctx);
+        waterWavePath(now, waterAmp());
+        ctx.lineTo(IX1, IY1);
+        ctx.lineTo(IX0, IY1);
+        ctx.closePath();
+        ctx.fillStyle = p.overTint;
+        ctx.fill();
+        ctx.restore();
+    }
+
+    /* 冰晶块：轮廓固定不变（"形状固定"的关键视觉） */
+    function drawIce(p, now) {
+        var r = iceRect();
+        if (cur.iceH < 4 || r.w < 6) { return; }
+
+        var pts = [
+            [r.x, r.y + r.h],
+            [r.x, r.y + r.h * 0.32],
+            [r.x + r.w * 0.24, r.y],
+            [r.x + r.w * 0.76, r.y],
+            [r.x + r.w, r.y + r.h * 0.32],
+            [r.x + r.w, r.y + r.h]
+        ];
+        ctx.beginPath();
+        ctx.moveTo(pts[0][0], pts[0][1]);
+        for (var i = 1; i < pts.length; i++) { ctx.lineTo(pts[i][0], pts[i][1]); }
+        ctx.closePath();
+        var ig = ctx.createLinearGradient(0, r.y, 0, r.y + r.h);
+        ig.addColorStop(0, p.iceTop);
+        ig.addColorStop(1, p.iceBottom);
+        ctx.fillStyle = ig;
+        ctx.fill();
+        ctx.strokeStyle = p.iceEdge;
+        ctx.lineWidth = 2;
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+
+        /* 棱面 */
+        ctx.strokeStyle = p.facet;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(r.x + r.w * 0.24, r.y);
+        ctx.lineTo(r.x + r.w * 0.5, r.y + r.h * 0.34);
+        ctx.lineTo(r.x + r.w * 0.76, r.y);
+        ctx.moveTo(r.x + r.w * 0.5, r.y + r.h * 0.34);
+        ctx.lineTo(r.x + r.w * 0.5, r.y + r.h);
+        ctx.stroke();
+
+        /* 闪光（形状固定，只是闪） */
+        ctx.strokeStyle = p.iceTop;
+        ctx.lineWidth = 2;
+        for (var s = 0; s < 3; s++) {
+            var sx = r.x + r.w * (0.3 + s * 0.2);
+            var sy = r.y + r.h * (0.24 + (s % 2) * 0.42);
+            ctx.globalAlpha = 0.2 + 0.6 * (0.5 + 0.5 * Math.sin(now * 2.4 + s * 2.1));
+            ctx.beginPath();
+            ctx.moveTo(sx - 4, sy); ctx.lineTo(sx + 4, sy);
+            ctx.moveTo(sx, sy - 4); ctx.lineTo(sx, sy + 4);
+            ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+
+        /* 晶格分子：原位振动，不流动 */
+        var g = layoutLattice(r);
+        var vib = 0.6 + Math.max(0, state.t + 20) * 0.07;
+        var k, q;
+        for (k = 0; k < g.n; k++) {
+            q = lattice[k];
+            q.px = q.hx + Math.sin(now * 3.4 + q.ph) * vib;
+            q.py = q.hy + Math.cos(now * 3.0 + q.ph) * vib;
+        }
+        ctx.strokeStyle = p.bond;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (k = 0; k < g.n; k++) {
+            var col = k % g.cols;
+            var row = Math.floor(k / g.cols);
+            if (col + 1 < g.cols && k + 1 < g.n) {
+                ctx.moveTo(lattice[k].px, lattice[k].py);
+                ctx.lineTo(lattice[k + 1].px, lattice[k + 1].py);
+            }
+            if (row + 1 < g.rows && k + g.cols < g.n) {
+                ctx.moveTo(lattice[k].px, lattice[k].py);
+                ctx.lineTo(lattice[k + g.cols].px, lattice[k + g.cols].py);
+            }
+        }
+        ctx.stroke();
+        for (k = 0; k < g.n; k++) {
+            q = lattice[k];
+            drawMolecule(ctx, q.px, q.py, q.ang, 6.6, p, 0.95);
+        }
+    }
+
+    function layoutLattice(r) {
+        var cols = Math.max(2, Math.min(5, Math.round(r.w / 40)));
+        var rows = Math.max(1, Math.min(4, Math.round(r.h / 40)));
+        var n = Math.min(cols * rows, lattice.length);
+        var padX = r.w * 0.17;
+        var padY = r.h * 0.2;
+        var x0 = cols > 1 ? r.x + padX : r.x + r.w / 2;
+        var y0 = rows > 1 ? r.y + padY : r.y + r.h / 2;
+        var stepX = cols > 1 ? (r.w - padX * 2) / (cols - 1) : 0;
+        var stepY = rows > 1 ? (r.h - padY * 2) / (rows - 1) : 0;
+        var k = 0;
+        for (var row = 0; row < rows; row++) {
+            for (var col = 0; col < cols; col++) {
+                if (k >= n) { break; }
+                lattice[k].hx = x0 + col * stepX;
+                lattice[k].hy = y0 + row * stepY;
+                lattice[k].ang = row % 2 ? 0.32 : 0.62;   /* 朝向也是固定的 */
+                k++;
+            }
+        }
+        return { n: n, cols: cols, rows: rows };
+    }
+
+    /* 自由分子：液态被水面和杯壁约束；气态带拖尾飞散、跑出杯口 */
+    function drawFreePart(p, now, dt) {
+        /* 既没有水也没有蒸汽（固态）时，自由分子应当已"结"进晶格，全部隐去 */
+        var life = Math.max(cur.waterDepth / 70, cur.haze);
+        if (life > 1) { life = 1; }
+        if (life < 0.02) { return; }
+        var liquidMode = cur.waterDepth > 8 && cur.haze < 0.8;
+        var k = dt * 60;
+        var m;
+        for (var i = 0; i < free.length; i++) {
+            var q = free[i];
+            if (liquidMode) {
+                var spd = 0.35 + 0.8 * cur.speed;
+                q.vx += (Math.random() - 0.5) * 0.24;
+                q.vy += (Math.random() - 0.5) * 0.24;
+                if (cur.boil > 0.2) { q.vy -= 0.12 * cur.boil; }
+                m = Math.sqrt(q.vx * q.vx + q.vy * q.vy) || 1;
+                q.vx = q.vx / m * spd;
+                q.vy = q.vy / m * spd;
+                q.x += q.vx * k;
+                q.y += q.vy * k;
+                var left = IX0 + 15, right = IX1 - 15;
+                var top = Math.max(surfaceY() + 13, IY0 + 16), bottom = IY1 - 15;
+                if (q.x < left) { q.x = left; q.vx = Math.abs(q.vx); }
+                if (q.x > right) { q.x = right; q.vx = -Math.abs(q.vx); }
+                if (q.y < top) { q.y = top; q.vy = Math.abs(q.vy); }
+                if (q.y > bottom) { q.y = bottom; q.vy = -Math.abs(q.vy); }
+                q.ang += 0.03 + q.spin;
+                drawMolecule(ctx, q.x, q.y, q.ang, 7, p, 0.92 * life);
+            } else {
+                var spd2 = 1 + cur.speed * 1.35;
+                m = Math.sqrt(q.vx * q.vx + q.vy * q.vy) || 1;
+                q.vx = q.vx / m * spd2;
+                q.vy = q.vy / m * spd2;
+                q.x += q.vx * k;
+                q.y += q.vy * k;
+                if (q.x < 70) { q.x = 70; q.vx = Math.abs(q.vx); }
+                if (q.x > CW - 70) { q.x = CW - 70; q.vx = -Math.abs(q.vx); }
+                if (q.y < 42) { q.y = 42; q.vy = Math.abs(q.vy); }
+                if (q.y > CH - 46) { q.y = CH - 46; q.vy = -Math.abs(q.vy); }
+                q.ang += 0.07 + q.spin;
+                ctx.globalAlpha = life;
+                ctx.strokeStyle = p.trail;
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(q.x - q.vx * 5, q.y - q.vy * 5);
+                ctx.lineTo(q.x, q.y);
+                ctx.stroke();
+                ctx.lineCap = 'butt';
+                ctx.globalAlpha = 1;
+                drawMolecule(ctx, q.x, q.y, q.ang, 6.2, p, 0.9 * life);
+            }
+        }
+    }
+
+    /* 沸腾气泡 */
+    function drawBubbles(p, now, dt) {
+        if (cur.boil < 0.1) { bubbles.length = 0; return; }
+        if (cur.boil > 0.25 && bubbles.length < 24 && Math.random() < cur.boil * 0.6) {
+            bubbles.push({
+                x: IX0 + 26 + Math.random() * (IX1 - IX0 - 52),
+                y: IY1 - 14,
+                r: 2.4 + Math.random() * 3.4,
+                v: 0.7 + Math.random() * 1.2,
+                ph: Math.random() * TAU
+            });
+        }
+        if (!bubbles.length) { return; }
+        var sy = surfaceY();
+        ctx.save();
+        clipInner(ctx);
+        for (var i = bubbles.length - 1; i >= 0; i--) {
+            var b = bubbles[i];
+            b.y -= b.v * (0.7 + cur.boil * 1.1) * dt * 60;
+            b.x += Math.sin(now * 3 + b.ph) * 0.7;
+            if (b.y < sy + 6) { bubbles.splice(i, 1); continue; }
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.r, 0, TAU);
+            ctx.fillStyle = p.bubble;
+            ctx.fill();
+            ctx.strokeStyle = p.surface;
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    /* 蒸汽 / 水蒸气（预渲染软团，避免每帧建渐变） */
+    function mistSprite(p) {
+        if (sprite && spriteKey === p.mistRgb) { return sprite; }
+        var c = document.createElement('canvas');
+        c.width = 128;
+        c.height = 128;
+        var c2 = c.getContext('2d');
+        var g = c2.createRadialGradient(64, 64, 0, 64, 64, 64);
+        g.addColorStop(0, 'rgba(' + p.mistRgb + ',.5)');
+        g.addColorStop(0.5, 'rgba(' + p.mistRgb + ',.22)');
+        g.addColorStop(1, 'rgba(' + p.mistRgb + ',0)');
+        c2.fillStyle = g;
+        c2.fillRect(0, 0, 128, 128);
+        sprite = c;
+        spriteKey = p.mistRgb;
+        return c;
+    }
+
+    function drawMist(p, now, dt) {
+        if (cur.haze < 0.04) { mists.length = 0; return; }
+        var wide = cur.haze > 0.75;
+        var want = Math.round(MIST_MAX * cur.haze);
+        while (mists.length < want) {
+            mists.push({
+                x: wide ? BX0 - 70 + Math.random() * (BX1 - BX0 + 140)
+                    : IX0 + 24 + Math.random() * (IX1 - IX0 - 48),
+                y: wide ? 46 + Math.random() * (IY1 - 56) : surfaceY() - Math.random() * 46,
+                r: 18 + Math.random() * 26,
+                v: 0.25 + Math.random() * 0.5,
+                ph: Math.random() * TAU,
+                a: 0.2 + Math.random() * 0.3
+            });
+        }
+        while (mists.length > want) { mists.pop(); }
+        var img = mistSprite(p);
+        for (var i = 0; i < mists.length; i++) {
+            var m = mists[i];
+            m.y -= m.v * dt * 60 * (0.6 + cur.haze * 0.8);
+            m.x += Math.sin(now * 0.8 + m.ph) * 0.4;
+            if (m.y < 44) {
+                m.y = wide ? 44 + Math.random() * 24 : IY1 - 20 - Math.random() * 30;
+                m.x = wide ? BX0 - 70 + Math.random() * (BX1 - BX0 + 140)
+                    : IX0 + 24 + Math.random() * (IX1 - IX0 - 48);
+            }
+            ctx.globalAlpha = m.a * Math.min(1, cur.haze * 0.7);
+            ctx.drawImage(img, m.x - m.r, m.y - m.r, m.r * 2, m.r * 2);
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    /* 烧杯（画在内容之上，形成"隔着玻璃"的观感） */
+    function drawGlass(p) {
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = p.glass;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(BX0, BY0);
+        ctx.lineTo(BX0, BY1 - 18);
+        ctx.quadraticCurveTo(BX0, BY1, BX0 + 18, BY1);
+        ctx.lineTo(BX1 - 18, BY1);
+        ctx.quadraticCurveTo(BX1, BY1, BX1, BY1 - 18);
+        ctx.lineTo(BX1, BY0);
+        ctx.stroke();
+
+        /* 杯口 */
+        ctx.beginPath();
+        ctx.moveTo(BX0 - 6, BY0);
+        ctx.lineTo(BX1 + 6, BY0);
+        ctx.stroke();
+
+        /* 刻度线 */
+        ctx.strokeStyle = p.tickSoft;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (var i = 1; i <= 3; i++) {
+            var y = IY1 - (IY1 - IY0) * i / 4;
+            ctx.moveTo(IX1 - 30, y);
+            ctx.lineTo(IX1 - 8, y);
+        }
+        ctx.stroke();
+
+        /* 玻璃高光 */
+        ctx.strokeStyle = p.glassHi;
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(BX0 + 13, BY1 - 40);
+        ctx.lineTo(BX0 + 13, BY0 + 46);
+        ctx.stroke();
+        ctx.lineCap = 'butt';
+    }
+
+    /* 温度计：0 °C / 100 °C 有刻度线，液柱颜色随温度由蓝转红 */
+    /* 温度 → 颜色：与滑杆渐变同源（冰蓝 → 水蓝 → 琥珀 → 橙 → 红） */
+    var T_STOPS = [
+        [0, [191, 219, 254]], [0.08, [147, 197, 253]], [0.133, [125, 211, 252]],
+        [0.4, [56, 189, 248]], [0.68, [251, 191, 36]], [0.8, [249, 115, 22]],
+        [1, [239, 68, 68]]
+    ];
+
+    function tColor(t) {
+        var v = Math.max(0, Math.min(1, (t + 20) / 150));
+        for (var i = 1; i < T_STOPS.length; i++) {
+            if (v <= T_STOPS[i][0]) {
+                var a = T_STOPS[i - 1], b = T_STOPS[i];
+                var k = (v - a[0]) / ((b[0] - a[0]) || 1);
+                return 'rgb(' +
+                    Math.round(a[1][0] + (b[1][0] - a[1][0]) * k) + ',' +
+                    Math.round(a[1][1] + (b[1][1] - a[1][1]) * k) + ',' +
+                    Math.round(a[1][2] + (b[1][2] - a[1][2]) * k) + ')';
+            }
+        }
+        return 'rgb(239,68,68)';
+    }
+
+    function drawTick(val, color, label) {
+        var y = T_BOT - ((val + 20) / 150) * (T_BOT - T_TOP);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(T_CX + T_HALF, y);
+        ctx.lineTo(T_CX + T_HALF + 12, y);
+        ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.fillText(label, T_CX + T_HALF + 16, y);
+    }
+
+    function drawThermo(p) {
+        var v = Math.max(0, Math.min(1, (state.t + 20) / 150));
+        var colTop = T_BOT - v * (T_BOT - T_TOP);
+        var col = tColor(state.t);
+
+        roundRectPath(ctx, T_CX - T_HALF, T_TOP, T_HALF * 2, T_BOT - T_TOP + 2, T_HALF);
+        ctx.fillStyle = p.tube;
+        ctx.fill();
+        ctx.strokeStyle = p.tubeLine;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        /* 液柱 */
+        ctx.save();
+        roundRectPath(ctx, T_CX - T_HALF, T_TOP, T_HALF * 2, T_BOT - T_TOP + 2, T_HALF);
+        ctx.clip();
+        ctx.fillStyle = col;
+        ctx.fillRect(T_CX - T_HALF, colTop, T_HALF * 2, T_BOT - colTop + 4);
+        ctx.restore();
+
+        /* 球泡 */
+        ctx.beginPath();
+        ctx.arc(T_CX, T_BOT, T_BULB, 0, TAU);
+        ctx.fillStyle = col;
+        ctx.fill();
+        ctx.strokeStyle = p.tubeLine;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.font = '700 12px "Microsoft YaHei", system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        drawTick(0, '#0ea5e9', '0 °C');
+        drawTick(100, '#f97316', '100 °C');
+    }
+
+    /* 场景内标签 */
+    function pill(x, y, text, p, color) {
+        ctx.font = FONT;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        var w = ctx.measureText(text).width + 22;
+        roundRectPath(ctx, x, y - 13, w, 26, 13);
+        ctx.fillStyle = p.labelBg;
+        ctx.fill();
+        ctx.strokeStyle = color || p.labelLine;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = color || p.labelFg;
+        ctx.fillText(text, x + 11, y + 1);
+    }
+
+    function drawLabels(p) {
+        var x = 646;
+        if (zone === 'solid') {
+            pill(x, 214, '分子排列整齐', p);
+            pill(x, 250, '形状、体积都固定', p, '#3b82f6');
+        } else if (zone === 'melt') {
+            pill(x, 200, '冰在熔化，水在凝固', p);
+            pill(x, 236, '温度停在 0 °C', p, '#0ea5e9');
+        } else if (zone === 'liquid') {
+            pill(x, surfaceY() - 20, '水面：随容器变形', p);
+            pill(x, surfaceY() + 18, '形状不固定 · 体积固定', p, '#0284c7');
+        } else if (zone === 'boil') {
+            pill(x, surfaceY() - 46, '内部和表面同时汽化', p);
+            pill(x, surfaceY() - 10, '温度停在 100 °C', p, '#f97316');
+        } else {
+            pill(x, 176, '分子四处飞散', p);
+            pill(x, 212, '充满整个空间', p, '#8b5cf6');
+            pill(x, 248, '形状、体积都不固定', p, '#8b5cf6');
+        }
+    }
+
+    function drawAll(ts, dt) {
+        var p = pal();
+        var now = ts / 1000;
+        easeAll(dt);
+        ctx.clearRect(0, 0, CW, CH);
+        drawGround(p);
+        drawHeat(p, now);
+        drawWaterBody(p, now);
+        drawIce(p, now);
+        drawSubmerged(p, now);
+        drawFreePart(p, now, dt);
+        drawBubbles(p, now, dt);
+        drawMist(p, now, dt);
+        drawGlass(p);
+        drawThermo(p);
+        drawLabels(p);
+    }
+
     /* ---------- 启动（Canvas 能力检测：缺失时降级为文字说明） ---------- */
 
-    buildPresets();
+    var saved = Number(store.get('t', 25));
+    if (!isFinite(saved)) { saved = 25; }
+    state.t = Math.max(-20, Math.min(130, Math.round(saved)));
+    zone = zoneOf(state.t);
 
-    if (!ctx) {
-        els.canvas.style.display = 'none';
-        els.stateDesc.innerHTML = '当前浏览器不支持 Canvas 绘制，仅保留温度与文字说明。';
-    } else {
-        initParts();
-        setTemp(state.t, true);
-        requestAnimationFrame(tick);
-    }
+    buildCompareTable();
+    buildPresets();
     els.slider.value = state.t;
     els.tempNum.textContent = state.t;
+    applyInfo(zone);
+    syncPresets();
+
+    if (!ctx) {
+        if (canvas) { canvas.style.display = 'none'; }
+        els.stateDesc.innerHTML = '当前浏览器不支持 Canvas 绘制，仅保留温度控制与文字说明。';
+    } else {
+        initParticles();
+        var startTarget = TARGETS[zone];
+        for (var startKey in startTarget) {
+            if (Object.prototype.hasOwnProperty.call(startTarget, startKey)) {
+                cur[startKey] = startTarget[startKey];
+            }
+        }
+        var lastTs = 0;
+        var frame = function (ts) {
+            var dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0.016;
+            lastTs = ts;
+            if (auto.on) { stepAuto(dt); }
+            drawAll(ts, dt);
+            requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+    }
 })();
 </script>
 

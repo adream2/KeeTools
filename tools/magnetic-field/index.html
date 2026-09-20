@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>磁场磁感线 — KeeTools 课工具</title>
 <!-- ET-META
-{"id":"magnetic-field","version":"1.0.0"}
+{"id":"magnetic-field","version":"1.0.1"}
 -->
 
 <!-- 共享外壳样式（由 sync_shared.py 注入） -->
@@ -62,6 +62,13 @@ html[data-et-theme="dark"] {
 }
 
 /* ============ 基础 ============ */
+
+/* body 作为外壳时必须清掉浏览器默认 8px 外边距，
+   否则 iframe 预览中文档会比视口高 16px（底部白边 + 多余滚动） */
+body.et-app {
+    margin: 0;
+}
+
 .et-app {
     position: relative;
     isolation: isolate;
@@ -657,7 +664,7 @@ html[data-et-theme="dark"] {
                 <svg class="et-icon"><use href="#i-minus"></use></svg>
             </button>
         </div>
-        <div class="mf-legend" id="legend">磁感线从 N 出发回到 S；拖动小磁针，N 极（红）指向该点磁场方向。</div>
+        <div class="mf-legend" id="legend">磁感线从 N 出发回到 S；拖动小磁针，N 极（红）指向该点磁场方向，S 极（蓝）指向相反方向。</div>
     </div>
 
     <div class="mf-hint" id="hint"></div>
@@ -1534,7 +1541,7 @@ try { ET.Stats.send('use_offline', 'magnetic-field'); } catch (e) { /* 静默 */
         help: '<div style="font-size:13.5px;line-height:2">' +
             '<p style="margin:0 0 8px"><b>怎么用</b>：切换条形磁铁 / 通电直导线 / 通电螺线管；' +
             '「反转方向」交换 N·S 或电流方向；+/− 调整磁感线条数。</p>' +
-            '<p style="margin:0 0 8px"><b>小磁针</b>：拖到任意位置，红色 N 极始终指向该点磁场方向——' +
+            '<p style="margin:0 0 8px"><b>小磁针</b>：拖到任意位置，红色 N 极始终指向该点磁场方向、蓝色 S 极指向相反方向——' +
             '这就是磁场方向的定义。</p>' +
             '<p style="margin:0 0 8px"><b>右手定则</b>：直导线——拇指指电流，四指绕向即磁场方向；' +
             '螺线管——四指指电流，拇指指 N 极。</p>' +
@@ -1827,12 +1834,18 @@ try { ET.Stats.send('use_offline', 'magnetic-field'); } catch (e) { /* 静默 */
     function makeCompass(home, idx) {
         var g = mk('g', { cursor: 'grab' });
         g.appendChild(mk('circle', { r: 24, fill: 'rgba(255,255,255,.9)', stroke: '#6b7280', 'stroke-width': 2 }));
-        var needle = mk('path', { d: 'M0,-17 L6,0 L0,17 L-6,0 Z', fill: '#ef4444', stroke: '#7f1d1d', 'stroke-width': 1 });
-        g.appendChild(needle);
+        // 双色指针：红端（-y）= N 极，指向磁场方向；蓝端（+y）= S 极
+        var nHalf = mk('path', { d: 'M0,-17 L6,0 L-6,0 Z', fill: '#ef4444', stroke: '#7f1d1d', 'stroke-width': 1 });
+        var sHalf = mk('path', { d: 'M0,17 L6,0 L-6,0 Z', fill: '#3b82f6', stroke: '#1e3a8a', 'stroke-width': 1 });
+        g.appendChild(nHalf);
+        g.appendChild(sHalf);
         var nLab = mk('text', { y: -28, 'font-size': 12, 'font-weight': 800, fill: '#ef4444', 'text-anchor': 'middle' });
         nLab.textContent = 'N';
         g.appendChild(nLab);
-        var obj = { g: g, needle: needle, x: home.x, y: home.y, home: home, idx: idx };
+        var sLab = mk('text', { y: 37, 'font-size': 12, 'font-weight': 800, fill: '#3b82f6', 'text-anchor': 'middle' });
+        sLab.textContent = 'S';
+        g.appendChild(sLab);
+        var obj = { g: g, needle: nHalf, needleS: sHalf, x: home.x, y: home.y, home: home, idx: idx };
         g.addEventListener('pointerdown', function (e) {
             obj.drag = true;
             g.setAttribute('cursor', 'grabbing');
@@ -1861,7 +1874,9 @@ try { ET.Stats.send('use_offline', 'magnetic-field'); } catch (e) { /* 静默 */
             var v = fieldAt(c.x, c.y);
             var m = Math.sqrt(v.x * v.x + v.y * v.y);
             var deg = m > 1e-9 ? Math.atan2(v.y, v.x) * 180 / Math.PI : 0;
-            c.needle.setAttribute('transform', 'rotate(' + deg.toFixed(1) + ')');
+            var rot = 'rotate(' + deg.toFixed(1) + ')';
+            c.needle.setAttribute('transform', rot);
+            c.needleS.setAttribute('transform', rot);
         }
     }
 

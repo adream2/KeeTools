@@ -1,7 +1,7 @@
 {
   "id": "newton-second-law",
   "title": "牛顿第二定律",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "experiment",
   "description": "调节质量与拉力观察加速度变化，a=F/m 气垫导轨式实验模拟与数据表。",
   "author": "KeeTools Team",
@@ -17,5 +17,5 @@
   "screen": "large",
   "stats_enabled": true,
   "created_at": "2026-09-19",
-  "updated_at": "2026-09-19"
+  "updated_at": "2026-09-20"
 }

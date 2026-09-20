@@ -425,5 +425,32 @@
     "et-chrome-css": "ui/et-chrome.css",
     "et-chrome": "ui/et-chrome.js",
     "et-stats": "ui/et-stats.js"
+  },
+  "exam-seat-print": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "et-import-css": "ui/et-import.css",
+    "et-import": "ui/et-import.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "noise-meter": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "mic-level": "logic/mic-level.js",
+    "level-chart": "logic/level-chart.js",
+    "et-stats": "ui/et-stats.js"
+  },
+  "early-reading": {
+    "et-util": "logic/et-util.js",
+    "icons": "icons/icons.svg",
+    "et-chrome-css": "ui/et-chrome.css",
+    "et-chrome": "ui/et-chrome.js",
+    "mic-level": "logic/mic-level.js",
+    "level-chart": "logic/level-chart.js",
+    "et-stats": "ui/et-stats.js"
   }
 }

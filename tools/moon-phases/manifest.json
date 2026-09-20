@@ -1,9 +1,9 @@
 {
   "id": "moon-phases",
   "title": "月相变化",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "type": "fixed",
-  "description": "月相变化：拖动月龄看地球-月球-太阳位置与月相，含农历日期与成因说明。",
+  "description": "月相变化：3D 模拟日地月系统，轨道视角看公转成因、地球视角看当晚月相（月面按真实光照呈现），含农历与八相速查。",
   "author": "KeeTools Team",
   "entry": "index.html",
   "single_file": true,
@@ -17,5 +17,5 @@
   "screen": "large",
   "stats_enabled": true,
   "created_at": "2026-09-19",
-  "updated_at": "2026-09-19"
+  "updated_at": "2026-09-20"
 }
