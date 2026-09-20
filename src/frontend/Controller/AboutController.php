@@ -14,7 +14,7 @@ use App\Services\ToolRepository;
  * 关于页（/about）
  *
  * 项目介绍 + 开放素材版权说明。版权登记的唯一真源是
- * assets-src/third-party.json：本页由此自动渲染，
+ * src/data/third-party.json：本页由此自动渲染，
  * THIRD-PARTY-LICENSES.md 由 scripts/gen_licenses.py 从同一数据生成。
  * 页面数据（工具数 / 学科数）从库里实时读。
  */

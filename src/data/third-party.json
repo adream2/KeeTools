@@ -4,7 +4,7 @@
   "preamble": "本项目遵循**零 CDN 依赖**原则：运行时不引用任何外部链接（CDN / 在线字体 / 在线图标），确保无网条件下工具正常使用。本登记覆盖所有**内联打包**进产出物的第三方资源及其许可证。",
   "rules": [
     "确认许可证允许商用",
-    "在 assets-src/third-party.json 新增条目",
+    "在 src/data/third-party.json 新增条目",
     "若许可证要求署名（如 CC-BY），在产出的页面中保留声明",
     "若来源为 npm/CDN，需一并下载到 assets-src/ 或 tools/_shared/ 后内联",
     "跑 python scripts/gen_licenses.py 重新生成 THIRD-PARTY-LICENSES.md"
@@ -98,6 +98,6 @@
     { "date": "2026-09-18", "action": "建立登记表", "detail": "初始登记，当前仅 Lucide + Tabler" },
     { "date": "2026-09-18", "action": "P2 工具图标集", "detail": "tools/_shared/icons/icons.svg 内联 Lucide 子集（ISC）约 40 符号" },
     { "date": "2026-09-19", "action": "关于页上线", "detail": "/about 面向访客展示署名版" },
-    { "date": "2026-09-19", "action": "登记自动化", "detail": "唯一真源迁移至 assets-src/third-party.json，/about 自动渲染，THIRD-PARTY-LICENSES.md 改为脚本生成" }
+    { "date": "2026-09-19", "action": "登记自动化", "detail": "唯一真源迁移至 src/data/third-party.json（原 assets-src/third-party.json，2026-09-20 迁入运行时目录），/about 自动渲染，THIRD-PARTY-LICENSES.md 改为脚本生成" }
   ]
 }

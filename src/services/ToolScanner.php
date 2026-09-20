@@ -66,6 +66,9 @@ final class ToolScanner
 
     private const VALID_SCREENS = ['large', 'any'];
 
+    /** requires（运行环境要求）白名单，与 check_manifest.py 保持一致 */
+    private const VALID_REQUIRES = ['microphone', 'camera'];
+
     private const VALID_GRADES = ['1-2', '3-4', '5-6', '1-6', '7-9', '10-12', '1-12'];
 
     private const VALID_SUBJECTS = [
@@ -78,6 +81,9 @@ final class ToolScanner
     private ManifestWriter $writer;
 
     private ?Database $db;
+
+    /** requires 列是否可用（null = 尚未探测）；旧库缺列时自动 ALTER 补齐 */
+    private ?bool $requiresColumn = null;
 
     public function __construct(?string $toolsPath = null, ?ManifestWriter $writer = null, ?Database $db = null)
     {
@@ -336,6 +342,24 @@ final class ToolScanner
             $errors[] = 'family 格式非法';
         }
 
+        // ── requires（运行环境要求，可选）────────
+        $requires = $data['requires'] ?? null;
+        if ($requires !== null) {
+            if (!is_array($requires)) {
+                $errors[] = 'requires 缺失或非数组（可省略，或填 []）';
+            } else {
+                foreach ($requires as $item) {
+                    if (!is_string($item) || !in_array($item, self::VALID_REQUIRES, true)) {
+                        $errors[] = 'requires 取值非法：'
+                            . (is_string($item) ? $item : (string) json_encode($item));
+                    }
+                }
+                if (count(array_unique($requires)) !== count($requires)) {
+                    $errors[] = 'requires 含重复项';
+                }
+            }
+        }
+
         // ── entry ────────────────────────────────
         $entry = $data['entry'] ?? null;
         if (is_string($entry)) {
@@ -447,6 +471,7 @@ final class ToolScanner
     private function upsert(array $m, string $dirName, int $mtime, bool $mismatch): string
     {
         $toolId = (string) $m['id'];
+        $hasRequires = $this->hasRequiresColumn();
 
         $cols = [
             'title'         => (string) $m['title'],
@@ -458,6 +483,7 @@ final class ToolScanner
             'subjects'      => $this->jsonEncode($m['subjects']),
             'tags'          => $this->jsonEncode($m['tags']),
             'author'        => (string) $m['author'],
+            'requires'      => $hasRequires ? $this->jsonEncode($m['requires'] ?? []) : '[]',
             'entry'         => (string) $m['entry'],
             'single_file'   => $m['single_file'] === true ? 1 : 0,
             'offline'       => $m['offline'] === true ? 1 : 0,
@@ -580,6 +606,33 @@ final class ToolScanner
         $json = json_encode(is_array($value) ? $value : [], JSON_UNESCAPED_UNICODE);
 
         return $json === false ? '[]' : $json;
+    }
+
+    /**
+     * 库结构自愈：tools.requires 列缺失时自动补齐（2026-09-20 新增字段）。
+     *
+     * 只在真的需要写库时调用（syncChanged 无变化时不触发），因此正常情况下
+     * 生产环境部署后第一次「有新工具 / manifest 变动」的请求即完成迁移，
+     * 无需人工执行 init_db。迁移失败时返回 false，upsert 跳过该列而不是整条失败。
+     */
+    private function hasRequiresColumn(): bool
+    {
+        if ($this->requiresColumn !== null) {
+            return $this->requiresColumn;
+        }
+
+        $this->requiresColumn = false;
+        try {
+            $columns = array_column($this->db()->fetchAll('PRAGMA table_info(tools)'), 'name');
+            if (!in_array('requires', $columns, true)) {
+                $this->db()->execute("ALTER TABLE tools ADD COLUMN requires TEXT NOT NULL DEFAULT '[]'");
+            }
+            $this->requiresColumn = true;
+        } catch (\Throwable) {
+            // 无写权限 / 只读库等：不影响其它字段入库
+        }
+
+        return $this->requiresColumn;
     }
 
     private function hasDb(): bool

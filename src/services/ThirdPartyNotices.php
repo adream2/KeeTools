@@ -6,11 +6,14 @@ namespace App\Services;
 use App\Core\App;
 
 /**
- * 第三方素材版权说明（唯一真源：assets-src/third-party.json）
+ * 第三方素材版权说明（唯一真源：src/data/third-party.json）
  *
  * /about 页由此服务驱动渲染，THIRD-PARTY-LICENSES.md 由
  * scripts/gen_licenses.py 从同一 JSON 生成 —— 新增素材只改 JSON 一处。
  * JSON 缺失 / 损坏时返回空结构（页面降级为提示，不 500）。
+ *
+ * 注意：JSON 位于 src/data/（随应用代码部署）；assets-src/ 是构建源目录，
+ * 不进入生产环境（2026-09-20 迁移，此前放 assets-src/ 导致线上 /about 降级）。
  *
  * @phpstan-type Item array{name: string, source: string, license: string, usage: string}
  * @phpstan-type Category array{id: string, title: string, items: list<Item>, notes: list<string>}
@@ -24,7 +27,7 @@ final class ThirdPartyNotices
      */
     public static function all(): array
     {
-        $file = App::path('assets-src/third-party.json');
+        $file = App::path('src/data/third-party.json');
         if (!is_file($file)) {
             return ['categories' => []];
         }

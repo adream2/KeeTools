@@ -1,6 +1,6 @@
 # 第三方资源许可证登记
 
-> 本文件由 `scripts/gen_licenses.py` 从 **`assets-src/third-party.json`** 自动生成，
+> 本文件由 `scripts/gen_licenses.py` 从 **`src/data/third-party.json`** 自动生成，
 > **请勿手工编辑**（登记 / 修改请改 JSON 后重新生成）。
 > 前台展示版见 `/about`（同样由 JSON 自动渲染）。
 
@@ -11,7 +11,7 @@
 新增任何第三方资源（图标 / 音频 / 数据 / 字体 / JS 库）时，必须：
 
 1. 确认许可证允许商用
-2. 在 assets-src/third-party.json 新增条目
+2. 在 src/data/third-party.json 新增条目
 3. 若许可证要求署名（如 CC-BY），在产出的页面中保留声明
 4. 若来源为 npm/CDN，需一并下载到 assets-src/ 或 tools/_shared/ 后内联
 5. 跑 python scripts/gen_licenses.py 重新生成 THIRD-PARTY-LICENSES.md
@@ -86,4 +86,4 @@
 | 2026-09-18 | 建立登记表 | 初始登记，当前仅 Lucide + Tabler |
 | 2026-09-18 | P2 工具图标集 | tools/_shared/icons/icons.svg 内联 Lucide 子集（ISC）约 40 符号 |
 | 2026-09-19 | 关于页上线 | /about 面向访客展示署名版 |
-| 2026-09-19 | 登记自动化 | 唯一真源迁移至 assets-src/third-party.json，/about 自动渲染，THIRD-PARTY-LICENSES.md 改为脚本生成 |
+| 2026-09-19 | 登记自动化 | 唯一真源迁移至 src/data/third-party.json（原 assets-src/third-party.json，2026-09-20 迁入运行时目录），/about 自动渲染，THIRD-PARTY-LICENSES.md 改为脚本生成 |

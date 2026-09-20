@@ -16,6 +16,8 @@
 | [`check_css_tokens.py`](check_css_tokens.py) | CSS 字面量检查（须用 `var(--...)` 令牌） | 改过 CSS 后 |
 | [`build_css.py`](build_css.py) | 四层 CSS 拼合产出到 `public/assets/css/` | 改过 CSS 源后 / 提交前 `--check` |
 | [`new_tool.py`](new_tool.py) | 新工具脚手架（模板取 `tools/_template/`，自动登记共享片段 + 内联 + 自检） | 新建工具时 |
+| [`gen_china_map.py`](gen_china_map.py) | 生成 `map-china` 工具的真实省界数据（下载省级 GeoJSON → Albers 投影 → DP 简化 → 注入工具 HTML 标记块，支持 `--check`） | 省界数据源更新时（低频） |
+| [`gen_world_map.py`](gen_world_map.py) | 生成 `map-world` 工具的真实海陆数据（下载 world-atlas 国家级 TopoJSON → 解码 → 177 国归洲 → DP 简化 → 注入标记块，支持 `--check`） | 数据源更新时（低频） |
 | [`asset_report.py`](asset_report.py) | 静态资源体积审计（`public/` 汇总 + 各工具 HTML 体积排行，只读） | 每批工具完成后 / 发版前 |
 | [`check_tools_runtime.py`](check_tools_runtime.py) | 工具**运行时**抽检：抽 `<script>` 块跑 `node --check` + 无头 Chrome/Edge 打开 `file://` 抓 DOM / 截图 / 控制台报错（**非门禁**，无 Node 或浏览器时优雅跳过） | 每批工具交付前 |
 | [`icons/prepare_source.py`](icons/prepare_source.py) | 从 Iconify 提取图标离线源（**唯一联网脚本**） | 改过 `icons.txt` 后（低频） |
@@ -26,8 +28,9 @@
 > 支持 Iconify **别名回溯**（如 `lucide:home` → `house`、`lucide:trash-2` → `trash`）。
 > 图标源准备方式见 [`../assets-src/icons/README.md`](../assets-src/icons/README.md)。
 >
-> `icons/prepare_source.py` 是**唯一需要联网**的脚本，只在新增图标时手工跑一次
+> `icons/prepare_source.py` 是图标链路里**唯一需要联网**的脚本，只在新增图标时手工跑一次
 > （`python scripts/icons/prepare_source.py`），产物入库后构建链完全离线。
+> 此外 `gen_china_map.py` 在本地无 GeoJSON 缓存时也会联网下载（低频，产物内联进工具 HTML）。
 > 它默认不覆盖已有源文件，加 `--force` 才重建，避免误删手工增补的图标。
 
 ---

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """THIRD-PARTY-LICENSES.md 生成器。
 
-唯一真源：assets-src/third-party.json。
+唯一真源：src/data/third-party.json。
 用法：
     python scripts/gen_licenses.py            # 生成 / 覆盖 THIRD-PARTY-LICENSES.md
     python scripts/gen_licenses.py --check    # 校验产物是否为最新（CI / pre-commit）
@@ -16,12 +16,12 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SOURCE = ROOT / "assets-src" / "third-party.json"
+SOURCE = ROOT / "src" / "data" / "third-party.json"
 TARGET = ROOT / "THIRD-PARTY-LICENSES.md"
 
 PREAMBLE = """# 第三方资源许可证登记
 
-> 本文件由 `scripts/gen_licenses.py` 从 **`assets-src/third-party.json`** 自动生成，
+> 本文件由 `scripts/gen_licenses.py` 从 **`src/data/third-party.json`** 自动生成，
 > **请勿手工编辑**（登记 / 修改请改 JSON 后重新生成）。
 > 前台展示版见 `/about`（同样由 JSON 自动渲染）。
 

@@ -75,3 +75,6 @@ __pycache__/
 npm-debug.log*
 php_errors.log
 .xdebug-*
+
+# 本地工具缓存（agent-browser / playwright-cli 等技能产生，非项目产物）
+.playwright-cli/

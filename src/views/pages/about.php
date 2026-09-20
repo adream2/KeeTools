@@ -111,11 +111,11 @@ $stats[] = ['num' => '0', 'label' => '外部链接'];
   <div class="card-body about-licenses">
     <?php if (!$hasNotices): ?>
       <p>本站坚持「零 CDN 依赖」：不引用任何外部链接，所有图标、音频、数据均在构建时本地化打包，确保无网条件下工具照常使用。</p>
-      <p class="about-licenses-note">第三方素材登记数据暂不可用（assets-src/third-party.json 缺失或损坏）。</p>
+      <p class="about-licenses-note">第三方素材登记数据暂不可用（src/data/third-party.json 缺失或损坏）。</p>
     <?php else: ?>
       <p>本站坚持「零 CDN 依赖」：不引用任何外部链接，所有图标、音频、数据均在构建时本地化打包，确保无网条件下工具照常使用。
       以下为本站引用的第三方素材及其许可证，感谢原作者与社区（本表由
-      <code>assets-src/third-party.json</code> 自动渲染，新增素材无需手改本页）：</p>
+      <code>src/data/third-party.json</code> 自动渲染，新增素材无需手改本页）：</p>
 
       <?php foreach ($notices['categories'] as $category): ?>
         <?php if ($category['items'] === [] && $category['notes'] === []): continue; endif; ?>

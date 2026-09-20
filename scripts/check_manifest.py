@@ -49,6 +49,9 @@ SUBJECT_VALUES = {
 
 VALID_SCREEN = {"large", "any"}
 
+# requires（运行环境要求）取值白名单：只声明能力 key，中文文案由站点侧统一渲染
+VALID_REQUIRES = {"microphone", "camera"}
+
 MAX_TITLE_LEN = 40
 MAX_DESC_LEN = 60
 
@@ -215,6 +218,21 @@ def check_one(tool_dir: Path) -> Result:
     family = data.get("family")
     if family is not None and not (isinstance(family, str) and ID_RE.match(family)):
         res.err(f"family 格式非法：{family}")
+
+    # ── requires（运行环境要求，可选）────────
+    requires = data.get("requires")
+    if requires is not None:
+        if not isinstance(requires, list):
+            res.err("requires 缺失或非数组（可省略，或填 []）")
+        else:
+            for item in requires:
+                if not isinstance(item, str) or item not in VALID_REQUIRES:
+                    res.err(
+                        f"requires 取值非法：{item!r}"
+                        f"（可选 {'/'.join(sorted(VALID_REQUIRES))}）"
+                    )
+            if len(set(requires)) != len(requires):
+                res.err("requires 含重复项")
 
     # ── 日期 ─────────────────────────────────
     created = parse_date(data.get("created_at", ""))

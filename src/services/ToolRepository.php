@@ -18,7 +18,7 @@ final class ToolRepository
 {
     /** 列表 / 卡片场景的公共字段 */
     private const CARD_FIELDS =
-        'tool_id, title, description, version, type, family, grade_range, subjects, tags, author,
+        'tool_id, title, description, version, type, family, grade_range, subjects, tags, requires, author,
          entry, single_file, offline, screen, stats_enabled, license, is_featured, dir_path, updated_at';
 
     private ?Database $db;
@@ -423,7 +423,7 @@ final class ToolRepository
      */
     private function hydrate(array $row): array
     {
-        foreach (['grade_range', 'subjects', 'tags'] as $key) {
+        foreach (['grade_range', 'subjects', 'tags', 'requires'] as $key) {
             $decoded = json_decode((string) ($row[$key] ?? '[]'), true);
             $row[$key] = is_array($decoded) ? $decoded : [];
         }

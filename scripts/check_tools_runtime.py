@@ -87,7 +87,7 @@ TOOL_MARKERS = {
     "vertical-arithmetic": ['class="vertmain-cell'],
     "chart-maker": ['class="cmk-bar'],
     "magnet-demo": ['class="mag-magnet'],
-    "water-states": ['class="ws-preset'],
+    "water-states": ['class="ws-preset', 'id="compareBody"', 'id="autoBtn"'],
     "solar-system": ['ss-plabel'],
     "dynasty-timeline": ['class="dt-block'],
     "history-event-cards": ['class="hec-card'],
@@ -96,7 +96,10 @@ TOOL_MARKERS = {
     "map-world": ['class="mw-land"'],
     "cell-structure": ['class="cs-badge"'],
     "blood-circulation": ['class="bc-legend"'],
-    "moon-phases": ['id="mpOrbit"'],
+    "moon-phases": ['id="mpScene"'],
+    "exam-seat-print": ['id="modeSeg"', '待导入名单'],
+    "noise-meter": ['id="nmChart"', 'class="nm-value"'],
+    "early-reading": ['id="erChart"', 'class="er-state"'],
 }
 
 CHROME_CANDIDATES = [

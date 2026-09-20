@@ -208,6 +208,52 @@ if (!function_exists('tool_type_tag_class')) {
     }
 }
 
+if (!function_exists('tool_requires_items')) {
+    /**
+     * 工具运行环境要求（manifest `requires`）→ 详情页「使用要求」条目。
+     *
+     * 工具只声明能力 key；"为什么可能用不了 / 怎么解决"的标准措辞集中在此维护，
+     * 改一次全站生效（manifest 规范 §3.6.2）。未登记的 key 直接忽略。
+     *
+     * @param mixed $requires manifest requires 字段（字符串数组）
+     * @return list<array{key: string, label: string, desc: string, icon: string}>
+     */
+    function tool_requires_items(mixed $requires): array
+    {
+        if (!is_array($requires)) {
+            return [];
+        }
+
+        $catalog = [
+            'microphone' => [
+                'label' => '需要麦克风',
+                'desc'  => '本工具通过麦克风采集声音，首次使用浏览器会询问权限，请选择「允许」。'
+                    . '取麦需要安全上下文：https 与 localhost 稳定可用，http 页面会被浏览器直接禁止；'
+                    . '直接双击下载到本地的文件（file://）时能否取麦取决于浏览器安全策略'
+                    . '（Safari 等会直接拒绝，这不是工具故障）。若被拒绝，请在本页「在线体验」中打开，'
+                    . '或把工具放到本地服务器 / 校园网 HTTPS 环境使用。',
+                'icon'  => 'activity',
+            ],
+            'camera' => [
+                'label' => '需要摄像头',
+                'desc'  => '本工具通过摄像头采集画面，首次使用浏览器会询问权限，请选择「允许」。'
+                    . '取用摄像头同样需要安全上下文（https / localhost 稳定可用，http 会被禁止），'
+                    . '本地文件方式打开时能否使用取决于浏览器安全策略。',
+                'icon'  => 'eye',
+            ],
+        ];
+
+        $items = [];
+        foreach ($requires as $key) {
+            if (is_string($key) && isset($catalog[$key])) {
+                $items[] = ['key' => $key] + $catalog[$key];
+            }
+        }
+
+        return $items;
+    }
+}
+
 if (!function_exists('grade_range_label')) {
     /**
      * 学段数组 → 人类可读文案（如「全学段」「小学 · 初中」）。

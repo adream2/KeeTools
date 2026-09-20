@@ -139,6 +139,7 @@ CREATE TABLE IF NOT EXISTS tools (
     grade_range   TEXT    NOT NULL DEFAULT '[]',    -- JSON 数组，如 ["1-6","7-9"]
     subjects      TEXT    NOT NULL DEFAULT '[]',    -- JSON 数组，如 ["物理","化学"]
     tags          TEXT    NOT NULL DEFAULT '[]',    -- JSON 数组
+    requires      TEXT    NOT NULL DEFAULT '[]',    -- JSON 数组：运行环境要求（microphone / camera）
     author        TEXT    NOT NULL DEFAULT '',
     entry         TEXT    NOT NULL DEFAULT 'index.html',
     single_file   INTEGER NOT NULL DEFAULT 1,
@@ -329,6 +330,14 @@ try {
     $db->runSqlString(APP_SCHEMA);
     $tableCount = count(array_filter(TABLES, [$db, 'tableExists']));
     echo "[OK]  app.db 建表完成（{$tableCount}/" . count(TABLES) . " 张表）\n";
+
+    // 迁移：tools.requires（运行环境要求，2026-09-20 新增）。
+    // CREATE TABLE IF NOT EXISTS 不会给旧表补列，故按列名探测后 ALTER。
+    $toolColumns = array_column($db->fetchAll('PRAGMA table_info(tools)'), 'name');
+    if (!in_array('requires', $toolColumns, true)) {
+        $db->execute("ALTER TABLE tools ADD COLUMN requires TEXT NOT NULL DEFAULT '[]'");
+        echo "[WARN] tools 表缺 requires 列，已自动补齐（旧数据按 [] 处理）\n";
+    }
 
     // 迁移：P0 的 stats 表 CHECK 白名单缺 download_direct / sponsor_click。
     // SQLite 无法修改 CHECK 约束，检测到旧结构时整表重建（统计允许丢失，无补偿）。

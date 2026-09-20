@@ -2,7 +2,7 @@
 
 > `manifest.json` 是工具与网站之间的**唯一契约**。
 > 配套：[`工具开发规范.md`](工具开发规范.md)、[`CHANGELOG.md（历史决策）`](CHANGELOG.md（历史决策）)
-> 最后更新：2026-09-18
+> 最后更新：2026-09-20（新增可选字段 `requires`）
 
 ---
 
@@ -22,6 +22,7 @@
   "grade_range": ["1-12"],
   "subjects": ["通用"],
   "tags": ["点名", "课堂互动", "抽签", "大屏"],
+  "requires": [],
   "family": "random-name",
   "license": "free",
   "dependencies": [],
@@ -50,6 +51,7 @@
 | `grade_range` | string[] | ✅ | 非空数组 | 适用学段，见 §3.1 |
 | `subjects` | string[] | ✅ | 非空数组 | 学科，通用类填 `["通用"]` |
 | `tags` | string[] | ✅ | 非空数组 | 自由标签，**关联同一逻辑不同花样工具的主要手段** |
+| `requires` | string[] | ❌ | 取值 `microphone` / `camera`，可省略 | **运行环境要求**，见 §3.6 |
 | `family` | string | ❌ | `^[a-z0-9-]+$` | 逻辑族标识，同一算法的不同花样填相同值 |
 | `license` | string | ❌ | 默认 `free` | 许可证 |
 | `dependencies` | string[] | ✅ | 单文件工具**必须为空数组** | 本地资源依赖列表 |
@@ -131,6 +133,35 @@ random-name-neon       family: "random-name"   tags: ["点名", ...]
 | `large` | 大屏 / 投影（默认） |
 | `any` | 通用 |
 
+### 3.6 `requires`（运行环境要求）
+
+> 2026-09-20 新增（首个使用者：`noise-meter` / `early-reading`）。
+
+声明工具**运行所需、但可能不被满足**的浏览器能力。工具只写能力 key，**中文文案由站点侧统一渲染**
+（`tool_requires_items()`，见 §3.6.2），避免每个工具各写一套说法。
+
+| 值 | 含义 | 典型工具 |
+|---|---|---|
+| `microphone` | 需要麦克风采集（`getUserMedia` + WebAudio） | 噪音计、早读检测 |
+| `camera` | 需要摄像头采集 | 需要拍照 / 取景的工具 |
+
+#### 3.6.1 声明后的行为
+
+1. **详情页在线预览的 iframe 会自动带上对应权限**：`allow="fullscreen; microphone"`。
+   不声明时 iframe 受 Permissions Policy 限制，工具内 `getUserMedia()` 会直接失败——**这是易漏点**。
+2. 详情页渲染「使用要求」卡片，并在工具头标签区显示 `需要麦克风` 警示标签。
+3. `requires` 只描述"需要什么"，**不改变"离线可用"语义**：需要麦克风 ≠ 不能离线。
+   取麦的前提是安全上下文（https / localhost 稳定可用，http 页面必然被拒）；
+   以本地文件（`file://`）打开时是否可用**取决于浏览器策略**（Chrome 视其为可信来源，
+   Safari 等会直接拒绝），因此工具须做**能力检测 + 优雅降级 + 替代用法引导**
+   （改用在线体验 / HTTPS），不允许白屏或报错中断（见 `docs/工具开发规范.md` §4.1）。
+   **文案不得写死"本地文件一定不能用"**，也不得写"一定能用"。
+
+#### 3.6.2 措辞归属
+
+工具侧只在 README / 工具内引导文案中说明用法；**"为什么可能用不了、怎么解决"的标准措辞**
+由站点 `tool_requires_items()` 集中维护，改一次全站生效。
+
 ---
 
 ## 四、`ET-META` 元数据块
@@ -173,6 +204,7 @@ python scripts/check_manifest.py
 8. `index.html` 中 `ET-META` 存在且 `id` / `version` 与 manifest 一致
 9. `updated_at` ≥ `created_at`
 10. `tools/{id}/CHANGELOG.md` 存在
+11. `requires`（若填写）元素全部在白名单内、无重复项
 
 **退出码**：`0` 全部通过，`1` 有错误。
 

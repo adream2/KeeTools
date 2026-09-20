@@ -21,6 +21,19 @@ $toolId = (string) $tool['tool_id'];
 $downloadEnabled = Config::bool('DOWNLOAD_DIRECT_ENABLED', true);
 $previewEnabled = (bool) $tool['single_file'];
 $useUrl = url('/tool/' . rawurlencode($toolId) . '/use');
+
+// 运行环境要求（manifest requires）：标签 + 「使用要求」卡片 + iframe 权限声明
+$requireKeys = is_array($tool['requires'] ?? null) ? array_values(array_filter($tool['requires'], 'is_string')) : [];
+$requireItems = tool_requires_items($requireKeys);
+
+// 在线预览是 iframe，Permissions Policy 默认不放行麦克风 / 摄像头：
+// 不在这里显式 allow，工具内的 getUserMedia() 会被浏览器直接拒绝。
+$allowList = ['fullscreen'];
+foreach (['microphone', 'camera'] as $capability) {
+    if (in_array($capability, $requireKeys, true)) {
+        $allowList[] = $capability;
+    }
+}
 $communityQr = trim(Config::string('community_qr_image'));
 $communityText = trim(Config::string('community_qr_text'));
 
@@ -67,6 +80,9 @@ $jsonLd = [
       <?php if ($tool['single_file']): ?>
         <span class="tag tag-info">单文件</span>
       <?php endif; ?>
+      <?php foreach ($requireItems as $item): ?>
+        <span class="tag tag-warning"><?= icon($item['icon']) ?><?= e($item['label']) ?></span>
+      <?php endforeach; ?>
     </div>
   </div>
 </div>
@@ -83,9 +99,13 @@ $jsonLd = [
           </span>
         </div>
         <iframe class="preview-frame" src="<?= e($useUrl) ?>" title="<?= e((string) $tool['title']) ?> 在线体验"
-                loading="lazy" allowfullscreen allow="fullscreen"></iframe>
+                loading="lazy" allowfullscreen allow="<?= e(implode('; ', $allowList)) ?>"></iframe>
         <p class="preview-tip">
           上方画面即是工具本身，点击后即可直接操作；教室没网时请使用右侧离线合集包。
+          <?php foreach ($requireItems as $item): ?>
+            <br><span class="preview-tip-require"><?= icon($item['icon']) ?><?= e($item['label']) ?></span>：
+            首次使用请在弹出的浏览器提示中选择「允许」，若点了「拒绝」需在地址栏权限图标里重新开启。
+          <?php endforeach; ?>
         </p>
       </section>
     <?php else: ?>
@@ -111,6 +131,27 @@ $jsonLd = [
         <?php endif; ?>
       </div>
     </div>
+
+    <?php if ($requireItems !== []): ?>
+      <div class="card">
+        <div class="card-head">
+          <h2 class="card-title"><?= icon('alert-triangle') ?>使用要求</h2>
+        </div>
+        <div class="card-body">
+          <ul class="require-list">
+            <?php foreach ($requireItems as $item): ?>
+              <li class="require-item">
+                <span class="require-item-icon"><?= icon($item['icon']) ?></span>
+                <div>
+                  <div class="require-item-label"><?= e($item['label']) ?></div>
+                  <p class="require-item-desc"><?= e($item['desc']) ?></p>
+                </div>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </div>
+      </div>
+    <?php endif; ?>
 
     <?php View::include('partials/ad-slot', ['slot' => SiteOps::adSlot('detail_bottom'), 'position' => 'bottom']); ?>
   </div>

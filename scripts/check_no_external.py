@@ -57,7 +57,7 @@ EXEMPT_MARKER = "et-allow-external"
 # 文件级豁免：第三方素材登记清单——它本身就是「声明外部来源」的登记表，
 # 条目中的 URL 是署名/溯源信息，运行时永不请求（/about 与 THIRD-PARTY-LICENSES.md 均只做文本展示）。
 EXEMPT_FILES = {
-    "assets-src/third-party.json",
+    "src/data/third-party.json",
 }
 
 # 本站域名（部署后替换；相对路径优先，此处只是兜底白名单）

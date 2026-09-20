@@ -199,6 +199,56 @@
   background-color: var(--c-info-weak);
 }
 
+/* ── 工具详情页「使用要求」（manifest requires，2026-09-20）──── */
+
+.require-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.require-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: var(--bw-1) solid var(--c-border);
+  border-radius: var(--r-md);
+  background-color: var(--c-bg-soft);
+}
+
+.require-item-icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sp-8);
+  height: var(--sp-8);
+  border-radius: var(--r-sm);
+  color: var(--c-warning);
+  background-color: var(--c-warning-weak);
+}
+
+.require-item-label {
+  font-weight: var(--fw-bold);
+  color: var(--c-text);
+}
+
+.require-item-desc {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-loose);
+  color: var(--c-text-muted);
+}
+
+.preview-tip-require {
+  color: var(--c-warning);
+  font-weight: var(--fw-medium);
+}
+
 .tag-group {
   display: flex;
   flex-wrap: wrap;
