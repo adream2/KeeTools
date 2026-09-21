@@ -86,6 +86,14 @@
           "commercial": true,
           "attribution": "须保留许可证文本与声明",
           "usage": "tools/stroke-order/ 逐笔书写动画（内联，运行时不联网）。"
+        },
+        {
+          "name": "汉字拼音数据（GB2312 一级常用字 3755 字）",
+          "source": "https://github.com/mozillazg/pinyin-data（pinyin.txt，整理自 Unicode Unihan kMandarin 等）",
+          "license": "MIT",
+          "commercial": true,
+          "attribution": "无需（建议保留）",
+          "usage": "tools/pinyin-to-words/ 自动注音：由 scripts/gen_hanzi_pinyin.py 抽取常用字集精简后内联，运行时不联网。"
         }
       ],
       "notes": [
@@ -98,6 +106,7 @@
     { "date": "2026-09-18", "action": "建立登记表", "detail": "初始登记，当前仅 Lucide + Tabler" },
     { "date": "2026-09-18", "action": "P2 工具图标集", "detail": "tools/_shared/icons/icons.svg 内联 Lucide 子集（ISC）约 40 符号" },
     { "date": "2026-09-19", "action": "关于页上线", "detail": "/about 面向访客展示署名版" },
-    { "date": "2026-09-19", "action": "登记自动化", "detail": "唯一真源迁移至 src/data/third-party.json（原 assets-src/third-party.json，2026-09-20 迁入运行时目录），/about 自动渲染，THIRD-PARTY-LICENSES.md 改为脚本生成" }
+    { "date": "2026-09-19", "action": "登记自动化", "detail": "唯一真源迁移至 src/data/third-party.json（原 assets-src/third-party.json，2026-09-20 迁入运行时目录），/about 自动渲染，THIRD-PARTY-LICENSES.md 改为脚本生成" },
+    { "date": "2026-09-21", "action": "拼音数据", "detail": "新增 mozillazg/pinyin-data（MIT）衍生的 GB2312 一级常用字拼音表，用于 tools/pinyin-to-words 自动注音，由 scripts/gen_hanzi_pinyin.py 生成" }
   ]
 }

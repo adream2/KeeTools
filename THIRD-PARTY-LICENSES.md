@@ -71,6 +71,7 @@
 |---|---|---|---|---|---|
 | 汉语拼音音节真人录音（183 个 mp3） | https://github.com/hugolpz/audio-cmn（18k-abr/syllabs/），Chen Wang 录制；原音源 shtooka/cmn | CC BY-SA | ✅ | 须署名 | tools/pinyin-chart/ 点读音频（base64 内嵌）。 |
 | 汉字笔画中位线数据（210 字） | npm hanzi-writer-data@2.0.1，派生自 Make Me a Hanzi | Arphic Public License | ✅ | 须保留许可证文本与声明 | tools/stroke-order/ 逐笔书写动画（内联，运行时不联网）。 |
+| 汉字拼音数据（GB2312 一级常用字 3755 字） | https://github.com/mozillazg/pinyin-data（pinyin.txt，整理自 Unicode Unihan kMandarin 等） | MIT | ✅ | 无需（建议保留） | tools/pinyin-to-words/ 自动注音：由 scripts/gen_hanzi_pinyin.py 抽取常用字集精简后内联，运行时不联网。 |
 
 > 署名义务：已在 `tools/pinyin-chart/README.md` 与工具内帮助弹窗注明「音频：Chen Wang 录制（audio-cmn，CC BY-SA）」。CC BY-SA 具有相同方式共享义务，音频以独立 mp3 形式内嵌、未做演绎修改（仅格式/码率经上游转换），在此登记以履行披露。
 
@@ -87,3 +88,4 @@
 | 2026-09-18 | P2 工具图标集 | tools/_shared/icons/icons.svg 内联 Lucide 子集（ISC）约 40 符号 |
 | 2026-09-19 | 关于页上线 | /about 面向访客展示署名版 |
 | 2026-09-19 | 登记自动化 | 唯一真源迁移至 src/data/third-party.json（原 assets-src/third-party.json，2026-09-20 迁入运行时目录），/about 自动渲染，THIRD-PARTY-LICENSES.md 改为脚本生成 |
+| 2026-09-21 | 拼音数据 | 新增 mozillazg/pinyin-data（MIT）衍生的 GB2312 一级常用字拼音表，用于 tools/pinyin-to-words 自动注音，由 scripts/gen_hanzi_pinyin.py 生成 |

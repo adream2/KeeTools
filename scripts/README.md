@@ -19,6 +19,7 @@
 | [`gen_china_map.py`](gen_china_map.py) | 生成 `map-china` 工具的真实省界数据（下载省级 GeoJSON → Albers 投影 → DP 简化 → 注入工具 HTML 标记块，支持 `--check`） | 省界数据源更新时（低频） |
 | [`gen_world_map.py`](gen_world_map.py) | 生成 `map-world` 工具的真实海陆数据（下载 world-atlas 国家级 TopoJSON → 解码 → 177 国归洲 → DP 简化 → 注入标记块，支持 `--check`） | 数据源更新时（低频） |
 | [`asset_report.py`](asset_report.py) | 静态资源体积审计（`public/` 汇总 + 各工具 HTML 体积排行，只读） | 每批工具完成后 / 发版前 |
+| [`gen_hanzi_pinyin.py`](gen_hanzi_pinyin.py) | 生成 `pinyin-to-words` 的内置拼音字表（GB2312 一级 3755 常用字，源为 mozillazg/pinyin-data，注入工具 HTML 的 `PYW_DICT` 标记块，支持 `--check`） | 拼音字表需要更新时（低频） |
 | [`check_tools_runtime.py`](check_tools_runtime.py) | 工具**运行时**抽检：抽 `<script>` 块跑 `node --check` + 无头 Chrome/Edge 打开 `file://` 抓 DOM / 截图 / 控制台报错（**非门禁**，无 Node 或浏览器时优雅跳过） | 每批工具交付前 |
 | [`icons/prepare_source.py`](icons/prepare_source.py) | 从 Iconify 提取图标离线源（**唯一联网脚本**） | 改过 `icons.txt` 后（低频） |
 | [`icons/build_sprite.py`](icons/build_sprite.py) | 网站图标 sprite 子集化（离线） | 改过 `icons.txt` 后 |
@@ -30,8 +31,10 @@
 >
 > `icons/prepare_source.py` 是图标链路里**唯一需要联网**的脚本，只在新增图标时手工跑一次
 > （`python scripts/icons/prepare_source.py`），产物入库后构建链完全离线。
-> 此外 `gen_china_map.py` 在本地无 GeoJSON 缓存时也会联网下载（低频，产物内联进工具 HTML）。
-> 它默认不覆盖已有源文件，加 `--force` 才重建，避免误删手工增补的图标。
+> 它是图标链路专用；另有三个**低频联网脚本**在本地无缓存时下载数据，产物一律内联进工具 HTML，
+> 运行时仍然完全离线：`gen_china_map.py`（省界 GeoJSON）、`gen_world_map.py`（海陆 TopoJSON）、
+> `gen_hanzi_pinyin.py`（拼音字表，下载后缓存于 `var/tmp/hanzi-pinyin/`）。
+> 其中 `icons/prepare_source.py` 默认不覆盖已有源文件，加 `--force` 才重建，避免误删手工增补的图标。
 
 ---
 
