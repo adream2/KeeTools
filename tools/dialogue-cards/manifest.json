@@ -1,0 +1,32 @@
+{
+  "id": "dialogue-cards",
+  "title": "情景对话卡 · 任务转盘",
+  "version": "1.1.1",
+  "type": "shell",
+  "description": "购物问路点餐等情景对话卡，逐句揭示角色扮演，任务转盘抽口语任务。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "3-4",
+    "5-6"
+  ],
+  "subjects": [
+    "英语"
+  ],
+  "tags": [
+    "情景对话",
+    "角色扮演",
+    "任务转盘",
+    "口语练习",
+    "英语对话"
+  ],
+  "family": "word-game",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

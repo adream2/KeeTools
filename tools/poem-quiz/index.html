@@ -1,0 +1,2611 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>古诗默写 · 飞花令 — KeeTools 课工具</title>
+<!-- ET-META
+{"id":"poem-quiz","version":"1.0.0"}
+-->
+
+<!-- 共享外壳样式（由 sync_shared.py 注入） -->
+<!-- ET:INLINE name="et-chrome-css" src="ui/et-chrome.css" type="css" -->
+<style>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * et-chrome.css — 工具通用外壳样式（顶栏 / 页脚 / 弹窗 / 按钮 / 主题）
+ *
+ * 共享样式源。改这里，然后跑：python scripts/sync_shared.py
+ * 所有类名带 et- 前缀，避免与工具自身样式冲突。
+ * 依赖：无外部资源；颜色全部为令牌变量。
+ */
+
+/* ============ 设计令牌 ============ */
+:root {
+    --et-accent: #2563eb;
+    --et-accent-weak: rgba(37, 99, 235, .14);
+    --et-bg: #f4f6fb;
+    --et-surface: #ffffff;
+    --et-surface-2: #f8fafc;
+    --et-fg: #0b1220;
+    --et-muted: #64748b;
+    --et-line: rgba(15, 23, 42, .12);
+    --et-line-strong: rgba(15, 23, 42, .22);
+    --et-glass: rgba(255, 255, 255, .85);
+    --et-shadow-md: 0 10px 28px -18px rgba(15, 23, 42, .3);
+    --et-shadow-lg: 0 24px 60px -32px rgba(15, 23, 42, .4);
+    --et-ok: #059669;
+    --et-warn: #d97706;
+    --et-err: #dc2626;
+    --et-radius: 12px;
+    --et-radius-sm: 9px;
+    --et-font: -apple-system, BlinkMacSystemFont, "Segoe UI",
+               "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+               "Noto Sans SC", sans-serif;
+    --et-mono: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace;
+}
+
+html[data-et-theme="dark"] {
+    --et-bg: #0b1120;
+    --et-surface: #111a2e;
+    --et-surface-2: #0f1729;
+    --et-fg: #f1f5f9;
+    --et-muted: #94a3b8;
+    --et-line: rgba(148, 163, 184, .18);
+    --et-line-strong: rgba(148, 163, 184, .3);
+    --et-glass: rgba(17, 26, 46, .85);
+    --et-shadow-md: 0 10px 34px -18px rgba(0, 0, 0, .8);
+    --et-shadow-lg: 0 24px 70px -30px rgba(0, 0, 0, .9);
+    --et-ok: #34d399;
+    --et-warn: #fbbf24;
+    --et-err: #f87171;
+}
+
+/* ============ 基础 ============ */
+
+/* body 作为外壳时必须清掉浏览器默认 8px 外边距，
+   否则 iframe 预览中文档会比视口高 16px（底部白边 + 多余滚动） */
+body.et-app {
+    margin: 0;
+}
+
+.et-app {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    background: var(--et-bg);
+    color: var(--et-fg);
+    font-family: var(--et-font);
+    -webkit-font-smoothing: antialiased;
+    transition: background .25s, color .25s;
+}
+
+/* 极光背景：径向渐变 + 呼吸动画（edupick 品质基线，老内核也不掉帧） */
+.et-app::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(46% 40% at 20% 18%, var(--et-accent-weak), transparent 65%),
+        radial-gradient(42% 38% at 82% 24%, var(--et-accent-weak), transparent 70%),
+        radial-gradient(50% 44% at 55% 95%, rgba(16, 185, 129, .10), transparent 65%);
+    animation: et-aurora 16s ease-in-out infinite alternate;
+}
+
+@keyframes et-aurora {
+    from { opacity: .55; transform: scale(1); }
+    to { opacity: 1; transform: scale(1.06); }
+}
+
+.et-app *,
+.et-app *::before,
+.et-app *::after { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+.et-icon {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex: none;
+}
+
+/* ============ 顶栏 ============ */
+.et-topbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 20px;
+    border-bottom: 1px solid var(--et-line);
+    background: var(--et-glass);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    z-index: 20;
+}
+
+.et-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.et-brand__dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--et-accent);
+    box-shadow: 0 0 0 4px var(--et-accent-weak);
+    flex: none;
+}
+
+.et-brand__name {
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: -.01em;
+    white-space: nowrap;
+}
+
+.et-brand__sub {
+    font-size: 12.5px;
+    color: var(--et-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.et-status {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    color: var(--et-muted);
+    background: var(--et-surface-2);
+    border: 1px solid var(--et-line);
+    white-space: nowrap;
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.et-status__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--et-ok);
+    flex: none;
+    transition: background .2s;
+}
+
+.et-status[data-tone="err"] .et-status__dot { background: var(--et-err); }
+.et-status[data-tone="warn"] .et-status__dot { background: var(--et-warn); }
+
+.et-actions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.et-icon-btn {
+    display: inline-grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
+    line-height: 1;
+    border-radius: 11px;
+    border: 1px solid var(--et-line);
+    background: var(--et-surface-2);
+    color: var(--et-fg);
+    cursor: pointer;
+    transition: transform .14s, border-color .14s, color .14s, opacity .14s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.et-icon-btn:hover {
+    border-color: var(--et-accent);
+    color: var(--et-accent);
+    transform: translateY(-1px);
+}
+
+.et-icon-btn:active { transform: translateY(0); }
+.et-icon-btn.is-off { opacity: .4; }
+.et-icon-btn:focus-visible { outline: 2px solid var(--et-accent); outline-offset: 2px; }
+
+/* ============ 主区默认 ============ */
+.et-main {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: auto;
+}
+
+/* ============ 页脚（品牌回流 L2） ============ */
+.et-footer {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 16px;
+    font-size: 12px;
+    color: var(--et-muted);
+    border-top: 1px solid var(--et-line);
+    background: var(--et-glass);
+    user-select: none;
+    z-index: 20;
+}
+
+.et-footer a {
+    color: inherit;
+    text-decoration: none;
+    transition: color .14s;
+}
+
+.et-footer a:hover { color: var(--et-accent); }
+
+/* ============ 按钮 ============ */
+.et-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 16px;
+    border-radius: 11px;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    border: 1px solid var(--et-line);
+    background: var(--et-surface-2);
+    color: var(--et-fg);
+    cursor: pointer;
+    transition: transform .14s, border-color .14s, color .14s, background .14s, box-shadow .14s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.et-btn:hover {
+    border-color: var(--et-accent);
+    color: var(--et-accent);
+    transform: translateY(-1px);
+}
+
+.et-btn:active { transform: translateY(0); }
+.et-btn:focus-visible { outline: 2px solid var(--et-accent); outline-offset: 2px; }
+.et-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+.et-btn--primary {
+    background: var(--et-accent);
+    border-color: var(--et-accent);
+    color: #fff;
+    box-shadow: 0 6px 18px -8px var(--et-accent);
+}
+
+.et-btn--primary:hover { color: #fff; filter: brightness(1.08); }
+.et-btn--primary:disabled { filter: none; }
+
+.et-btn--danger:hover {
+    border-color: var(--et-err);
+    color: var(--et-err);
+}
+
+.et-btn--lg {
+    padding: 13px 26px;
+    font-size: 16px;
+    border-radius: 14px;
+}
+
+/* ============ 弹窗 ============ */
+.et-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(2, 6, 23, .55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: et-fade .18s ease;
+}
+
+.et-modal__panel {
+    width: min(680px, 94vw);
+    max-height: 86vh;
+    max-height: 86dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--et-surface);
+    border: 1px solid var(--et-line);
+    border-radius: 16px;
+    box-shadow: var(--et-shadow-lg);
+    animation: et-pop .2s cubic-bezier(.34, 1.4, .64, 1);
+    overflow: hidden;
+}
+
+.et-modal__panel--narrow { width: min(460px, 92vw); }
+.et-modal__panel--wide { width: min(900px, 94vw); }
+
+.et-modal__head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--et-line);
+    font-weight: 800;
+    font-size: 15px;
+}
+
+.et-modal__head .et-icon-btn {
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+}
+
+.et-modal__body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 18px 20px;
+}
+
+.et-modal__foot {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--et-line);
+    background: var(--et-surface-2);
+}
+
+.et-modal__foot .spacer { flex: 1; }
+
+@keyframes et-fade {
+    from { opacity: 0; }
+}
+
+@keyframes et-pop {
+    from { opacity: 0; transform: translateY(14px) scale(.97); }
+}
+
+/* ============ 轻提示（toast） ============ */
+.et-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 56px;
+    transform: translateX(-50%) translateY(10px);
+    z-index: 120;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    max-width: min(520px, 88vw);
+    padding: 11px 18px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #fff;
+    background: rgba(15, 23, 42, .92);
+    border: 1px solid rgba(148, 163, 184, .25);
+    box-shadow: var(--et-shadow-lg);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .22s, transform .22s;
+}
+
+.et-toast.is-show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.et-toast[data-tone="ok"] { background: rgba(5, 150, 105, .95); }
+.et-toast[data-tone="err"] { background: rgba(220, 38, 38, .95); }
+.et-toast[data-tone="warn"] { background: rgba(217, 119, 6, .95); }
+
+/* ============ 设置抽屉（右上角入口，edupick 交互） ============ */
+.et-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: rgba(2, 6, 23, .45);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    opacity: 0;
+    transition: opacity .2s;
+}
+
+.et-drawer-backdrop.is-open { opacity: 1; }
+
+.et-drawer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: min(400px, 92vw);
+    display: flex;
+    flex-direction: column;
+    background: var(--et-surface);
+    border-left: 1px solid var(--et-line);
+    box-shadow: var(--et-shadow-lg);
+    transform: translateX(100%);
+    transition: transform .22s cubic-bezier(.32, .72, .35, 1);
+}
+
+.et-drawer-backdrop.is-open .et-drawer { transform: translateX(0); }
+
+.et-drawer__head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 18px;
+    border-bottom: 1px solid var(--et-line);
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--et-accent);
+}
+
+.et-drawer__head .et-icon-btn {
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+}
+
+.et-drawer__body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 16px 18px 24px;
+}
+
+/* 抽屉内容通用小节（工具复用） */
+.et-drawer__body h4 {
+    margin: 18px 0 8px;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--et-muted);
+}
+
+.et-drawer__body h4:first-child { margin-top: 0; }
+
+.et-drawer__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.et-drawer__tip {
+    margin: 8px 0 0;
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--et-muted);
+}
+
+.et-drawer__tip b { color: var(--et-fg); }
+
+.et-drawer__input {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 12px;
+    border: 1px solid var(--et-line-strong);
+    border-radius: 9px;
+    background: var(--et-surface-2);
+    color: var(--et-fg);
+    font: inherit;
+    font-size: 13.5px;
+    transition: border-color .14s, box-shadow .14s;
+}
+
+.et-drawer__input:focus {
+    outline: none;
+    border-color: var(--et-accent);
+    box-shadow: 0 0 0 3px var(--et-accent-weak);
+}
+
+.et-drawer__switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--et-line);
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--et-fg);
+    cursor: pointer;
+    user-select: none;
+}
+
+.et-drawer__switch input {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--et-accent);
+    cursor: pointer;
+}
+</style>
+<!-- /ET:INLINE -->
+
+<style>
+/* ── 工具自身样式：自包含，不引用任何外部资源 ── */
+:root {
+    --pq-accent: #dc2626;
+    --pq-paper: #ffffff;
+    --pq-ink: #111827;
+    --pq-ink-muted: #4b5563;
+    --pq-line: #cbd5e1;
+    --pq-blank: #94a3b8;
+    --pq-answer: #b91c1c;
+    --pq-hit: #fde68a;
+}
+
+.pq-main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ── 屏幕控制条（打印时隐藏） ── */
+.pq-bar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--et-line);
+    background: var(--et-surface-2);
+}
+
+.pq-seg {
+    display: flex;
+    border: 1px solid var(--et-line-strong);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--et-surface);
+}
+
+.pq-seg button {
+    appearance: none;
+    -webkit-appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--et-fg);
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    padding: 9px 14px;
+    cursor: pointer;
+    transition: background .14s, color .14s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.pq-seg button + button { border-left: 1px solid var(--et-line); }
+.pq-seg button:hover { background: var(--et-accent-weak); }
+.pq-seg button.is-on { background: var(--pq-accent); color: #fff; }
+
+.pq-sel, .pq-input {
+    font: inherit;
+    font-size: 13px;
+    padding: 8px 10px;
+    border: 1px solid var(--et-line-strong);
+    border-radius: 9px;
+    background: var(--et-surface);
+    color: var(--et-fg);
+}
+
+.pq-input { width: 5.5em; text-align: center; font-size: 16px; font-weight: 700; }
+
+.pq-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.pq-chip {
+    appearance: none;
+    -webkit-appearance: none;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--et-line-strong);
+    border-radius: 8px;
+    background: var(--et-surface);
+    color: var(--et-fg);
+    cursor: pointer;
+}
+
+.pq-chip:hover { background: var(--pq-accent); color: #fff; border-color: var(--pq-accent); }
+
+.pq-ctl {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.pq-ctl[hidden] { display: none; }
+
+.pq-bar [hidden] { display: none !important; }
+
+.pq-stat {
+    font-size: 13px;
+    color: var(--et-muted);
+    white-space: nowrap;
+}
+
+.pq-spacer { flex: 1; }
+
+/* ── 预览区 ── */
+.pq-preview {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    padding: 18px;
+    background: #e9edf5;
+}
+
+html[data-et-theme="dark"] .pq-preview { background: #070c17; }
+
+/* ── A4 纸面 ── */
+.pq-page {
+    flex: none;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 14mm 14mm 12mm;
+    background: var(--pq-paper);
+    color: var(--pq-ink);
+    border-radius: 4px;
+    box-shadow: 0 18px 44px -26px rgba(15, 23, 42, .6);
+    display: flex;
+    flex-direction: column;
+}
+
+.pq-head { flex: none; text-align: center; }
+
+.pq-title {
+    font-size: 17pt;
+    font-weight: 800;
+    letter-spacing: .06em;
+}
+
+.pq-sub {
+    margin-top: 1mm;
+    font-size: 10pt;
+    color: var(--pq-ink-muted);
+}
+
+.pq-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 2.5mm;
+    padding-bottom: 1.2mm;
+    border-bottom: 1.2pt solid var(--pq-ink);
+    font-size: 10.5pt;
+    font-weight: 600;
+}
+
+/* ── 默写模式 ── */
+.pq-poem { flex: 1; min-height: 0; margin-top: 8mm; }
+
+.pq-poem-title {
+    text-align: center;
+    font-size: 20pt;
+    font-weight: 800;
+    letter-spacing: .1em;
+}
+
+.pq-poem-author {
+    margin-top: 2mm;
+    text-align: center;
+    font-size: 12pt;
+    color: var(--pq-ink-muted);
+}
+
+.pq-lines { margin-top: 8mm; text-align: center; }
+
+.pq-line {
+    font-size: 19pt;
+    font-weight: 600;
+    line-height: 2.1;
+    letter-spacing: .06em;
+}
+
+.pq-line + .pq-line { letter-spacing: .06em; }
+
+.pq-blank {
+    display: inline-block;
+    min-width: 1.05em;
+    margin: 0 .06em;
+    border-bottom: 1.6pt solid var(--pq-blank);
+    vertical-align: -.12em;
+    color: transparent;
+}
+
+.pq-blank.is-shown {
+    color: var(--pq-answer);
+    border-bottom-color: transparent;
+    font-weight: 800;
+}
+
+.pq-hint { color: var(--pq-ink-muted); }
+
+/* ── 飞花令 ── */
+.pq-fh-title {
+    margin-top: 6mm;
+    text-align: center;
+    font-size: 15pt;
+    font-weight: 800;
+}
+
+.pq-fh-count {
+    margin-top: 2mm;
+    text-align: center;
+    font-size: 11pt;
+    color: var(--pq-ink-muted);
+}
+
+.pq-fh-list { margin-top: 6mm; }
+
+.pq-fh-item {
+    padding: 2.4mm 0;
+    border-bottom: 1px dashed var(--pq-line);
+    font-size: 14pt;
+    line-height: 1.7;
+}
+
+.pq-fh-src {
+    font-size: 10.5pt;
+    color: var(--pq-ink-muted);
+    font-weight: 600;
+    margin-right: 2mm;
+}
+
+.pq-fh-hit {
+    background: var(--pq-hit);
+    padding: 0 .06em;
+    border-radius: 2px;
+    font-weight: 800;
+}
+
+.pq-empty {
+    margin-top: 20mm;
+    text-align: center;
+    color: var(--pq-ink-muted);
+    font-size: 12pt;
+    line-height: 2;
+}
+
+/* ── 接句抢答 ── */
+.pq-say { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; }
+
+.pq-say-src {
+    text-align: center;
+    font-size: 12pt;
+    color: var(--pq-ink-muted);
+    font-weight: 700;
+}
+
+.pq-say-line {
+    margin-top: 6mm;
+    text-align: center;
+    font-size: 30pt;
+    font-weight: 700;
+    line-height: 1.6;
+    letter-spacing: .06em;
+}
+
+.pq-say-next {
+    margin-top: 10mm;
+    text-align: center;
+    font-size: 26pt;
+    font-weight: 700;
+    line-height: 1.6;
+    letter-spacing: .06em;
+    color: var(--pq-answer);
+    min-height: 1.6em;
+    border-top: 2px dashed var(--pq-line);
+    padding-top: 6mm;
+}
+
+.pq-say-next.is-hidden { color: transparent; }
+
+.pq-timer {
+    margin-top: 8mm;
+    text-align: center;
+    font-size: 34pt;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .04em;
+}
+
+.pq-timer.is-over { color: var(--pq-answer); }
+
+.pq-tip {
+    margin-top: auto;
+    padding-top: 3mm;
+    text-align: center;
+    font-size: 10pt;
+    color: var(--pq-ink-muted);
+}
+
+/* ── 打印：只输出纸面 ── */
+@page {
+    size: A4 portrait;
+    margin: 0;
+}
+
+@media print {
+    html,
+    body.et-app {
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
+        background: #fff !important;
+        color: #000 !important;
+    }
+
+    .et-app::before { display: none !important; }
+
+    .et-topbar,
+    .et-footer,
+    .pq-bar { display: none !important; }
+
+    .et-main {
+        display: block !important;
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+    }
+
+    .pq-preview {
+        display: block !important;
+        overflow: visible !important;
+        gap: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+
+    .pq-page {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0;
+        padding: 14mm 14mm 12mm;
+        border-radius: 0;
+        box-shadow: none;
+        break-after: page;
+        page-break-after: always;
+    }
+
+    .pq-page:last-child {
+        break-after: auto;
+        page-break-after: auto;
+    }
+}
+</style>
+</head>
+<body class="et-app">
+
+<header id="et-topbar"></header>
+
+<main id="et-main" class="pq-main">
+    <div class="pq-bar">
+        <div class="pq-seg" id="modeSeg">
+            <button type="button" data-mode="fill" class="is-on">填空默写</button>
+            <button type="button" data-mode="feihua">飞花令</button>
+            <button type="button" data-mode="say">接句抢答</button>
+        </div>
+        <span class="pq-ctl" id="fillCtl">
+            <select class="pq-sel" id="blankSel" title="挖空方式">
+                <option value="chars">挖字填空</option>
+                <option value="half">每句后半挖空</option>
+                <option value="line">整句挖空</option>
+            </select>
+            <button class="et-btn" id="btnReshuffle" type="button">
+                <svg class="et-icon"><use href="#i-shuffle"></use></svg>
+                <span>重新挖空</span>
+            </button>
+            <button class="et-btn" id="btnPrev" type="button" title="上一篇">
+                <svg class="et-icon"><use href="#i-chevron-left"></use></svg>
+            </button>
+            <button class="et-btn" id="btnNext" type="button" title="下一篇">
+                <svg class="et-icon"><use href="#i-chevron-right"></use></svg>
+            </button>
+            <button class="et-btn" id="btnRandom" type="button">
+                <svg class="et-icon"><use href="#i-dice"></use></svg>
+                <span>随机一篇</span>
+            </button>
+        </span>
+        <span class="pq-ctl" id="feihuaCtl" hidden>
+            <input class="pq-input" id="fhInput" maxlength="2" value="月" title="飞花令：输入一个字">
+        </span>
+        <span class="pq-ctl" id="sayCtl" hidden>
+            <button class="et-btn" id="btnSayNext" type="button">
+                <svg class="et-icon"><use href="#i-eye"></use></svg>
+                <span>显示下句</span>
+            </button>
+            <button class="et-btn" id="btnSayNew" type="button">
+                <svg class="et-icon"><use href="#i-refresh"></use></svg>
+                <span>换一句</span>
+            </button>
+            <button class="et-btn" id="btnSayTimer" type="button">
+                <svg class="et-icon"><use href="#i-timer"></use></svg>
+                <span>30 秒抢答</span>
+            </button>
+        </span>
+        <span class="pq-stat" id="stat"></span>
+        <span class="pq-spacer"></span>
+        <button class="et-btn" id="btnAnswer" type="button">
+            <svg class="et-icon"><use href="#i-eye"></use></svg>
+            <span>显示答案</span>
+        </button>
+        <button class="et-btn et-btn--primary" id="btnPrint" type="button">
+            <svg class="et-icon"><use href="#i-download"></use></svg>
+            <span>打印</span>
+        </button>
+    </div>
+
+    <div class="pq-preview" id="preview"></div>
+</main>
+
+<footer id="et-footer"></footer>
+
+<!-- 图标集合（由 sync_shared.py 注入） -->
+<!-- ET:INLINE name="icons" src="icons/icons.svg" type="svg" -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <!--
+    工具用图标 symbol 集合（内联源，独立于网站 sprite）。
+
+    来源：Lucide (ISC License) 子集，手工挑选内联。
+    颜色统一 currentColor；描边样式由工具 CSS 的 .et-icon 控制：
+      .et-icon { fill:none; stroke:currentColor; stroke-width:2;
+                 stroke-linecap:round; stroke-linejoin:round; }
+
+    工具内用法：
+      <svg class="et-icon"><use href="#i-play"></use></svg>
+  -->
+
+  <symbol id="i-maximize" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
+  <symbol id="i-minimize" viewBox="0 0 24 24"><path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></symbol>
+  <symbol id="i-volume" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></symbol>
+  <symbol id="i-volume-off" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></symbol>
+  <symbol id="i-rotate" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></symbol>
+  <symbol id="i-dice" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none"/><circle cx="16" cy="8" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="8" cy="16" r="1.2" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.2" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+  <symbol id="i-timer" viewBox="0 0 24 24"><line x1="10" y1="2" x2="14" y2="2"/><line x1="12" y1="14" x2="15" y2="11"/><circle cx="12" cy="14" r="8"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z"/></symbol>
+  <symbol id="i-chevron-left" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><polyline points="12 7 12 12 15 15"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+  <symbol id="i-crown" viewBox="0 0 24 24"><path d="M2 18h20l-2-11-5 4-3-7-3 7-5-4-2 11z"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+  <symbol id="i-shuffle" viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-award" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
+  <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="10"/><line x1="10" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="14" y2="10"/><line x1="18" y1="10" x2="18" y2="10"/><line x1="7" y1="14" x2="17" y2="14"/></symbol>
+</svg>
+<!-- /ET:INLINE -->
+
+<!-- 共享逻辑（由 sync_shared.py 注入） -->
+<!-- ET:INLINE name="et-util" src="logic/et-util.js" -->
+<script>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * et-util.js — 工具通用小工具函数
+ *
+ * 共享逻辑源。改这里，然后跑：python scripts/sync_shared.py
+ * 禁止手工编辑工具 HTML 内 ET:INLINE 之间的内容。
+ *
+ * 兼容性：ES5，Win7 + 老版 Chrome / 360 可运行。
+ * 依赖：无。
+ * 全局：挂载 window.ET（单一命名空间，不污染其他全局）
+ */
+(function (global) {
+    'use strict';
+
+    var ET = global.ET || {};
+
+    /** 按 id 取元素 */
+    ET.el = function (id) {
+        return document.getElementById(id);
+    };
+
+    /** 按选择器取首个元素 */
+    ET.qs = function (selector, root) {
+        return (root || document).querySelector(selector);
+    };
+
+    /** 按选择器取全部元素，返回真数组 */
+    ET.qsa = function (selector, root) {
+        var list = (root || document).querySelectorAll(selector);
+        var out = [];
+        for (var i = 0; i < list.length; i++) {
+            out.push(list[i]);
+        }
+        return out;
+    };
+
+    /** 创建元素 */
+    ET.create = function (tag, className, text) {
+        var node = document.createElement(tag);
+        if (className) {
+            node.className = className;
+        }
+        if (text !== undefined && text !== null) {
+            node.textContent = String(text);
+        }
+        return node;
+    };
+
+    /** HTML 转义（用于把用户数据放进 HTML 字符串时） */
+    ET.escapeHtml = function (value) {
+        return String(value === undefined || value === null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    };
+
+    /** 触发自定义事件（老浏览器用 createEvent 降级） */
+    ET.emit = function (target, name, detail) {
+        var event;
+        if (typeof global.CustomEvent === 'function') {
+            event = new global.CustomEvent(name, { detail: detail });
+        } else {
+            event = document.createEvent('CustomEvent');
+            event.initCustomEvent(name, false, false, detail);
+        }
+        target.dispatchEvent(event);
+    };
+
+    /**
+     * localStorage 读写（带前缀与异常兜底）
+     * 前缀规范：et_{toolId}_
+     */
+    ET.store = function (toolId) {
+        var prefix = 'et_' + toolId + '_';
+
+        function available() {
+            try {
+                var probe = prefix + '__probe__';
+                global.localStorage.setItem(probe, '1');
+                global.localStorage.removeItem(probe);
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+
+        var ok = available();
+
+        return {
+            /** 读取，解析失败返回 fallback */
+            get: function (key, fallback) {
+                if (!ok) {
+                    return fallback;
+                }
+                try {
+                    var raw = global.localStorage.getItem(prefix + key);
+                    if (raw === null) {
+                        return fallback;
+                    }
+                    return JSON.parse(raw);
+                } catch (err) {
+                    return fallback;
+                }
+            },
+            /** 写入，失败静默（隐私模式 / 配额满） */
+            set: function (key, value) {
+                if (!ok) {
+                    return false;
+                }
+                try {
+                    global.localStorage.setItem(prefix + key, JSON.stringify(value));
+                    return true;
+                } catch (err) {
+                    return false;
+                }
+            },
+            /** 删除 */
+            remove: function (key) {
+                if (!ok) {
+                    return;
+                }
+                try {
+                    global.localStorage.removeItem(prefix + key);
+                } catch (err) {
+                    /* 静默 */
+                }
+            }
+        };
+    };
+
+    /** DOM 就绪回调（脚本在 head 内也能安全调用） */
+    ET.ready = function (callback) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', callback);
+        } else {
+            callback();
+        }
+    };
+
+    global.ET = ET;
+})(window);
+</script>
+<!-- /ET:INLINE -->
+
+<!-- ET:INLINE name="et-chrome" src="ui/et-chrome.js" -->
+<script>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * et-chrome.js — 工具通用外壳（顶栏 / 页脚 / 主题 / 全屏 / 音效 / 设置抽屉 / 帮助 / PWA）
+ *
+ * 共享逻辑源。改这里，然后跑：python scripts/sync_shared.py
+ * 依赖：et-util.js（ET.store）
+ * 兼容性：现代浏览器优先（Chrome 90+），无外部依赖。
+ * 全局：ET.Chrome
+ *
+ * 工具 HTML 约定的骨架：
+ *   <body class="et-app">
+ *     <header id="et-topbar"></header>
+ *     <main id="et-main">…工具内容…</main>
+ *     <footer id="et-footer"></footer>
+ *   </body>
+ *
+ * 用法：
+ *   var chrome = ET.Chrome.mount({
+ *     toolId: 'random-name-classic',
+ *     title: '随机点名器',
+ *     sub: '导入名单 · 课堂互动',
+ *     accent: '#e11d48',          // 可选，主题色
+ *     status: '就绪',              // 可选，初始状态
+ *     sound: true,                 // 可选，显示音效开关
+ *     help: '<div>…帮助内容…</div>', // 可选
+ *     settings: {                  // 可选，右上角「设置」抽屉（edupick 交互）
+ *       title: '名单 / 设置',
+ *       build: function (body, api) { … }  // 每次打开重建内容
+ *     },
+ *     actions: [{icon:'i-dice', label:'抽一个', onClick: fn}] // 可选
+ *   });
+ *
+ * iframe 全屏委托：工具在 iframe 内运行时，全屏按钮向父窗口发送
+ * {type:'et-fullscreen-toggle'}，由宿主页面统一 fullscreen（避免双层全屏）；
+ * 宿主应回传 {type:'et-fullscreen-change', value:bool} 同步按钮图标。
+ *
+ * 站点回流（postMessage 协议）：
+ *   工具加载后向父窗口发送 {type:'et-hello', toolId}；
+ *   宿主页面可回复 {type:'et-origin', origin:'https://…'}，
+ *   工具据此渲染页脚官网链接。也可直接提供 window.ET_SITE_ORIGIN。
+ *   收不到任何来源时页脚只显示纯文本（离线可用，必须有默认值）。
+ */
+(function (global) {
+    'use strict';
+
+    var NS_SVG = 'http://www.w3.org/2000/svg'; /* et-allow-external SVG 命名空间 */
+    var NS_XLINK = 'http://www.w3.org/1999/xlink'; /* et-allow-external SVG 命名空间 */
+
+    /* ---------- 内部工具 ---------- */
+
+    function makeIcon(id, cls) {
+        var svg = document.createElementNS(NS_SVG, 'svg');
+        svg.setAttribute('class', cls || 'et-icon');
+        var use = document.createElementNS(NS_SVG, 'use');
+        use.setAttribute('href', '#' + id);
+        use.setAttributeNS(NS_XLINK, 'xlink:href', '#' + id);
+        svg.appendChild(use);
+        return svg;
+    }
+
+    function makeBtn(icon, title, onClick) {
+        var b = document.createElement('button');
+        b.className = 'et-icon-btn';
+        b.type = 'button';
+        b.title = title;
+        b.setAttribute('aria-label', title);
+        b.appendChild(makeIcon(icon));
+        if (onClick) { b.addEventListener('click', onClick); }
+        return b;
+    }
+
+    function el(tag, cls, text) {
+        var node = document.createElement(tag);
+        if (cls) { node.className = cls; }
+        if (text !== undefined && text !== null) { node.textContent = text; }
+        return node;
+    }
+
+    /* ---------- 音效（WebAudio，无音频文件，音量按教室大屏调校） ---------- */
+
+    var audioCtx = null;
+
+    function ensureCtx() {
+        if (!audioCtx) {
+            var AC = global.AudioContext || global.webkitAudioContext;
+            if (!AC) { return null; }
+            try { audioCtx = new AC(); } catch (err) { return null; }
+        }
+        if (audioCtx.state === 'suspended') {
+            try { audioCtx.resume(); } catch (err) { /* 忽略 */ }
+        }
+        return audioCtx;
+    }
+
+    var MASTER_GAIN = 0.5; /* 整体音量层（教室设备音量 100% 也要听得清） */
+
+    function tone(ctx, freq, start, dur, gainPeak, type) {
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = type || 'triangle';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(gainPeak, start + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + dur + 0.05);
+    }
+
+    var BEEPS = {
+        tick: [[880, 0, 0.06, 0.42]],
+        ok: [[660, 0, 0.1, 0.46], [880, 0.1, 0.14, 0.46]],
+        win: [[523.25, 0, 0.16, 0.5], [659.25, 0.12, 0.16, 0.5], [783.99, 0.24, 0.16, 0.5], [1046.5, 0.36, 0.34, 0.52]],
+        err: [[220, 0, 0.22, 0.46, 'square']],
+        over: [[880, 0, 0.18, 0.5], [659.25, 0.2, 0.18, 0.5], [523.25, 0.4, 0.36, 0.5]]
+    };
+
+    function playBeep(kind) {
+        var ctx = ensureCtx();
+        if (!ctx || !BEEPS[kind]) { return; }
+        var seq = BEEPS[kind];
+        var t0 = ctx.currentTime + 0.01;
+        for (var i = 0; i < seq.length; i++) {
+            tone(ctx, seq[i][0], t0 + seq[i][1], seq[i][2], seq[i][3] * MASTER_GAIN, seq[i][4]);
+        }
+    }
+
+    /* ---------- 设置抽屉 ---------- */
+
+    function openDrawer(title, build) {
+        var backdrop = el('div', 'et-drawer-backdrop');
+        var drawer = el('aside', 'et-drawer');
+        drawer.setAttribute('role', 'dialog');
+        drawer.setAttribute('aria-label', title);
+
+        var head = el('div', 'et-drawer__head');
+        head.appendChild(makeIcon('i-sliders'));
+        head.appendChild(el('span', 'et-drawer__title', title));
+        head.appendChild(makeBtn('i-x', '关闭', close));
+        drawer.appendChild(head);
+
+        var body = el('div', 'et-drawer__body');
+        drawer.appendChild(body);
+
+        backdrop.appendChild(drawer);
+        document.body.appendChild(backdrop);
+        requestAnimationFrame(function () { backdrop.classList.add('is-open'); });
+
+        function close() {
+            backdrop.classList.remove('is-open');
+            document.removeEventListener('keydown', onKey);
+            setTimeout(function () {
+                if (backdrop.parentNode) { backdrop.parentNode.removeChild(backdrop); }
+            }, 220);
+        }
+        function onKey(ev) {
+            if (ev.key === 'Escape') { ev.stopPropagation(); close(); }
+        }
+        document.addEventListener('keydown', onKey);
+        backdrop.addEventListener('mousedown', function (ev) {
+            if (ev.target === backdrop) { close(); }
+        });
+
+        if (typeof build === 'function') {
+            /* 兼容两种约定：build 自己往 body 里塞内容，或 return 一个元素节点 */
+            var ret = build(body, { close: close });
+            if (ret && ret.nodeType === 1 && ret.parentNode !== body) {
+                body.appendChild(ret);
+            }
+        }
+        return { body: body, close: close };
+    }
+
+    /* ---------- 通用弹窗 / toast（同时挂模块级，供其他共享组件使用） ---------- */
+
+    function modal(mo) {
+        var backdrop = el('div', 'et-modal');
+        var panel = el('div', 'et-modal__panel' + (mo.size === 'narrow' ? ' et-modal__panel--narrow'
+            : mo.size === 'wide' ? ' et-modal__panel--wide' : ''));
+        var head = el('div', 'et-modal__head');
+        if (mo.icon) { head.appendChild(makeIcon(mo.icon)); }
+        head.appendChild(el('span', null, mo.title || ''));
+        head.appendChild(makeBtn('i-x', '关闭', close));
+        panel.appendChild(head);
+
+        var body = el('div', 'et-modal__body');
+        if (typeof mo.body === 'string') { body.innerHTML = mo.body; }
+        else if (mo.body) { body.appendChild(mo.body); }
+        panel.appendChild(body);
+
+        var foot = null;
+        if (mo.buttons && mo.buttons.length) {
+            foot = el('div', 'et-modal__foot');
+            foot.appendChild(el('span', 'spacer'));
+            mo.buttons.forEach(function (b) {
+                var btn = el('button', 'et-btn' + (b.primary ? ' et-btn--primary' : '') + (b.danger ? ' et-btn--danger' : ''), b.label);
+                btn.type = 'button';
+                btn.addEventListener('click', function () {
+                    if (b.onClick) { b.onClick(close); } else { close(); }
+                });
+                foot.appendChild(btn);
+            });
+            panel.appendChild(foot);
+        }
+
+        backdrop.appendChild(panel);
+        document.body.appendChild(backdrop);
+
+        function close() {
+            if (backdrop.parentNode) { backdrop.parentNode.removeChild(backdrop); }
+            document.removeEventListener('keydown', onKey);
+            if (mo.onClose) { mo.onClose(); }
+        }
+        function onKey(ev) {
+            if (ev.key === 'Escape') { ev.stopPropagation(); close(); }
+        }
+        document.addEventListener('keydown', onKey);
+        backdrop.addEventListener('mousedown', function (ev) {
+            if (ev.target === backdrop) { close(); }
+        });
+
+        return { panel: panel, body: body, foot: foot, close: close };
+    }
+
+    var toastEl = null;
+    var toastTimer = 0;
+
+    function toast(msg, tone) {
+        if (!toastEl) {
+            toastEl = el('div', 'et-toast');
+            document.body.appendChild(toastEl);
+        }
+        toastEl.textContent = msg;
+        toastEl.setAttribute('data-tone', tone || '');
+        void toastEl.offsetWidth;
+        toastEl.classList.add('is-show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toastEl.classList.remove('is-show'); }, 2200);
+    }
+
+    /* ---------- PWA 元数据（blob manifest，环境不支持时静默跳过） ---------- */
+
+    function installPwa(toolId, title, accent) {
+        try {
+            var theme = document.querySelector('meta[name="theme-color"]');
+            if (!theme) {
+                theme = document.createElement('meta');
+                theme.setAttribute('name', 'theme-color');
+                document.head.appendChild(theme);
+            }
+            theme.setAttribute('content', accent || '#2563eb');
+
+            var svg = '<svg xmlns="' + NS_SVG + '" viewBox="0 0 64 64">' +
+                '<rect width="64" height="64" rx="14" fill="' + (accent || '#2563eb') + '"/>' +
+                '<text x="32" y="43" font-size="32" font-weight="800" font-family="sans-serif" ' +
+                'fill="#fff" text-anchor="middle">' + (title || '课').charAt(0) + '</text></svg>';
+            var iconUri = 'data:image/svg+xml,' + encodeURIComponent(svg);
+
+            var mf = {
+                name: title || 'KeeTools 课工具',
+                short_name: title || '课工具',
+                start_url: '.',
+                display: 'standalone',
+                background_color: '#f4f6fb',
+                theme_color: accent || '#2563eb',
+                icons: [{ src: iconUri, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }]
+            };
+            var blob = new Blob([JSON.stringify(mf)], { type: 'application/manifest+json' });
+            var link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = URL.createObjectURL(blob);
+            document.head.appendChild(link);
+        } catch (err) { /* 不支持 PWA 元数据的环境静默跳过 */ }
+    }
+
+    /* ---------- 挂载 ---------- */
+
+    function mount(options) {
+        var opt = options || {};
+        var toolId = opt.toolId || 'unknown-tool';
+        var store = global.ET && global.ET.store
+            ? global.ET.store(toolId)
+            : (function () { return { get: function () { return null; }, set: function () {} }; })();
+
+        var api = { toolId: toolId, store: store };
+        var soundEnabled = store.get('sound', true) !== false;
+
+        /* 主题色 */
+        if (opt.accent) {
+            document.documentElement.style.setProperty('--et-accent', opt.accent);
+        }
+
+        installPwa(toolId, opt.title, opt.accent);
+
+        /* ---------- 主题 ---------- */
+        var theme = store.get('theme', null);
+        if (theme !== 'dark' && theme !== 'light') {
+            theme = (global.matchMedia && global.matchMedia('(prefers-color-scheme: dark)').matches)
+                ? 'dark' : 'light';
+        }
+        applyTheme(theme);
+
+        function applyTheme(t) {
+            theme = t;
+            document.documentElement.setAttribute('data-et-theme', t);
+            store.set('theme', t);
+            if (themeBtn) {
+                themeBtn.innerHTML = '';
+                themeBtn.appendChild(makeIcon(t === 'dark' ? 'i-sun' : 'i-moon'));
+                themeBtn.title = t === 'dark' ? '切换到浅色' : '切换到深色';
+            }
+        }
+
+        /* ---------- 顶栏 ---------- */
+        var topbar = document.getElementById('et-topbar');
+        var main = document.getElementById('et-main');
+        var footer = document.getElementById('et-footer');
+
+        if (!topbar) { topbar = el('header'); topbar.id = 'et-topbar'; document.body.insertBefore(topbar, document.body.firstChild); }
+        if (!main) { main = el('main'); main.id = 'et-main'; topbar.after(main); }
+        if (!footer) { footer = el('footer'); footer.id = 'et-footer'; document.body.appendChild(footer); }
+
+        topbar.className = 'et-topbar';
+        main.classList.add('et-main');
+        footer.className = 'et-footer';
+
+        /* 品牌 */
+        var brand = el('div', 'et-brand');
+        brand.appendChild(el('span', 'et-brand__dot'));
+        var nameWrap = el('div');
+        nameWrap.style.cssText = 'min-width:0;line-height:1.25';
+        nameWrap.appendChild(el('div', 'et-brand__name', opt.title || '课工具'));
+        if (opt.sub) { nameWrap.appendChild(el('div', 'et-brand__sub', opt.sub)); }
+        brand.appendChild(nameWrap);
+        topbar.appendChild(brand);
+
+        /* 状态胶囊 */
+        var statusPill = el('div', 'et-status');
+        statusPill.hidden = true;
+        statusPill.appendChild(el('span', 'et-status__dot'));
+        var statusText = el('span', null, '');
+        statusPill.appendChild(statusText);
+        topbar.appendChild(statusPill);
+
+        api.setStatus = function (text, tone) {
+            if (!text) { statusPill.hidden = true; return; }
+            statusText.textContent = text;
+            statusPill.setAttribute('data-tone', tone || 'ok');
+            statusPill.hidden = false;
+        };
+        if (opt.status) { api.setStatus(opt.status); }
+
+        /* 动作区（edupick 交互：右上角聚合设置入口） */
+        var actions = el('div', 'et-actions');
+
+        var settingsBtn = null;
+        if (opt.settings && typeof opt.settings.build === 'function') {
+            settingsBtn = makeBtn('i-sliders', opt.settings.title || '设置', function () {
+                openDrawer(opt.settings.title || '设置', function (body, drawerApi) {
+                    return opt.settings.build(body, { api: api, close: drawerApi.close });
+                });
+            });
+            actions.appendChild(settingsBtn);
+        }
+
+        (opt.actions || []).forEach(function (a) {
+            var b = makeBtn(a.icon, a.label || '', a.onClick);
+            if (a.id) { b.id = a.id; }
+            actions.appendChild(b);
+        });
+
+        var soundBtn = null;
+        if (opt.sound) {
+            soundBtn = makeBtn(soundEnabled ? 'i-volume' : 'i-volume-off',
+                soundEnabled ? '关闭音效' : '开启音效', toggleSound);
+            if (!soundEnabled) { soundBtn.classList.add('is-off'); }
+            actions.appendChild(soundBtn);
+        }
+
+        if (opt.help) {
+            actions.appendChild(makeBtn('i-help', '使用说明', function () { openHelp(); }));
+        }
+
+        var themeBtn = makeBtn('', '切换主题', function () {
+            applyTheme(theme === 'dark' ? 'light' : 'dark');
+        });
+        applyTheme(theme); /* 填充图标 */
+        actions.appendChild(themeBtn);
+
+        /* 全屏按钮始终保留：iframe 内对本工具文档 requestFullscreen
+           （宿主 iframe 已声明 allow="fullscreen"），与宿主「全屏体验」等效同屏。 */
+        var fsBtn = makeBtn('i-maximize', '全屏', toggleFullscreen);
+        actions.appendChild(fsBtn);
+
+        topbar.appendChild(actions);
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            store.set('sound', soundEnabled);
+            soundBtn.innerHTML = '';
+            soundBtn.appendChild(makeIcon(soundEnabled ? 'i-volume' : 'i-volume-off'));
+            soundBtn.title = soundEnabled ? '关闭音效' : '开启音效';
+            soundBtn.classList.toggle('is-off', !soundEnabled);
+            if (soundEnabled) { api.beep('ok'); }
+        }
+
+        api.openSettings = function () {
+            if (settingsBtn) { settingsBtn.click(); }
+        };
+
+        /* ---------- 全屏（iframe 内委托宿主，避免双层全屏） ---------- */
+
+        function inIframe() {
+            try { return global.parent && global.parent !== global; } catch (err) { return true; }
+        }
+
+        function toggleFullscreen() {
+            var root = document.documentElement;
+            var fsEl = document.fullscreenElement || document.webkitFullscreenElement || null;
+            if (fsEl) {
+                (document.exitFullscreen || document.webkitExitFullscreen || function () {}).call(document);
+            } else {
+                var req = root.requestFullscreen || root.webkitRequestFullscreen;
+                if (req) { try { req.call(root); } catch (err) { /* 忽略 */ } }
+            }
+        }
+
+        function syncFsIcon(on) {
+            if (!fsBtn) { return; }
+            fsBtn.innerHTML = '';
+            fsBtn.appendChild(makeIcon(on ? 'i-minimize' : 'i-maximize'));
+            fsBtn.title = on ? '退出全屏' : '全屏';
+        }
+
+        document.addEventListener('fullscreenchange', function () {
+            syncFsIcon(!!(document.fullscreenElement || document.webkitFullscreenElement));
+        });
+        document.addEventListener('webkitfullscreenchange', function () {
+            syncFsIcon(!!(document.fullscreenElement || document.webkitFullscreenElement));
+        });
+        syncFsIcon(false);
+
+        api.toggleFullscreen = toggleFullscreen;
+
+        /* ---------- 音效 API ---------- */
+        api.beep = function (kind) {
+            if (!soundEnabled) { return; }
+            playBeep(kind);
+        };
+        api.soundOn = function () { return soundEnabled; };
+
+        api.modal = modal;
+
+        /* ---------- 帮助 ---------- */
+        function openHelp() {
+            modal({
+                title: '使用说明',
+                icon: 'i-help',
+                size: 'narrow',
+                body: opt.help,
+                buttons: [{ label: '知道了', primary: true }]
+            });
+        }
+        api.openHelp = openHelp;
+
+        /* ---------- toast ---------- */
+        api.toast = toast;
+
+        /* ---------- 页脚（L2 品牌回流，低调一行） ---------- */
+        var siteOrigin = typeof global.ET_SITE_ORIGIN === 'string' && /^https?:\/\//.test(global.ET_SITE_ORIGIN)
+            ? global.ET_SITE_ORIGIN
+            : null;
+
+        function renderFooter() {
+            footer.textContent = '';
+            footer.appendChild(el('span', null, 'KeeTools 课工具'));
+            footer.appendChild(el('span', null, '·'));
+            if (siteOrigin) {
+                var a = el('a', null, '更多课堂工具');
+                a.href = siteOrigin + '/?from=tool-footer&tool=' + encodeURIComponent(toolId);
+                a.target = '_blank';
+                a.rel = 'noopener';
+                footer.appendChild(a);
+            } else {
+                footer.appendChild(el('span', null, '更多课堂工具'));
+            }
+        }
+        renderFooter();
+
+        /* 站点来源发现：iframe 内向父窗口询问；也可由宿主直接注入 ET_SITE_ORIGIN */
+        try {
+            if (global.parent && global.parent !== global) {
+                global.parent.postMessage(JSON.stringify({ type: 'et-hello', toolId: toolId }), '*');
+            }
+        } catch (err) { /* 跨域异常忽略 */ }
+
+        global.addEventListener('message', function (ev) {
+            var data = ev.data;
+            if (typeof data === 'string') {
+                try { data = JSON.parse(data); } catch (err) { return; }
+            }
+            if (!data || typeof data !== 'object') { return; }
+
+            if (data.type === 'et-origin' && typeof data.origin === 'string' && /^https?:\/\//.test(data.origin)) {
+                siteOrigin = data.origin;
+                if (!global.ET_SITE_ORIGIN) { global.ET_SITE_ORIGIN = data.origin; }
+                renderFooter();
+            }
+            if (data.type === 'et-fullscreen-change' && typeof data.value === 'boolean') {
+                syncFsIcon(data.value);
+            }
+        });
+
+        api.el = { topbar: topbar, main: main, footer: footer, actions: actions };
+
+        /* ---------- 激光笔 / 翻页笔适配（HID 翻页键） ----------
+         * 翻页笔的上下页键在系统层等价于 PageDown / PageUp。
+         * 工具通过 opt.primary / opt.secondary 注册动作：
+         *   PageDown → primary（主操作，如开始点名 / 开始计时）
+         *   PageUp   → secondary（副操作，缺省时同 primary）
+         * 输入框聚焦或弹窗/抽屉打开时不响应，避免误触。 */
+        if (typeof opt.primary === 'function') {
+            document.addEventListener('keydown', function (ev) {
+                if (ev.key !== 'PageDown' && ev.key !== 'PageUp') { return; }
+                var tag = (document.activeElement && document.activeElement.tagName) || '';
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') { return; }
+                if (document.querySelector('.et-modal, .et-drawer-backdrop, .ws-winner')) { return; }
+                ev.preventDefault();
+                if (ev.key === 'PageDown') { opt.primary(); }
+                else if (typeof opt.secondary === 'function') { opt.secondary(); }
+                else { opt.primary(); }
+            });
+        }
+
+        return api;
+    }
+
+    global.ET = global.ET || {};
+    global.ET.Chrome = {
+        mount: mount,
+        modal: modal,
+        toast: toast,
+        beep: playBeep /* 挂载前的独立音效入口（不经过音效开关） */
+    };
+})(window);
+</script>
+<!-- /ET:INLINE -->
+
+<!-- ET:INLINE name="et-stats" src="ui/et-stats.js" -->
+<script>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * et-stats.js — 使用统计模块（模块化，可整体移除）
+ *
+ * 共享逻辑源。改这里，然后跑：python scripts/sync_shared.py
+ * 依赖：无（可脱离 et-util / et-chrome 独立运行）。
+ * 全局：ET.Stats
+ *
+ * ┌────────────────────────────────────────────────────────────────┐
+ * │ 说明：本模块只做一件事——工具被打开时向上报端点发一条匿名计数。 │
+ * │ · 在线（iframe 内）：宿主页面已服务端计数，本模块不重复上报。   │
+ * │ · 离线打开（file:// / 下载单文件 / 离线包）：联网条件具备时，   │
+ * │   以 sendBeacon 上报 use_offline 事件（text/plain 免预检）。    │
+ * │ · 上报端点 = window.ET_SITE_ORIGIN（由宿主注入或离线包配置）。  │
+ * │   未配置端点时本模块完全静默，不发任何请求。                    │
+ * │ · **整个 <script> 块可安全删除**：删除后工具其余功能完全正常，  │
+ * │   且完全不再发起任何网络请求。                                  │
+ * └────────────────────────────────────────────────────────────────┘
+ */
+(function (global) {
+    'use strict';
+
+    var ET = global.ET = global.ET || {};
+
+    var Stats = {
+        /** 上报端点来源（站点绝对地址，无协议尾斜杠） */
+        endpoint: (typeof global.ET_SITE_ORIGIN === 'string' && /^https?:\/\//.test(global.ET_SITE_ORIGIN))
+            ? global.ET_SITE_ORIGIN
+            : null,
+
+        _done: {},
+
+        /**
+         * 上报一次事件（同一事件同一工具每次页面加载只报一次）。
+         * event: 'use_offline' 等；toolId: 工具 id。
+         */
+        send: function (event, toolId) {
+            if (!event || this._done[event + ':' + (toolId || '')]) { return false; }
+            if (!this.endpoint) { return false; }
+            /* iframe 内由宿主统计，避免双计 */
+            try {
+                if (global.parent && global.parent !== global) { return false; }
+            } catch (err) { return false; }
+            /* 断网时挂起，网络恢复自动补报一次 */
+            if (global.navigator && global.navigator.onLine === false) {
+                var self = this;
+                global.addEventListener('online', function () { self.send(event, toolId); }, { once: true });
+                return false;
+            }
+
+            this._done[event + ':' + (toolId || '')] = true;
+            var payload = JSON.stringify({ event: event, tool: toolId || '' });
+
+            try {
+                if (global.navigator.sendBeacon) {
+                    return global.navigator.sendBeacon(
+                        this.endpoint + '/api/track',
+                        new Blob([payload], { type: 'text/plain;charset=UTF-8' })
+                    );
+                }
+                global.fetch(this.endpoint + '/api/track', {
+                    method: 'POST',
+                    body: payload,
+                    keepalive: true,
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=UTF-8' }
+                });
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+    };
+
+    ET.Stats = Stats;
+})(window);
+</script>
+<!-- /ET:INLINE -->
+
+<!-- 使用统计：删除上方 et-stats 块即可完全不联网（模块化设计） -->
+<script>
+try { ET.Stats.send('use_offline', 'poem-quiz'); } catch (e) { /* 静默 */ }
+</script>
+
+<script>
+(function () {
+    'use strict';
+
+    var TOOL_ID = 'poem-quiz';
+    var store = ET.store(TOOL_ID);
+
+    var MODES = ['fill', 'feihua', 'say'];
+    var PUNCT = '，。！？、；：（）“”《》…—·〈〉「」';
+    var FH_CHIPS = ['月', '花', '春', '风', '山', '水', '日', '云', '雨', '江', '天', '白', '红', '不'];
+    var GRADE_LABEL = {
+        '全部': '全部学段', '1-2': '小学低年级', '3-4': '小学中年级',
+        '5-6': '小学高年级', '7-9': '初中', '10-12': '高中'
+    };
+
+    /* 内置诗词数据（抽取自同族工具 poem-cards，全部为公版古诗文）
+       字段：t = 诗题  a = 作者  d = 朝代  g = 学段  l = 按句 / 联分行 */
+    var POEMS = [
+        /* ---------- 小学低年级（1-2） ---------- */
+        { t: '咏鹅', a: '骆宾王', d: '唐', g: '1-2', l: ['鹅，鹅，鹅，曲项向天歌。', '白毛浮绿水，红掌拨清波。'] },
+        { t: '春晓', a: '孟浩然', d: '唐', g: '1-2', l: ['春眠不觉晓，处处闻啼鸟。', '夜来风雨声，花落知多少。'] },
+        { t: '静夜思', a: '李白', d: '唐', g: '1-2', l: ['床前明月光，疑是地上霜。', '举头望明月，低头思故乡。'] },
+        { t: '悯农（其一）', a: '李绅', d: '唐', g: '1-2', l: ['春种一粒粟，秋收万颗子。', '四海无闲田，农夫犹饿死。'] },
+        { t: '悯农（其二）', a: '李绅', d: '唐', g: '1-2', l: ['锄禾日当午，汗滴禾下土。', '谁知盘中餐，粒粒皆辛苦。'] },
+        { t: '池上', a: '白居易', d: '唐', g: '1-2', l: ['小娃撑小艇，偷采白莲回。', '不解藏踪迹，浮萍一道开。'] },
+        { t: '小池', a: '杨万里', d: '宋', g: '1-2', l: ['泉眼无声惜细流，树阴照水爱晴柔。', '小荷才露尖尖角，早有蜻蜓立上头。'] },
+        { t: '登鹳雀楼', a: '王之涣', d: '唐', g: '1-2', l: ['白日依山尽，黄河入海流。', '欲穷千里目，更上一层楼。'] },
+        { t: '古朗月行（节选）', a: '李白', d: '唐', g: '1-2', l: ['小时不识月，呼作白玉盘。', '又疑瑶台镜，飞在青云端。'] },
+        { t: '风', a: '李峤', d: '唐', g: '1-2', l: ['解落三秋叶，能开二月花。', '过江千尺浪，入竹万竿斜。'] },
+        { t: '江南', a: '汉乐府', d: '汉', g: '1-2', l: ['江南可采莲，莲叶何田田。', '鱼戏莲叶间。', '鱼戏莲叶东，鱼戏莲叶西，', '鱼戏莲叶南，鱼戏莲叶北。'] },
+        { t: '敕勒歌', a: '北朝民歌', d: '北朝', g: '1-2', l: ['敕勒川，阴山下。', '天似穹庐，笼盖四野。', '天苍苍，野茫茫，', '风吹草低见牛羊。'] },
+        { t: '赠汪伦', a: '李白', d: '唐', g: '1-2', l: ['李白乘舟将欲行，忽闻岸上踏歌声。', '桃花潭水深千尺，不及汪伦送我情。'] },
+        { t: '寻隐者不遇', a: '贾岛', d: '唐', g: '1-2', l: ['松下问童子，言师采药去。', '只在此山中，云深不知处。'] },
+        { t: '村居', a: '高鼎', d: '清', g: '1-2', l: ['草长莺飞二月天，拂堤杨柳醉春烟。', '儿童散学归来早，忙趁东风放纸鸢。'] },
+        { t: '咏柳', a: '贺知章', d: '唐', g: '1-2', l: ['碧玉妆成一树高，万条垂下绿丝绦。', '不知细叶谁裁出，二月春风似剪刀。'] },
+        { t: '所见', a: '袁枚', d: '清', g: '1-2', l: ['牧童骑黄牛，歌声振林樾。', '意欲捕鸣蝉，忽然闭口立。'] },
+        { t: '望庐山瀑布', a: '李白', d: '唐', g: '1-2', l: ['日照香炉生紫烟，遥看瀑布挂前川。', '飞流直下三千尺，疑是银河落九天。'] },
+        { t: '绝句（两个黄鹂鸣翠柳）', a: '杜甫', d: '唐', g: '1-2', l: ['两个黄鹂鸣翠柳，一行白鹭上青天。', '窗含西岭千秋雪，门泊东吴万里船。'] },
+        { t: '晓出净慈寺送林子方', a: '杨万里', d: '宋', g: '1-2', l: ['毕竟西湖六月中，风光不与四时同。', '接天莲叶无穷碧，映日荷花别样红。'] },
+
+        /* ---------- 小学中年级（3-4） ---------- */
+        { t: '山行', a: '杜牧', d: '唐', g: '3-4', l: ['远上寒山石径斜，白云生处有人家。', '停车坐爱枫林晚，霜叶红于二月花。'] },
+        { t: '赠刘景文', a: '苏轼', d: '宋', g: '3-4', l: ['荷尽已无擎雨盖，菊残犹有傲霜枝。', '一年好景君须记，最是橙黄橘绿时。'] },
+        { t: '夜书所见', a: '叶绍翁', d: '宋', g: '3-4', l: ['萧萧梧叶送寒声，江上秋风动客情。', '知有儿童挑促织，夜深篱落一灯明。'] },
+        { t: '望天门山', a: '李白', d: '唐', g: '3-4', l: ['天门中断楚江开，碧水东流至此回。', '两岸青山相对出，孤帆一片日边来。'] },
+        { t: '饮湖上初晴后雨', a: '苏轼', d: '宋', g: '3-4', l: ['水光潋滟晴方好，山色空蒙雨亦奇。', '欲把西湖比西子，淡妆浓抹总相宜。'] },
+        { t: '绝句（迟日江山丽）', a: '杜甫', d: '唐', g: '3-4', l: ['迟日江山丽，春风花草香。', '泥融飞燕子，沙暖睡鸳鸯。'] },
+        { t: '惠崇春江晚景', a: '苏轼', d: '宋', g: '3-4', l: ['竹外桃花三两枝，春江水暖鸭先知。', '蒌蒿满地芦芽短，正是河豚欲上时。'] },
+        { t: '三衢道中', a: '曾几', d: '宋', g: '3-4', l: ['梅子黄时日日晴，小溪泛尽却山行。', '绿阴不减来时路，添得黄鹂四五声。'] },
+        { t: '元日', a: '王安石', d: '宋', g: '3-4', l: ['爆竹声中一岁除，春风送暖入屠苏。', '千门万户曈曈日，总把新桃换旧符。'] },
+        { t: '清明', a: '杜牧', d: '唐', g: '3-4', l: ['清明时节雨纷纷，路上行人欲断魂。', '借问酒家何处有，牧童遥指杏花村。'] },
+        { t: '九月九日忆山东兄弟', a: '王维', d: '唐', g: '3-4', l: ['独在异乡为异客，每逢佳节倍思亲。', '遥知兄弟登高处，遍插茱萸少一人。'] },
+        { t: '滁州西涧', a: '韦应物', d: '唐', g: '3-4', l: ['独怜幽草涧边生，上有黄鹂深树鸣。', '春潮带雨晚来急，野渡无人舟自横。'] },
+        { t: '大林寺桃花', a: '白居易', d: '唐', g: '3-4', l: ['人间四月芳菲尽，山寺桃花始盛开。', '长恨春归无觅处，不知转入此中来。'] },
+        { t: '暮江吟', a: '白居易', d: '唐', g: '3-4', l: ['一道残阳铺水中，半江瑟瑟半江红。', '可怜九月初三夜，露似真珠月似弓。'] },
+        { t: '题西林壁', a: '苏轼', d: '宋', g: '3-4', l: ['横看成岭侧成峰，远近高低各不同。', '不识庐山真面目，只缘身在此山中。'] },
+        { t: '雪梅', a: '卢梅坡', d: '宋', g: '3-4', l: ['梅雪争春未肯降，骚人阁笔费评章。', '梅须逊雪三分白，雪却输梅一段香。'] },
+        { t: '出塞', a: '王昌龄', d: '唐', g: '3-4', l: ['秦时明月汉时关，万里长征人未还。', '但使龙城飞将在，不教胡马度阴山。'] },
+        { t: '凉州词', a: '王翰', d: '唐', g: '3-4', l: ['葡萄美酒夜光杯，欲饮琵琶马上催。', '醉卧沙场君莫笑，古来征战几人回。'] },
+        { t: '夏日绝句', a: '李清照', d: '宋', g: '3-4', l: ['生当作人杰，死亦为鬼雄。', '至今思项羽，不肯过江东。'] },
+        { t: '别董大', a: '高适', d: '唐', g: '3-4', l: ['千里黄云白日曛，北风吹雁雪纷纷。', '莫愁前路无知己，天下谁人不识君。'] },
+        { t: '渔歌子', a: '张志和', d: '唐', g: '3-4', l: ['西塞山前白鹭飞，桃花流水鳜鱼肥。', '青箬笠，绿蓑衣，斜风细雨不须归。'] },
+
+        /* ---------- 小学高年级（5-6） ---------- */
+        { t: '泊船瓜洲', a: '王安石', d: '宋', g: '5-6', l: ['京口瓜洲一水间，钟山只隔数重山。', '春风又绿江南岸，明月何时照我还。'] },
+        { t: '秋思', a: '张籍', d: '唐', g: '5-6', l: ['洛阳城里见秋风，欲作家书意万重。', '复恐匆匆说不尽，行人临发又开封。'] },
+        { t: '长相思', a: '纳兰性德', d: '清', g: '5-6', l: ['山一程，水一程，身向榆关那畔行，夜深千帐灯。', '风一更，雪一更，聒碎乡心梦不成，故园无此声。'] },
+        { t: '石灰吟', a: '于谦', d: '明', g: '5-6', l: ['千锤万凿出深山，烈火焚烧若等闲。', '粉骨碎身浑不怕，要留清白在人间。'] },
+        { t: '竹石', a: '郑燮', d: '清', g: '5-6', l: ['咬定青山不放松，立根原在破岩中。', '千磨万击还坚劲，任尔东西南北风。'] },
+        { t: '己亥杂诗', a: '龚自珍', d: '清', g: '5-6', l: ['九州生气恃风雷，万马齐喑究可哀。', '我劝天公重抖擞，不拘一格降人才。'] },
+        { t: '望洞庭', a: '刘禹锡', d: '唐', g: '5-6', l: ['湖光秋月两相和，潭面无风镜未磨。', '遥望洞庭山水翠，白银盘里一青螺。'] },
+        { t: '浪淘沙（其一）', a: '刘禹锡', d: '唐', g: '5-6', l: ['九曲黄河万里沙，浪淘风簸自天涯。', '如今直上银河去，同到牵牛织女家。'] },
+        { t: '江南春', a: '杜牧', d: '唐', g: '5-6', l: ['千里莺啼绿映红，水村山郭酒旗风。', '南朝四百八十寺，多少楼台烟雨中。'] },
+        { t: '书湖阴先生壁', a: '王安石', d: '宋', g: '5-6', l: ['茅檐长扫净无苔，花木成畦手自栽。', '一水护田将绿绕，两山排闼送青来。'] },
+        { t: '六月二十七日望湖楼醉书', a: '苏轼', d: '宋', g: '5-6', l: ['黑云翻墨未遮山，白雨跳珠乱入船。', '卷地风来忽吹散，望湖楼下水如天。'] },
+        { t: '春日', a: '朱熹', d: '宋', g: '5-6', l: ['胜日寻芳泗水滨，无边光景一时新。', '等闲识得东风面，万紫千红总是春。'] },
+        { t: '游园不值', a: '叶绍翁', d: '宋', g: '5-6', l: ['应怜屐齿印苍苔，小扣柴扉久不开。', '春色满园关不住，一枝红杏出墙来。'] },
+        { t: '宿新市徐公店', a: '杨万里', d: '宋', g: '5-6', l: ['篱落疏疏一径深，树头新绿未成阴。', '儿童急走追黄蝶，飞入菜花无处寻。'] },
+        { t: '四时田园杂兴（其二十五）', a: '范成大', d: '宋', g: '5-6', l: ['梅子金黄杏子肥，麦花雪白菜花稀。', '日长篱落无人过，惟有蜻蜓蛱蝶飞。'] },
+        { t: '清平乐·村居', a: '辛弃疾', d: '宋', g: '5-6', l: ['茅檐低小，溪上青青草。醉里吴音相媚好，白发谁家翁媪。', '大儿锄豆溪东，中儿正织鸡笼。最喜小儿亡赖，溪头卧剥莲蓬。'] },
+        { t: '西江月·夜行黄沙道中', a: '辛弃疾', d: '宋', g: '5-6', l: ['明月别枝惊鹊，清风半夜鸣蝉。稻花香里说丰年，听取蛙声一片。', '七八个星天外，两三点雨山前。旧时茅店社林边，路转溪桥忽见。'] },
+        { t: '忆江南', a: '白居易', d: '唐', g: '5-6', l: ['江南好，风景旧曾谙。', '日出江花红胜火，春来江水绿如蓝。', '能不忆江南？'] },
+        { t: '如梦令', a: '李清照', d: '宋', g: '5-6', l: ['常记溪亭日暮，沉醉不知归路。', '兴尽晚回舟，误入藕花深处。', '争渡，争渡，惊起一滩鸥鹭。'] },
+
+        /* ---------- 初中（7-9） ---------- */
+        { t: '观沧海', a: '曹操', d: '东汉', g: '7-9', l: ['东临碣石，以观沧海。水何澹澹，山岛竦峙。', '树木丛生，百草丰茂。秋风萧瑟，洪波涌起。', '日月之行，若出其中；星汉灿烂，若出其里。', '幸甚至哉，歌以咏志。'] },
+        { t: '次北固山下', a: '王湾', d: '唐', g: '7-9', l: ['客路青山外，行舟绿水前。潮平两岸阔，风正一帆悬。', '海日生残夜，江春入旧年。乡书何处达？归雁洛阳边。'] },
+        { t: '天净沙·秋思', a: '马致远', d: '元', g: '7-9', l: ['枯藤老树昏鸦，小桥流水人家，古道西风瘦马。', '夕阳西下，断肠人在天涯。'] },
+        { t: '闻王昌龄左迁龙标遥有此寄', a: '李白', d: '唐', g: '7-9', l: ['杨花落尽子规啼，闻道龙标过五溪。', '我寄愁心与明月，随君直到夜郎西。'] },
+        { t: '使至塞上', a: '王维', d: '唐', g: '7-9', l: ['单车欲问边，属国过居延。征蓬出汉塞，归雁入胡天。', '大漠孤烟直，长河落日圆。萧关逢候骑，都护在燕然。'] },
+        { t: '望岳', a: '杜甫', d: '唐', g: '7-9', l: ['岱宗夫如何？齐鲁青未了。造化钟神秀，阴阳割昏晓。', '荡胸生曾云，决眦入归鸟。会当凌绝顶，一览众山小。'] },
+        { t: '春望', a: '杜甫', d: '唐', g: '7-9', l: ['国破山河在，城春草木深。感时花溅泪，恨别鸟惊心。', '烽火连三月，家书抵万金。白头搔更短，浑欲不胜簪。'] },
+        { t: '钱塘湖春行', a: '白居易', d: '唐', g: '7-9', l: ['孤山寺北贾亭西，水面初平云脚低。', '几处早莺争暖树，谁家新燕啄春泥。', '乱花渐欲迷人眼，浅草才能没马蹄。', '最爱湖东行不足，绿杨阴里白沙堤。'] },
+        { t: '雁门太守行', a: '李贺', d: '唐', g: '7-9', l: ['黑云压城城欲摧，甲光向日金鳞开。', '角声满天秋色里，塞上燕脂凝夜紫。', '半卷红旗临易水，霜重鼓寒声不起。', '报君黄金台上意，提携玉龙为君死。'] },
+        { t: '赤壁', a: '杜牧', d: '唐', g: '7-9', l: ['折戟沉沙铁未销，自将磨洗认前朝。', '东风不与周郎便，铜雀春深锁二乔。'] },
+        { t: '渔家傲·秋思', a: '范仲淹', d: '宋', g: '7-9', l: ['塞下秋来风景异，衡阳雁去无留意。四面边声连角起，千嶂里，长烟落日孤城闭。', '浊酒一杯家万里，燕然未勒归无计。羌管悠悠霜满地，人不寐，将军白发征夫泪。'] },
+        { t: '江城子·密州出猎', a: '苏轼', d: '宋', g: '7-9', l: ['老夫聊发少年狂，左牵黄，右擎苍，锦帽貂裘，千骑卷平冈。为报倾城随太守，亲射虎，看孙郎。', '酒酣胸胆尚开张，鬓微霜，又何妨！持节云中，何日遣冯唐？会挽雕弓如满月，西北望，射天狼。'] },
+        { t: '破阵子·为陈同甫赋壮词以寄之', a: '辛弃疾', d: '宋', g: '7-9', l: ['醉里挑灯看剑，梦回吹角连营。八百里分麾下炙，五十弦翻塞外声。沙场秋点兵。', '马作的卢飞快，弓如霹雳弦惊。了却君王天下事，赢得生前身后名。可怜白发生！'] },
+        { t: '卜算子·咏梅', a: '陆游', d: '宋', g: '7-9', l: ['驿外断桥边，寂寞开无主。已是黄昏独自愁，更著风和雨。', '无意苦争春，一任群芳妒。零落成泥碾作尘，只有香如故。'] },
+        { t: '浣溪沙', a: '晏殊', d: '宋', g: '7-9', l: ['一曲新词酒一杯，去年天气旧亭台。夕阳西下几时回？', '无可奈何花落去，似曾相识燕归来。小园香径独徘徊。'] },
+        { t: '水调歌头·明月几时有', a: '苏轼', d: '宋', g: '7-9', l: ['明月几时有？把酒问青天。不知天上宫阙，今夕是何年。', '我欲乘风归去，又恐琼楼玉宇，高处不胜寒。起舞弄清影，何似在人间。', '转朱阁，低绮户，照无眠。不应有恨，何事长向别时圆？', '人有悲欢离合，月有阴晴圆缺，此事古难全。但愿人长久，千里共婵娟。'] },
+        { t: '饮酒（其五）', a: '陶渊明', d: '东晋', g: '7-9', l: ['结庐在人境，而无车马喧。问君何能尔？心远地自偏。', '采菊东篱下，悠然见南山。山气日夕佳，飞鸟相与还。', '此中有真意，欲辨已忘言。'] },
+        { t: '行路难（其一）', a: '李白', d: '唐', g: '7-9', l: ['金樽清酒斗十千，玉盘珍羞直万钱。', '停杯投箸不能食，拔剑四顾心茫然。', '欲渡黄河冰塞川，将登太行雪满山。', '闲来垂钓碧溪上，忽复乘舟梦日边。', '行路难！行路难！多歧路，今安在？', '长风破浪会有时，直挂云帆济沧海。'] },
+        { t: '酬乐天扬州初逢席上见赠', a: '刘禹锡', d: '唐', g: '7-9', l: ['巴山楚水凄凉地，二十三年弃置身。', '怀旧空吟闻笛赋，到乡翻似烂柯人。', '沉舟侧畔千帆过，病树前头万木春。', '今日听君歌一曲，暂凭杯酒长精神。'] },
+        { t: '白雪歌送武判官归京（节选）', a: '岑参', d: '唐', g: '7-9', l: ['北风卷地白草折，胡天八月即飞雪。', '忽如一夜春风来，千树万树梨花开。'] },
+
+        /* ---------- 初中补充（课本必背） ---------- */
+        { t: '登幽州台歌', a: '陈子昂', d: '唐', g: '7-9', l: ['前不见古人，后不见来者。', '念天地之悠悠，独怆然而涕下。'] },
+        { t: '竹里馆', a: '王维', d: '唐', g: '7-9', l: ['独坐幽篁里，弹琴复长啸。', '深林人不知，明月来相照。'] },
+        { t: '春夜洛城闻笛', a: '李白', d: '唐', g: '7-9', l: ['谁家玉笛暗飞声，散入春风满洛城。', '此夜曲中闻折柳，何人不起故园情。'] },
+        { t: '逢入京使', a: '岑参', d: '唐', g: '7-9', l: ['故园东望路漫漫，双袖龙钟泪不干。', '马上相逢无纸笔，凭君传语报平安。'] },
+        { t: '晚春', a: '韩愈', d: '唐', g: '7-9', l: ['草树知春不久归，百般红紫斗芳菲。', '杨花榆荚无才思，惟解漫天作雪飞。'] },
+        { t: '峨眉山月歌', a: '李白', d: '唐', g: '7-9', l: ['峨眉山月半轮秋，影入平羌江水流。', '夜发清溪向三峡，思君不见下渝州。'] },
+        { t: '江南逢李龟年', a: '杜甫', d: '唐', g: '7-9', l: ['岐王宅里寻常见，崔九堂前几度闻。', '正是江南好风景，落花时节又逢君。'] },
+        { t: '行军九日思长安故园', a: '岑参', d: '唐', g: '7-9', l: ['强欲登高去，无人送酒来。', '遥怜故园菊，应傍战场开。'] },
+        { t: '夜上受降城闻笛', a: '李益', d: '唐', g: '7-9', l: ['回乐烽前沙似雪，受降城外月如霜。', '不知何处吹芦管，一夜征人尽望乡。'] },
+        { t: '秋词（其一）', a: '刘禹锡', d: '唐', g: '7-9', l: ['自古逢秋悲寂寥，我言秋日胜春朝。', '晴空一鹤排云上，便引诗情到碧霄。'] },
+        { t: '夜雨寄北', a: '李商隐', d: '唐', g: '7-9', l: ['君问归期未有期，巴山夜雨涨秋池。', '何当共剪西窗烛，却话巴山夜雨时。'] },
+        { t: '十一月四日风雨大作（其二）', a: '陆游', d: '宋', g: '7-9', l: ['僵卧孤村不自哀，尚思为国戍轮台。', '夜阑卧听风吹雨，铁马冰河入梦来。'] },
+        { t: '潼关', a: '谭嗣同', d: '清', g: '7-9', l: ['终古高云簇此城，秋风吹散马蹄声。', '河流大野犹嫌束，山入潼关不解平。'] },
+        { t: '约客', a: '赵师秀', d: '宋', g: '7-9', l: ['黄梅时节家家雨，青草池塘处处蛙。', '有约不来过夜半，闲敲棋子落灯花。'] },
+        { t: '野望', a: '王绩', d: '唐', g: '7-9', l: ['东皋薄暮望，徙倚欲何依。树树皆秋色，山山唯落晖。', '牧人驱犊返，猎马带禽归。相顾无相识，长歌怀采薇。'] },
+        { t: '黄鹤楼', a: '崔颢', d: '唐', g: '7-9', l: ['昔人已乘黄鹤去，此地空余黄鹤楼。', '黄鹤一去不复返，白云千载空悠悠。', '晴川历历汉阳树，芳草萋萋鹦鹉洲。', '日暮乡关何处是？烟波江上使人愁。'] },
+        { t: '渡荆门送别', a: '李白', d: '唐', g: '7-9', l: ['渡远荆门外，来从楚国游。山随平野尽，江入大荒流。', '月下飞天镜，云生结海楼。仍怜故乡水，万里送行舟。'] },
+        { t: '龟虽寿', a: '曹操', d: '东汉', g: '7-9', l: ['神龟虽寿，犹有竟时。腾蛇乘雾，终为土灰。', '老骥伏枥，志在千里；烈士暮年，壮心不已。', '盈缩之期，不但在天；养怡之福，可得永年。', '幸甚至哉，歌以咏志。'] },
+        { t: '赠从弟（其二）', a: '刘桢', d: '东汉', g: '7-9', l: ['亭亭山上松，瑟瑟谷中风。风声一何盛，松枝一何劲！', '冰霜正惨凄，终岁常端正。岂不罹凝寒？松柏有本性。'] },
+        { t: '送杜少府之任蜀州', a: '王勃', d: '唐', g: '7-9', l: ['城阙辅三秦，风烟望五津。与君离别意，同是宦游人。', '海内存知己，天涯若比邻。无为在歧路，儿女共沾巾。'] },
+        { t: '题破山寺后禅院', a: '常建', d: '唐', g: '7-9', l: ['清晨入古寺，初日照高林。曲径通幽处，禅房花木深。', '山光悦鸟性，潭影空人心。万籁此都寂，但余钟磬音。'] },
+        { t: '送友人', a: '李白', d: '唐', g: '7-9', l: ['青山横北郭，白水绕东城。此地一为别，孤蓬万里征。', '浮云游子意，落日故人情。挥手自兹去，萧萧班马鸣。'] },
+        { t: '过零丁洋', a: '文天祥', d: '宋', g: '7-9', l: ['辛苦遭逢起一经，干戈寥落四周星。', '山河破碎风飘絮，身世浮沉雨打萍。', '惶恐滩头说惶恐，零丁洋里叹零丁。', '人生自古谁无死？留取丹心照汗青。'] },
+        { t: '山坡羊·潼关怀古', a: '张养浩', d: '元', g: '7-9', l: ['峰峦如聚，波涛如怒，山河表里潼关路。', '望西都，意踌躇。伤心秦汉经行处，宫阙万间都做了土。', '兴，百姓苦；亡，百姓苦。'] },
+        { t: '南乡子·登京口北固亭有怀', a: '辛弃疾', d: '宋', g: '7-9', l: ['何处望神州？满眼风光北固楼。千古兴亡多少事？悠悠。不尽长江滚滚流。', '年少万兜鍪，坐断东南战未休。天下英雄谁敌手？曹刘。生子当如孙仲谋。'] },
+        { t: '月夜忆舍弟', a: '杜甫', d: '唐', g: '7-9', l: ['戍鼓断人行，边秋一雁声。露从今夜白，月是故乡明。', '有弟皆分散，无家问死生。寄书长不达，况乃未休兵。'] },
+        { t: '商山早行', a: '温庭筠', d: '唐', g: '7-9', l: ['晨起动征铎，客行悲故乡。鸡声茅店月，人迹板桥霜。', '槲叶落山路，枳花明驿墙。因思杜陵梦，凫雁满回塘。'] },
+        { t: '无题（相见时难别亦难）', a: '李商隐', d: '唐', g: '7-9', l: ['相见时难别亦难，东风无力百花残。', '春蚕到死丝方尽，蜡炬成灰泪始干。', '晓镜但愁云鬓改，夜吟应觉月光寒。', '蓬山此去无多路，青鸟殷勤为探看。'] },
+        { t: '卜算子·黄州定慧院寓居作', a: '苏轼', d: '宋', g: '7-9', l: ['缺月挂疏桐，漏断人初静。谁见幽人独往来，缥缈孤鸿影。', '惊起却回头，有恨无人省。拣尽寒枝不肯栖，寂寞沙洲冷。'] },
+        { t: '木兰诗（节选）', a: '北朝民歌', d: '北朝', g: '7-9', l: ['唧唧复唧唧，木兰当户织。不闻机杼声，惟闻女叹息。', '问女何所思，问女何所忆。女亦无所思，女亦无所忆。', '昨夜见军帖，可汗大点兵。军书十二卷，卷卷有爷名。', '阿爷无大儿，木兰无长兄。愿为市鞍马，从此替爷征。', '东市买骏马，西市买鞍鞯，南市买辔头，北市买长鞭。', '旦辞爷娘去，暮宿黄河边。不闻爷娘唤女声，但闻黄河流水鸣溅溅。', '万里赴戎机，关山度若飞。朔气传金柝，寒光照铁衣。', '将军百战死，壮士十年归。', '雄兔脚扑朔，雌兔眼迷离；双兔傍地走，安能辨我是雄雌？'] },
+
+        /* ---------- 高中（课本必背） ---------- */
+        { t: '短歌行（节选）', a: '曹操', d: '东汉', g: '10-12', l: ['对酒当歌，人生几何！譬如朝露，去日苦多。', '慨当以慷，忧思难忘。何以解忧？唯有杜康。', '青青子衿，悠悠我心。但为君故，沉吟至今。', '呦呦鹿鸣，食野之苹。我有嘉宾，鼓瑟吹笙。', '月明星稀，乌鹊南飞。绕树三匝，何枝可依？', '山不厌高，海不厌深。周公吐哺，天下归心。'] },
+        { t: '归园田居（其一）', a: '陶渊明', d: '东晋', g: '10-12', l: ['少无适俗韵，性本爱丘山。误落尘网中，一去三十年。', '羁鸟恋旧林，池鱼思故渊。开荒南野际，守拙归园田。', '方宅十余亩，草屋八九间。榆柳荫后檐，桃李罗堂前。', '暧暧远人村，依依墟里烟。狗吠深巷中，鸡鸣桑树颠。', '户庭无尘杂，虚室有余闲。久在樊笼里，复得返自然。'] },
+        { t: '登高', a: '杜甫', d: '唐', g: '10-12', l: ['风急天高猿啸哀，渚清沙白鸟飞回。', '无边落木萧萧下，不尽长江滚滚来。', '万里悲秋常作客，百年多病独登台。', '艰难苦恨繁霜鬓，潦倒新停浊酒杯。'] },
+        { t: '念奴娇·赤壁怀古', a: '苏轼', d: '宋', g: '10-12', l: ['大江东去，浪淘尽，千古风流人物。故垒西边，人道是，三国周郎赤壁。', '乱石穿空，惊涛拍岸，卷起千堆雪。江山如画，一时多少豪杰。', '遥想公瑾当年，小乔初嫁了，雄姿英发。羽扇纶巾，谈笑间，樯橹灰飞烟灭。', '故国神游，多情应笑我，早生华发。人生如梦，一尊还酹江月。'] },
+        { t: '永遇乐·京口北固亭怀古', a: '辛弃疾', d: '宋', g: '10-12', l: ['千古江山，英雄无觅，孙仲谋处。舞榭歌台，风流总被，雨打风吹去。', '斜阳草树，寻常巷陌，人道寄奴曾住。想当年，金戈铁马，气吞万里如虎。', '元嘉草草，封狼居胥，赢得仓皇北顾。四十三年，望中犹记，烽火扬州路。', '可堪回首，佛狸祠下，一片神鸦社鼓。凭谁问：廉颇老矣，尚能饭否？'] },
+        { t: '声声慢', a: '李清照', d: '宋', g: '10-12', l: ['寻寻觅觅，冷冷清清，凄凄惨惨戚戚。', '乍暖还寒时候，最难将息。三杯两盏淡酒，怎敌他、晚来风急？', '雁过也，正伤心，却是旧时相识。', '满地黄花堆积。憔悴损，如今有谁堪摘？', '守着窗儿，独自怎生得黑？梧桐更兼细雨，到黄昏、点点滴滴。', '这次第，怎一个愁字了得！'] },
+        { t: '锦瑟', a: '李商隐', d: '唐', g: '10-12', l: ['锦瑟无端五十弦，一弦一柱思华年。', '庄生晓梦迷蝴蝶，望帝春心托杜鹃。', '沧海月明珠有泪，蓝田日暖玉生烟。', '此情可待成追忆？只是当时已惘然。'] },
+        { t: '书愤', a: '陆游', d: '宋', g: '10-12', l: ['早岁那知世事艰，中原北望气如山。', '楼船夜雪瓜洲渡，铁马秋风大散关。', '塞上长城空自许，镜中衰鬓已先斑。', '出师一表真名世，千载谁堪伯仲间！'] },
+        { t: '静女', a: '《诗经》', d: '先秦', g: '10-12', l: ['静女其姝，俟我于城隅。爱而不见，搔首踟蹰。', '静女其娈，贻我彤管。彤管有炜，说怿女美。', '自牧归荑，洵美且异。匪女之为美，美人之贻。'] },
+        { t: '客至', a: '杜甫', d: '唐', g: '10-12', l: ['舍南舍北皆春水，但见群鸥日日来。', '花径不曾缘客扫，蓬门今始为君开。', '盘飧市远无兼味，樽酒家贫只旧醅。', '肯与邻翁相对饮，隔篱呼取尽余杯。'] },
+        { t: '将进酒（节选）', a: '李白', d: '唐', g: '10-12', l: ['君不见，黄河之水天上来，奔流到海不复回。', '君不见，高堂明镜悲白发，朝如青丝暮成雪。', '人生得意须尽欢，莫使金樽空对月。', '天生我材必有用，千金散尽还复来。', '古来圣贤皆寂寞，惟有饮者留其名。', '五花马，千金裘，呼儿将出换美酒，与尔同销万古愁。'] }
+    ];
+
+    var DEFAULTS = {
+        mode: 'fill',
+        blank: 'chars',
+        ratio: 40,
+        grade: '全部',
+        showAnswer: false,
+        idx: 0,
+        fh: '月'
+    };
+
+    var chrome = ET.Chrome.mount({
+        toolId: TOOL_ID,
+        title: '古诗默写 · 飞花令',
+        sub: '语文 · 默写 / 飞花令 / 接句抢答',
+        accent: '#dc2626',
+        status: '填空默写',
+        sound: true,
+        primary: onPrimary,        /* 翻页笔下页键：默写=下一篇，接句=显示下句 */
+        secondary: onSecondary,    /* 翻页笔上页键：默写=重新挖空，接句=换一句 */
+        actions: [
+            { icon: 'i-shuffle', label: '重新挖空', onClick: reshuffle },
+            { icon: 'i-chevron-left', label: '上一篇', onClick: prevPoem },
+            { icon: 'i-chevron-right', label: '下一篇', onClick: nextPoem },
+            { icon: 'i-dice', label: '随机一篇', onClick: randomPoem }
+        ],
+        settings: { title: '默写 / 设置', build: buildSettings },
+        help: '<div style="font-size:13.5px;line-height:2">' +
+            '<p style="margin:0 0 8px"><b>填空默写</b>：内置 ' + POEMS.length +
+            ' 首教材常见必背篇目。选「挖字填空」随机空掉一部分字，' +
+            '「每句后半挖空」练下句，「整句挖空」练整句；点「重新挖空」换一组空，' +
+            '「显示答案」对答案，「打印」直接出 A4 默写卷。</p>' +
+            '<p style="margin:0 0 8px"><b>飞花令</b>：输入一个字（或点下面的常用字），' +
+            '列出内置篇目中所有含这个字的诗句，可做「含月字的诗句」抢答赛。</p>' +
+            '<p style="margin:0 0 8px"><b>接句抢答</b>：屏幕给出上句，学生抢答下句，' +
+            '点「显示下句」揭晓；「30 秒抢答」给一个倒计时。</p>' +
+            '<p style="margin:0"><b>快捷键</b>：<b>1</b>/<b>2</b>/<b>3</b> 切换模式、<b>空格</b> 主操作、' +
+            '<b>← →</b> 上下篇、<b>A</b> 显示答案、<b>P</b> 打印。翻页笔下页键 = 主操作。' +
+            '选篇与设置只保存在本机浏览器。</p></div>'
+    });
+
+    var els = {
+        seg: document.getElementById('modeSeg'),
+        ctlFill: document.getElementById('fillCtl'),
+        ctlFh: document.getElementById('feihuaCtl'),
+        ctlSay: document.getElementById('sayCtl'),
+        blankSel: document.getElementById('blankSel'),
+        fhInput: document.getElementById('fhInput'),
+        stat: document.getElementById('stat'),
+        preview: document.getElementById('preview'),
+        btnReshuffle: document.getElementById('btnReshuffle'),
+        btnPrev: document.getElementById('btnPrev'),
+        btnNext: document.getElementById('btnNext'),
+        btnRandom: document.getElementById('btnRandom'),
+        btnSayNext: document.getElementById('btnSayNext'),
+        btnSayNew: document.getElementById('btnSayNew'),
+        btnSayTimer: document.getElementById('btnSayTimer'),
+        btnAnswer: document.getElementById('btnAnswer'),
+        btnPrint: document.getElementById('btnPrint')
+    };
+
+    var state = loadState();
+    var mask = null;          /* 当前篇目的挖空标记 [[bool…]…] */
+    var sayPick = null;       /* 接句：{poem, i} */
+    var sayRevealed = false;
+    var timer = null;         /* 抢答倒计时句柄 */
+    var timerOn = false;      /* 倒计时面板是否显示 */
+    var timerLeft = 0;
+
+    /* ---------- 基础工具 ---------- */
+
+    function clampInt(v, min, max, fallback) {
+        var n = parseInt(v, 10);
+        if (isNaN(n)) { return fallback; }
+        return Math.max(min, Math.min(max, n));
+    }
+
+    function loadState() {
+        var s = {};
+        for (var k in DEFAULTS) {
+            if (Object.prototype.hasOwnProperty.call(DEFAULTS, k)) {
+                s[k] = store.get(k, DEFAULTS[k]);
+            }
+        }
+        if (MODES.indexOf(s.mode) < 0) { s.mode = DEFAULTS.mode; }
+        if (['chars', 'half', 'line'].indexOf(s.blank) < 0) { s.blank = DEFAULTS.blank; }
+        if (!GRADE_LABEL[s.grade]) { s.grade = DEFAULTS.grade; }
+        s.ratio = clampInt(s.ratio, 10, 90, DEFAULTS.ratio);
+        s.idx = clampInt(s.idx, 0, Math.max(0, POEMS.length - 1), 0);
+        s.fh = typeof s.fh === 'string' && s.fh ? s.fh : DEFAULTS.fh;
+        return s;
+    }
+
+    function persist() {
+        for (var k in DEFAULTS) {
+            if (Object.prototype.hasOwnProperty.call(DEFAULTS, k)) {
+                store.set(k, state[k]);
+            }
+        }
+    }
+
+    function isTypingTarget(node) {
+        if (!node || !node.tagName) { return false; }
+        var tag = node.tagName.toUpperCase();
+        return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || node.isContentEditable === true;
+    }
+
+    function el(tag, cls, value) {
+        var node = document.createElement(tag);
+        if (cls) { node.className = cls; }
+        if (value !== undefined && value !== null) { node.textContent = value; }
+        return node;
+    }
+
+    function isPunct(ch) { return PUNCT.indexOf(ch) >= 0; }
+
+    /* ---------- 篇目 ---------- */
+
+    function pool() {
+        if (state.grade === '全部') { return POEMS; }
+        var out = [];
+        for (var i = 0; i < POEMS.length; i++) {
+            if (POEMS[i].g === state.grade) { out.push(POEMS[i]); }
+        }
+        return out.length ? out : POEMS;
+    }
+
+    function currentPoem() {
+        var list = pool();
+        if (!list.length) { return null; }
+        if (state.idx >= list.length) { state.idx = 0; }
+        return list[state.idx];
+    }
+
+    /* ---------- 挖空 ---------- */
+
+    function buildMask(poem) {
+        var out = [];
+        for (var i = 0; i < poem.l.length; i++) {
+            var line = poem.l[i];
+            var flags = [];
+            for (var c = 0; c < line.length; c++) {
+                var ch = line.charAt(c);
+                if (isPunct(ch)) { flags.push(false); continue; }
+                if (state.blank === 'line') {
+                    flags.push(i % 2 === 1);
+                } else if (state.blank === 'half') {
+                    flags.push(c >= Math.ceil(line.length / 2));
+                } else {
+                    flags.push(Math.random() * 100 < state.ratio);
+                }
+            }
+            out.push(flags);
+        }
+        return out;
+    }
+
+    function reshuffle() {
+        var poem = currentPoem();
+        if (!poem) { return; }
+        mask = buildMask(poem);
+        state.showAnswer = false;
+        persist();
+        render();
+        chrome.toast('已重新挖空');
+    }
+
+    /* ---------- 渲染 ---------- */
+
+    function render() {
+        els.preview.innerHTML = '';
+        els.preview.appendChild(buildPage());
+        syncMode();
+        updateStat();
+    }
+
+    function buildPage() {
+        var page = el('section', 'pq-page');
+
+        var head = el('div', 'pq-head');
+        var poem = currentPoem();
+        var title = state.mode === 'feihua' ? '飞花令' : (state.mode === 'say' ? '接句抢答' : '古诗默写');
+        head.appendChild(el('div', 'pq-title', title));
+        var sub = (state.mode === 'fill' && poem)
+            ? '《' + poem.t + '》' + poem.d + ' · ' + poem.a
+            : (state.mode === 'feihua' ? '含「' + state.fh + '」的诗句' : '看下句，答下句');
+        head.appendChild(el('div', 'pq-sub', sub));
+
+        if (state.mode === 'fill' && metaOn()) {
+            var meta = el('div', 'pq-meta');
+            meta.appendChild(el('span', null, '姓名：____________'));
+            meta.appendChild(el('span', null, '班级：__________'));
+            meta.appendChild(el('span', null, '得分：________'));
+            head.appendChild(meta);
+        }
+        page.appendChild(head);
+
+        if (state.mode === 'feihua') { page.appendChild(buildFeihua()); }
+        else if (state.mode === 'say') { page.appendChild(buildSay()); }
+        else { page.appendChild(buildFill(poem)); }
+        return page;
+    }
+
+    /* ---- 填空默写 ---- */
+
+    function buildFill(poem) {
+        var wrap = el('div', 'pq-poem');
+        if (!poem) {
+            wrap.appendChild(el('div', 'pq-empty', '内置篇目里没有该学段的内容，请在设置里换一个学段。'));
+            return wrap;
+        }
+        if (!mask) { mask = buildMask(poem); }
+
+        wrap.appendChild(el('div', 'pq-poem-title', poem.t));
+        wrap.appendChild(el('div', 'pq-poem-author', poem.d + ' · ' + poem.a));
+
+        var lines = el('div', 'pq-lines');
+        var blankCount = 0;
+        for (var i = 0; i < poem.l.length; i++) {
+            var line = el('div', 'pq-line');
+            var src = poem.l[i];
+            var flags = mask[i] || [];
+            for (var c = 0; c < src.length; c++) {
+                var ch = src.charAt(c);
+                if (flags[c]) {
+                    var span = el('span', 'pq-blank' + (state.showAnswer ? ' is-shown' : ''), ch);
+                    line.appendChild(span);
+                    blankCount++;
+                } else {
+                    line.appendChild(document.createTextNode(ch));
+                }
+            }
+            lines.appendChild(line);
+        }
+        wrap.appendChild(lines);
+        wrap.appendChild(el('div', 'pq-tip',
+            state.blank === 'chars' ? '填空：把空出来的字写在横线上（共 ' + blankCount + ' 字）'
+                : state.blank === 'half' ? '补写：把每句的后半句写完整'
+                    : '默写：把空出的句子写完整'));
+        return wrap;
+    }
+
+    /* ---- 飞花令 ---- */
+
+    function buildFeihua() {
+        var wrap = el('div');
+        var key = state.fh;
+        var hits = [];
+
+        if (key) {
+            for (var i = 0; i < POEMS.length; i++) {
+                var poem = POEMS[i];
+                for (var j = 0; j < poem.l.length; j++) {
+                    var line = poem.l[j];
+                    var from = 0;
+                    var at = line.indexOf(key, from);
+                    while (at >= 0) {
+                        hits.push({ poem: poem, line: line, at: at });
+                        from = at + key.length;
+                        at = line.indexOf(key, from);
+                    }
+                }
+            }
+        }
+
+        var titles = {};
+        for (var h = 0; h < hits.length; h++) { titles[hits[h].poem.t] = true; }
+        var poemCount = 0;
+        for (var kk in titles) {
+            if (Object.prototype.hasOwnProperty.call(titles, kk)) { poemCount++; }
+        }
+
+        wrap.appendChild(el('div', 'pq-fh-title', key
+            ? '含有「' + key + '」的诗句　' + hits.length + ' 处 · 出自 ' + poemCount + ' 首'
+            : '在上方输入一个字，或点下面的常用字'));
+        wrap.appendChild(el('div', 'pq-fh-count',
+            '数据范围：内置 ' + POEMS.length + ' 首教材常见必背篇目（可在设置里按学段筛选）'));
+
+        var chips = el('div', 'pq-chips');
+        chips.style.marginTop = '5mm';
+        chips.style.justifyContent = 'center';
+        for (var c = 0; c < FH_CHIPS.length; c++) {
+            (function (word) {
+                var chip = el('button', 'pq-chip', word);
+                chip.type = 'button';
+                chip.addEventListener('click', function () {
+                    state.fh = word;
+                    els.fhInput.value = word;
+                    persist();
+                    render();
+                });
+                chips.appendChild(chip);
+            })(FH_CHIPS[c]);
+        }
+        wrap.appendChild(chips);
+
+        if (!hits.length) {
+            wrap.appendChild(el('div', 'pq-empty', key ? '内置篇目中没有含「' + key + '」的诗句' : ''));
+            return wrap;
+        }
+
+        var list = el('div', 'pq-fh-list');
+        var shown = Math.min(hits.length, 60);
+        for (var m = 0; m < shown; m++) {
+            var item = el('div', 'pq-fh-item');
+            item.appendChild(el('span', 'pq-fh-src',
+                '《' + hits[m].poem.t + '》' + hits[m].poem.a));
+            var text = hits[m].line;
+            item.appendChild(document.createTextNode(text.slice(0, hits[m].at)));
+            item.appendChild(el('span', 'pq-fh-hit', key));
+            item.appendChild(document.createTextNode(text.slice(hits[m].at + key.length)));
+            list.appendChild(item);
+        }
+        wrap.appendChild(list);
+        if (hits.length > shown) {
+            wrap.appendChild(el('div', 'pq-empty', '… 还有 ' + (hits.length - shown) + ' 处未显示'));
+        }
+        return wrap;
+    }
+
+    /* ---- 接句抢答 ---- */
+
+    function pickSay() {
+        var list = pool();
+        var tries = 0;
+        while (tries++ < 40) {
+            var poem = list[Math.floor(Math.random() * list.length)];
+            if (!poem || poem.l.length < 2) { continue; }
+            var i = Math.floor(Math.random() * (poem.l.length - 1));
+            return { poem: poem, i: i };
+        }
+        return { poem: list[0], i: 0 };
+    }
+
+    function buildSay() {
+        var wrap = el('div', 'pq-say');
+        if (!sayPick) { sayPick = pickSay(); }
+        var poem = sayPick.poem;
+        var i = sayPick.i;
+        var cur = poem.l[i];
+        var next = poem.l[i + 1] || '（这是最后一句）';
+
+        wrap.appendChild(el('div', 'pq-say-src', '《' + poem.t + '》' + poem.d + ' · ' + poem.a +
+            '　（第 ' + (i + 1) + ' / ' + poem.l.length + ' 句）'));
+        wrap.appendChild(el('div', 'pq-say-line', cur));
+        var nextBox = el('div', 'pq-say-next' + (sayRevealed ? '' : ' is-hidden'), next);
+        wrap.appendChild(nextBox);
+
+        if (timerOn) {
+            var clock = el('div', 'pq-timer' + (timerLeft <= 0 ? ' is-over' : ''),
+                timerLeft > 0 ? timerLeft + ' 秒' : '时间到！');
+            wrap.appendChild(clock);
+        }
+        wrap.appendChild(el('div', 'pq-tip', sayRevealed ? '点「换一句」继续' : '请抢答下一句，点「显示下句」揭晓'));
+        return wrap;
+    }
+
+    function showSayNext() {
+        if (state.mode !== 'say') { return; }
+        if (!sayPick) { sayPick = pickSay(); }
+        sayRevealed = true;
+        render();
+        try { chrome.beep('ok'); } catch (e) { /* 静默 */ }
+    }
+
+    function newSay() {
+        sayPick = pickSay();
+        sayRevealed = false;
+        stopTimer();
+        render();
+    }
+
+    function startTimer() {
+        if (state.mode !== 'say') { chrome.toast('先切到「接句抢答」再用倒计时'); return; }
+        stopTimer();
+        timerOn = true;
+        timerLeft = 30;
+        timer = window.setInterval(function () {
+            timerLeft--;
+            if (timerLeft <= 0) {
+                timerLeft = 0;
+                window.clearInterval(timer);
+                timer = null;
+                render();
+                try { chrome.beep('over'); } catch (e) { /* 静默 */ }
+                chrome.toast('时间到！', 'warn');
+                return;
+            }
+            var node = els.preview.querySelector('.pq-timer');
+            if (node) { node.textContent = timerLeft + ' 秒'; }
+        }, 1000);
+        render();
+        chrome.toast('30 秒抢答开始');
+    }
+
+    function stopTimer() {
+        if (timer) {
+            window.clearInterval(timer);
+            timer = null;
+        }
+        timerOn = false;
+        timerLeft = 0;
+    }
+
+    /* ---------- 模式 / 操作 ---------- */
+
+    function syncMode() {
+        var btns = els.seg.getElementsByTagName('button');
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].className = btns[i].getAttribute('data-mode') === state.mode ? 'is-on' : '';
+        }
+        els.ctlFill.hidden = state.mode !== 'fill';
+        els.ctlFh.hidden = state.mode !== 'feihua';
+        els.ctlSay.hidden = state.mode !== 'say';
+        els.blankSel.value = state.blank;
+        els.btnAnswer.querySelector('span').textContent =
+            (state.mode === 'say' ? (sayRevealed ? '再藏一次' : '显示下句') : (state.showAnswer ? '隐藏答案' : '显示答案'));
+        els.btnAnswer.hidden = state.mode === 'feihua';
+        els.btnPrint.hidden = state.mode === 'feihua';
+    }
+
+    function updateStat() {
+        if (state.mode === 'fill') {
+            var poem = currentPoem();
+            var list = pool();
+            els.stat.textContent = poem
+                ? '《' + poem.t + '》· 第 ' + (state.idx + 1) + ' / ' + list.length + ' 首 · ' +
+                (GRADE_LABEL[state.grade] || '全部学段')
+                : '该学段暂无篇目';
+        } else if (state.mode === 'feihua') {
+            els.stat.textContent = '含「' + state.fh + '」的诗句';
+        } else {
+            els.stat.textContent = sayRevealed ? '已揭晓' : '等待抢答';
+        }
+        chrome.setStatus(state.mode === 'fill' ? '填空默写' : (state.mode === 'feihua' ? '飞花令' : '接句抢答'), 'ok');
+    }
+
+    function setMode(mode) {
+        if (MODES.indexOf(mode) < 0 || mode === state.mode) { return; }
+        state.mode = mode;
+        if (mode === 'say' && !sayPick) { sayPick = pickSay(); sayRevealed = false; }
+        if (mode !== 'say') { stopTimer(); }
+        persist();
+        render();
+    }
+
+    function go(delta) {
+        var list = pool();
+        if (!list.length) { return; }
+        state.idx = ((state.idx + delta) % list.length + list.length) % list.length;
+        mask = null;
+        state.showAnswer = false;
+        persist();
+        render();
+    }
+
+    function prevPoem() { go(-1); }
+
+    function nextPoem() { go(1); }
+
+    function randomPoem() {
+        var list = pool();
+        if (list.length < 2) { return; }
+        var next = state.idx;
+        while (next === state.idx) { next = Math.floor(Math.random() * list.length); }
+        state.idx = next;
+        mask = null;
+        state.showAnswer = false;
+        persist();
+        render();
+    }
+
+    function toggleAnswer() {
+        if (state.mode === 'feihua') { return; }
+        if (state.mode === 'say') {
+            if (sayRevealed) { sayRevealed = false; render(); }
+            else { showSayNext(); }
+            return;
+        }
+        state.showAnswer = !state.showAnswer;
+        persist();
+        render();
+    }
+
+    function doPrint() {
+        if (typeof window.print !== 'function') { chrome.toast('当前环境不支持打印', 'err'); return; }
+        window.setTimeout(function () {
+            try { window.print(); } catch (e) { chrome.toast('打印失败，请用浏览器打印快捷键', 'err'); }
+        }, 60);
+    }
+
+    function onPrimary() {
+        if (state.mode === 'fill') { nextPoem(); }
+        else if (state.mode === 'say') { showSayNext(); }
+        else { chrome.toast('飞花令模式下可输入关键字查诗句'); }
+    }
+
+    function onSecondary() {
+        if (state.mode === 'fill') { reshuffle(); }
+        else if (state.mode === 'say') { newSay(); }
+        else { chrome.toast('飞花令模式下可输入关键字查诗句'); }
+    }
+
+    /* ---------- 设置抽屉 ---------- */
+
+    function options(pairs, current) {
+        var out = '';
+        for (var i = 0; i < pairs.length; i++) {
+            out += '<option value="' + pairs[i][0] + '"' +
+                (String(pairs[i][0]) === String(current) ? ' selected' : '') + '>' + pairs[i][1] + '</option>';
+        }
+        return out;
+    }
+
+    function buildSettings(body) {
+        body.innerHTML =
+            '<h4>篇目范围</h4>' +
+            '<div class="et-drawer__row">' +
+            '<select class="et-drawer__input" id="pqSetGrade">' +
+            options([['全部', '全部学段'], ['1-2', '小学低年级（1–2）'], ['3-4', '小学中年级（3–4）'],
+                ['5-6', '小学高年级（5–6）'], ['7-9', '初中（7–9）'], ['10-12', '高中（10–12）']], state.grade) +
+            '</select></div>' +
+            '<p class="et-drawer__tip">当前范围共 <b>' + pool().length + '</b> 首；' +
+            '「随机一篇」「上一篇 / 下一篇」都只在这个范围内选。</p>' +
+
+            '<h4>挖空方式</h4>' +
+            '<div class="et-drawer__row">' +
+            '<select class="et-drawer__input" id="pqSetBlank">' +
+            options([['chars', '挖字填空（随机空字）'], ['half', '每句后半挖空（补下句）'],
+                ['line', '整句挖空（默整句）']], state.blank) +
+            '</select></div>' +
+            '<div class="et-drawer__row" style="margin-top:8px">' +
+            '<input class="et-drawer__input" id="pqSetRatio" type="number" min="10" max="90" step="5" value="' +
+            state.ratio + '" style="flex:0 0 84px" title="挖字比例">' +
+            '<span class="etimp-dim">% 挖字比例（仅「挖字填空」生效）</span></div>' +
+            '<p class="et-drawer__tip">默写卷建议：低年级 30%（扶一扶），高年级 50% 以上或直接用整句挖空。</p>' +
+
+            '<h4>纸面</h4>' +
+            '<label class="et-drawer__switch">打印姓名 / 班级 / 得分栏' +
+            '<input type="checkbox" id="pqSetMeta"' + (metaOn() ? ' checked' : '') + '></label>' +
+            '<p class="et-drawer__tip">内置 <b>' + POEMS.length + '</b> 首公版古诗文（抽取自同族工具「古诗词卡片」），' +
+            '数据完全内置，断网可用。</p>' +
+
+            '<h4>当前</h4>' +
+            '<div class="et-drawer__row">' +
+            '<button class="et-btn" id="pqSetRe" type="button">重新挖空</button>' +
+            '<button class="et-btn" id="pqSetRandom" type="button">随机一篇</button>' +
+            '</div>';
+
+        var q = function (id) { return document.getElementById(id); };
+        q('pqSetGrade').addEventListener('change', function () {
+            state.grade = GRADE_LABEL[this.value] ? this.value : '全部';
+            state.idx = 0;
+            mask = null;
+            persist();
+            render();
+        });
+        q('pqSetBlank').addEventListener('change', function () {
+            state.blank = ['chars', 'half', 'line'].indexOf(this.value) >= 0 ? this.value : 'chars';
+            mask = null;
+            state.showAnswer = false;
+            persist();
+            render();
+        });
+        q('pqSetRatio').addEventListener('change', function () {
+            state.ratio = clampInt(this.value, 10, 90, DEFAULTS.ratio);
+            this.value = state.ratio;
+            mask = null;
+            persist();
+            render();
+        });
+        q('pqSetMeta').addEventListener('change', function () {
+            store.set('meta', this.checked);
+            render();
+        });
+        q('pqSetRe').addEventListener('click', reshuffle);
+        q('pqSetRandom').addEventListener('click', randomPoem);
+    }
+
+    function metaOn() { return store.get('meta', true) !== false; }
+
+    /* ---------- 事件与启动 ---------- */
+
+    var segBtns = els.seg.getElementsByTagName('button');
+    for (var b = 0; b < segBtns.length; b++) {
+        (function (btn) {
+            btn.addEventListener('click', function () { setMode(btn.getAttribute('data-mode')); });
+        })(segBtns[b]);
+    }
+
+    els.blankSel.addEventListener('change', function () {
+        state.blank = ['chars', 'half', 'line'].indexOf(this.value) >= 0 ? this.value : 'chars';
+        mask = null;
+        state.showAnswer = false;
+        persist();
+        render();
+    });
+
+    els.fhInput.addEventListener('input', function () {
+        state.fh = this.value.trim();
+        persist();
+        render();
+    });
+
+    els.btnReshuffle.addEventListener('click', reshuffle);
+    els.btnPrev.addEventListener('click', prevPoem);
+    els.btnNext.addEventListener('click', nextPoem);
+    els.btnRandom.addEventListener('click', randomPoem);
+    els.btnSayNext.addEventListener('click', showSayNext);
+    els.btnSayNew.addEventListener('click', newSay);
+    els.btnSayTimer.addEventListener('click', startTimer);
+    els.btnAnswer.addEventListener('click', toggleAnswer);
+    els.btnPrint.addEventListener('click', doPrint);
+
+    document.addEventListener('keydown', function (e) {
+        if (isTypingTarget(e.target)) { return; }
+        if (e.key === '1') { setMode('fill'); }
+        else if (e.key === '2') { setMode('feihua'); }
+        else if (e.key === '3') { setMode('say'); }
+        else if (e.key === 'ArrowLeft') { if (state.mode === 'fill') { prevPoem(); e.preventDefault(); } }
+        else if (e.key === 'ArrowRight') { if (state.mode === 'fill') { nextPoem(); e.preventDefault(); } }
+        else if (e.key === 'a' || e.key === 'A') { toggleAnswer(); }
+        else if ((e.key === 'p' || e.key === 'P') && !e.ctrlKey && !e.metaKey) { doPrint(); }
+        else if (e.key === ' ' || e.code === 'Space') {
+            e.preventDefault();
+            onPrimary();
+        }
+    });
+
+    els.fhInput.value = state.fh;
+    mask = null;
+    render();
+})();
+</script>
+
+</body>
+</html>

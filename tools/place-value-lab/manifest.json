@@ -1,0 +1,33 @@
+{
+  "id": "place-value-lab",
+  "title": "数位计数器 · 大数读写",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "个十百千万到千万计数器，拨珠看数，读法写法互转与读写练习。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "1-2",
+    "3-4",
+    "5-6"
+  ],
+  "subjects": [
+    "数学"
+  ],
+  "tags": [
+    "数位",
+    "计数器",
+    "大数读写",
+    "位值",
+    "数学教具"
+  ],
+  "family": "number-sense",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

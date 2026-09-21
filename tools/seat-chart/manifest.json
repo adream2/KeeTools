@@ -1,16 +1,22 @@
 {
   "id": "seat-chart",
   "title": "座位表 / 排座位",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "shell",
   "description": "导入名单自动排座位，拖动换位、随机重排、标记特殊座位，适配教室大屏。",
   "author": "KeeTools Team",
   "entry": "index.html",
   "single_file": true,
   "offline": true,
-  "grade_range": ["1-12"],
-  "subjects": ["通用"],
-  "tags": ["通用"],
+  "grade_range": [
+    "1-12"
+  ],
+  "subjects": [
+    "通用"
+  ],
+  "tags": [
+    "通用"
+  ],
   "family": null,
   "license": "free",
   "dependencies": [],

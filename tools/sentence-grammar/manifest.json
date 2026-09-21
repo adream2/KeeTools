@@ -1,0 +1,32 @@
+{
+  "id": "sentence-grammar",
+  "title": "句型与语法练习",
+  "version": "1.1.0",
+  "type": "shell",
+  "description": "名词复数、动词变化、be 动词等规则演示与句型转换练习。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "3-4",
+    "5-6"
+  ],
+  "subjects": [
+    "英语"
+  ],
+  "tags": [
+    "语法练习",
+    "单项选择",
+    "句型操练",
+    "小学语法",
+    "英语练习"
+  ],
+  "family": "word-game",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

@@ -27,7 +27,8 @@ tools/_shared/
 ├── logic/                  # 纯逻辑，无 DOM 依赖
 │   ├── random-pick.js
 │   ├── countdown.js
-│   └── scoreboard.js
+│   ├── scoreboard.js
+│   └── download.js         # 通用文件导出（ET.download / ET.csvCell，BOM 可控）
 ├── ui/                     # UI 片段（含样式）
 │   ├── et-import.js        # 通用数据导入组件（重点基建）
 │   ├── et-import.css

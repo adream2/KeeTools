@@ -1,0 +1,32 @@
+{
+  "id": "sentence-order",
+  "title": "连词成句 · 排句成段",
+  "version": "1.1.0",
+  "type": "shell",
+  "description": "导入句子自动打乱，点词连句、排句成段，可打印练习卷。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "1-2",
+    "3-4"
+  ],
+  "subjects": [
+    "语文"
+  ],
+  "tags": [
+    "连词成句",
+    "排句成段",
+    "句序训练",
+    "语言表达",
+    "语文游戏"
+  ],
+  "family": "word-game",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

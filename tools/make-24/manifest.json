@@ -1,0 +1,32 @@
+{
+  "id": "make-24",
+  "title": "二十四点",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "四张牌算 24 点：点选数字与符号组算式，自动判定并给出解法提示。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "3-4",
+    "5-6"
+  ],
+  "subjects": [
+    "数学"
+  ],
+  "tags": [
+    "二十四点",
+    "四则运算",
+    "口算",
+    "计算游戏",
+    "扑克牌"
+  ],
+  "family": "logic-puzzle",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

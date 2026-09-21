@@ -1,0 +1,21 @@
+{
+  "id": "english-copybook",
+  "title": "英语四线三格字帖",
+  "version": "1.0.0",
+  "type": "shell",
+  "description": "四线三格英语字帖：导入单词或句子，描红 / 留白自由组合，A4 打印。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["3-4", "5-6"],
+  "subjects": ["英语"],
+  "tags": ["英语字帖", "四线三格", "描红", "书写练习", "打印", "A4"],
+  "family": "print-sheet",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-20",
+  "updated_at": "2026-09-20"
+}

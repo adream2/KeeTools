@@ -1,0 +1,33 @@
+{
+  "id": "pinyin-wheel",
+  "title": "拼音拼读转盘",
+  "version": "1.0.2",
+  "type": "fixed",
+  "description": "声母×韵母双转盘随机拼读，声调朗读与组合总表，汉语拼音课堂教具。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "1-2"
+  ],
+  "subjects": [
+    "语文"
+  ],
+  "tags": [
+    "拼音",
+    "拼读",
+    "声母",
+    "韵母",
+    "声调",
+    "转盘",
+    "拼音教具"
+  ],
+  "family": "chinese-toy",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

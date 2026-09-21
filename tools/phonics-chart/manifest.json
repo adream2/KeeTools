@@ -1,0 +1,31 @@
+{
+  "id": "phonics-chart",
+  "title": "自然拼读表",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "字母与字母组合发音规则表：短长元音、常见组合，例词拼读拆解与朗读。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "3-4"
+  ],
+  "subjects": [
+    "英语"
+  ],
+  "tags": [
+    "自然拼读",
+    "字母发音",
+    "拼读规律",
+    "语音学习",
+    "跟读"
+  ],
+  "family": "word-game",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

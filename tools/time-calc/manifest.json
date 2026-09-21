@@ -1,0 +1,21 @@
+{
+  "id": "time-calc",
+  "title": "年月日与时间计算",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "年月日、平年闰年、24 时计时法互换与经过时间计算，含可打印练习。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["3-4"],
+  "subjects": ["数学"],
+  "tags": ["年月日", "平年闰年", "24时计时法", "经过时间", "日历", "打印"],
+  "family": "time",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

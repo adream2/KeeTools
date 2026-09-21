@@ -1,0 +1,32 @@
+{
+  "id": "word-memory",
+  "title": "单词配对连连看",
+  "version": "1.1.0",
+  "type": "shell",
+  "description": "单词配对连连看 / 记忆翻牌，导入词表即玩，可分队比赛与计时。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "3-4",
+    "5-6"
+  ],
+  "subjects": [
+    "英语"
+  ],
+  "tags": [
+    "单词配对",
+    "连连看",
+    "记忆翻牌",
+    "词汇游戏",
+    "小组赛"
+  ],
+  "family": "word-game",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

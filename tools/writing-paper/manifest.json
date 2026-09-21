@@ -1,0 +1,21 @@
+{
+  "id": "writing-paper",
+  "title": "作文稿纸生成器",
+  "version": "1.0.0",
+  "type": "shell",
+  "description": "方格 / 横线 / 400 格作文稿纸，A4 一键打印，抬头与字数栏可自定义。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["1-6"],
+  "subjects": ["语文"],
+  "tags": ["作文", "稿纸", "打印", "方格", "习作", "A4"],
+  "family": "print-sheet",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-20",
+  "updated_at": "2026-09-20"
+}

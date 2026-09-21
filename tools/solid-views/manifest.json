@@ -1,0 +1,21 @@
+{
+  "id": "solid-views",
+  "title": "观察物体 · 三视图",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "小方块搭立体图形，实时给出前视 / 上视 / 侧视三视图，投影讲解用。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["3-4", "5-6"],
+  "subjects": ["数学"],
+  "tags": ["观察物体", "三视图", "立体图形", "正方体", "投影"],
+  "family": "geometry-3d",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

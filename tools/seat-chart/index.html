@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>座位表 / 排座位 — KeeTools 课工具</title>
 <!-- ET-META
-{"id":"seat-chart","version":"1.0.0"}
+{"id":"seat-chart","version":"1.1.0"}
 -->
 
 <!-- 共享外壳样式（由 sync_shared.py 注入） -->
@@ -1082,7 +1082,13 @@ body.et-app {
             if (ev.target === backdrop) { close(); }
         });
 
-        if (typeof build === 'function') { build(body, { close: close }); }
+        if (typeof build === 'function') {
+            /* 兼容两种约定：build 自己往 body 里塞内容，或 return 一个元素节点 */
+            var ret = build(body, { close: close });
+            if (ret && ret.nodeType === 1 && ret.parentNode !== body) {
+                body.appendChild(ret);
+            }
+        }
         return { body: body, close: close };
     }
 
@@ -1272,7 +1278,7 @@ body.et-app {
         if (opt.settings && typeof opt.settings.build === 'function') {
             settingsBtn = makeBtn('i-sliders', opt.settings.title || '设置', function () {
                 openDrawer(opt.settings.title || '设置', function (body, drawerApi) {
-                    opt.settings.build(body, { api: api, close: drawerApi.close });
+                    return opt.settings.build(body, { api: api, close: drawerApi.close });
                 });
             });
             actions.appendChild(settingsBtn);
@@ -2444,6 +2450,56 @@ body.et-app {
 })(window);
 </script>
 <!-- /ET:INLINE -->
+
+<!-- ET:INLINE name="et-download" src="logic/download.js" -->
+<script>
+  /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
+/*!
+ * download.js — 通用文件导出（Blob + a[download]）
+ *
+ * 共享逻辑源。改这里，然后跑：python scripts/sync_shared.py
+ * 依赖：无。
+ * 全局：ET.download / ET.csvCell
+ *
+ * 用法：
+ *   ET.download('词表.csv', lines.join('\r\n'), 'text/csv');  // 默认加 UTF-8 BOM
+ *   ET.download('名单.txt', text, 'text/plain');
+ *   ET.download('数据.json', json, 'application/json', false); // 第 4 参 false = 不加 BOM
+ *   ET.csvCell(v)  // CSV 单元格转义（含逗号/引号/换行时加引号）
+ *
+ * 说明：BOM 让 Excel / WPS / 记事本正确识别 UTF-8；JSON 等程序消费格式传 false。
+ */
+(function (global) {
+    'use strict';
+
+    var ET = global.ET = global.ET || {};
+
+    function download(filename, text, mime, bom) {
+        var type = (mime || 'text/plain') + ';charset=utf-8';
+        var blob = new Blob([bom === false ? text : '\uFEFF' + text], { type: type });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () {
+            if (a.parentNode) { a.parentNode.removeChild(a); }
+            URL.revokeObjectURL(url);
+        }, 120);
+    }
+
+    function csvCell(v) {
+        var s = String(v === undefined || v === null ? '' : v);
+        if (/[",\n\r]/.test(s)) { return '"' + s.replace(/"/g, '""') + '"'; }
+        return s;
+    }
+
+    ET.download = download;
+    ET.csvCell = csvCell;
+})(window);
+</script>
+<!-- /ET:INLINE -->
 <!-- ET:INLINE name="et-stats" src="ui/et-stats.js" -->
 <script>
   /* 此块由 scripts/sync_shared.py 自动注入，请勿手工修改 */
@@ -2547,6 +2603,7 @@ try { ET.Stats.send('use_offline', 'seat-chart'); } catch (e) { /* 静默 */ }
         primary: shuffle,
         actions: [
             { icon: 'i-upload', label: '导入名单', onClick: openImport },
+            { icon: 'i-download', label: '导出名单', onClick: exportRoster },
             { icon: 'i-shuffle', label: '随机重排', onClick: shuffle },
             { icon: 'i-star', label: '标记座位（开/关）', id: 'btnMark', onClick: toggleMarkMode },
             { icon: 'i-trash', label: '清空座位', onClick: clearSeats }
@@ -2796,6 +2853,12 @@ try { ET.Stats.send('use_offline', 'seat-chart'); } catch (e) { /* 静默 */ }
                 chrome.toast('已导入 ' + state.roster.length + ' 人');
             }
         });
+    }
+
+    function exportRoster() {
+        if (!state.roster.length) { chrome.toast('名单为空，先导入学生', 'warn'); return; }
+        ET.download('学生名单.txt', state.roster.join('\n'), 'text/plain');
+        chrome.toast('已导出 ' + state.roster.length + ' 人（每行一个，可编辑后导回）', 'ok');
     }
 
     function globalETImport() {

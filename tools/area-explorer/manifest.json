@@ -1,0 +1,21 @@
+{
+  "id": "area-explorer",
+  "title": "面积公式推导",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "平行四边形、三角形、梯形、圆的面积公式剪拼推导动画，把转化过程演出来。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["5-6"],
+  "subjects": ["数学"],
+  "tags": ["面积公式", "平行四边形", "三角形", "梯形", "圆", "剪拼推导"],
+  "family": "geometry-area",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

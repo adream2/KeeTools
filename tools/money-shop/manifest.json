@@ -1,0 +1,32 @@
+{
+  "id": "money-shop",
+  "title": "认识人民币 · 模拟购物",
+  "version": "1.1.0",
+  "type": "fixed",
+  "description": "认识人民币：认一认（面值换算）、买一买（付钱找零）、摆一摆（按金额摆钱教具）。图形为简化示意。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "1-2"
+  ],
+  "subjects": [
+    "数学"
+  ],
+  "tags": [
+    "认识人民币",
+    "元角分",
+    "模拟购物",
+    "找零",
+    "换算",
+    "摆钱教具"
+  ],
+  "family": "money",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

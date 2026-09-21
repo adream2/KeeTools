@@ -1,0 +1,33 @@
+{
+  "id": "word-spell-game",
+  "title": "单词拼写游戏",
+  "version": "1.1.0",
+  "type": "shell",
+  "description": "一套词表三种玩法：字母重排、猜词、缺字母填空，适合课堂抢答与小组赛。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "3-4",
+    "5-6"
+  ],
+  "subjects": [
+    "英语"
+  ],
+  "tags": [
+    "单词拼写",
+    "字母重排",
+    "猜词",
+    "缺字母",
+    "词汇游戏",
+    "课堂互动"
+  ],
+  "family": "word-game",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

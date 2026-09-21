@@ -1,0 +1,21 @@
+{
+  "id": "tangram",
+  "title": "七巧板拼图",
+  "version": "1.1.2",
+  "type": "fixed",
+  "description": "七巧板拼图：全屏拖拽自由拼摆与剪影挑战，自动判定铺满并计时，看答案演示，可打印 A4 作业纸。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["1-2", "3-4"],
+  "subjects": ["数学"],
+  "tags": ["七巧板", "拼图", "图形拼搭", "旋转", "吸附", "挑战"],
+  "family": "geometry-toy",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-20",
+  "updated_at": "2026-09-21"
+}

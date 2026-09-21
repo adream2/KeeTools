@@ -1,0 +1,32 @@
+{
+  "id": "radical-sort",
+  "title": "部首归类 · 形声字",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "按部首给汉字归类，形旁声旁拆解，部首查字法步骤演示。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "1-2",
+    "3-4"
+  ],
+  "subjects": [
+    "语文"
+  ],
+  "tags": [
+    "部首",
+    "形声字",
+    "识字",
+    "归类游戏",
+    "字词游戏"
+  ],
+  "family": "word-game",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

@@ -1,0 +1,31 @@
+{
+  "id": "duty-roster",
+  "title": "值日生轮换表",
+  "version": "1.0.0",
+  "type": "shell",
+  "description": "导入班级名单，按岗位自动排值日轮换表，一键推进轮次，可打印可导出。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "1-12"
+  ],
+  "subjects": [
+    "通用"
+  ],
+  "tags": [
+    "值日表",
+    "岗位轮换",
+    "班级管理",
+    "名单导入",
+    "打印"
+  ],
+  "family": null,
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

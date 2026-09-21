@@ -1,0 +1,31 @@
+{
+  "id": "pre-writing-tracing",
+  "title": "控笔练习生成器",
+  "version": "1.0.0",
+  "type": "shell",
+  "description": "线条波浪螺旋与八大笔画描红，A4 控笔练习纸一键打印。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "1-2"
+  ],
+  "subjects": [
+    "语文"
+  ],
+  "tags": [
+    "控笔",
+    "描红",
+    "书写基础",
+    "A4 打印",
+    "练习纸生成"
+  ],
+  "family": "print-sheet",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

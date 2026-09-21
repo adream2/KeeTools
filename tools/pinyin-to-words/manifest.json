@@ -1,0 +1,21 @@
+{
+  "id": "pinyin-to-words",
+  "title": "看拼音写词语生成器",
+  "version": "1.0.0",
+  "type": "shell",
+  "description": "粘贴词语表自动注音并生成田字格练习，一二年级看拼音写词语随堂卷。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["1-2"],
+  "subjects": ["语文"],
+  "tags": ["看拼音写词语", "拼音", "田字格", "注音", "一二年级", "打印"],
+  "family": "print-sheet",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-20",
+  "updated_at": "2026-09-20"
+}

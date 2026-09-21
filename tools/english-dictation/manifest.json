@@ -1,0 +1,32 @@
+{
+  "id": "english-dictation",
+  "title": "英语听写",
+  "version": "1.1.0",
+  "type": "shell",
+  "description": "朗读单词句子听写判分，支持导入词表与听写纸打印。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "3-4",
+    "5-6"
+  ],
+  "subjects": [
+    "英语"
+  ],
+  "tags": [
+    "英语听写",
+    "单词默写",
+    "错词本",
+    "语音报词",
+    "词汇练习"
+  ],
+  "family": "word-game",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

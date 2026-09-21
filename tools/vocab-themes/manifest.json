@@ -1,0 +1,31 @@
+{
+  "id": "vocab-themes",
+  "title": "主题词汇卡",
+  "version": "1.1.0",
+  "type": "shell",
+  "description": "颜色动物文具食物家庭等主题词卡浏览与选词测验，支持导入扩展。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "3-4"
+  ],
+  "subjects": [
+    "英语"
+  ],
+  "tags": [
+    "主题词汇",
+    "单词卡",
+    "翻卡学习",
+    "小测验",
+    "词汇学习"
+  ],
+  "family": "word-game",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

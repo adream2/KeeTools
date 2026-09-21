@@ -1,0 +1,32 @@
+{
+  "id": "word-pairs",
+  "title": "词语搭配 · 近反义词",
+  "version": "1.2.0",
+  "type": "shell",
+  "description": "近义词反义词连线配对与量词填空练习，支持老师导入词对。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "1-2",
+    "3-4"
+  ],
+  "subjects": [
+    "语文"
+  ],
+  "tags": [
+    "近义词",
+    "反义词",
+    "词语搭配",
+    "连线配对",
+    "词汇游戏"
+  ],
+  "family": "word-game",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

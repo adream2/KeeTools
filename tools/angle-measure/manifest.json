@@ -1,0 +1,31 @@
+{
+  "id": "angle-measure",
+  "title": "交互量角器",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "量角器与角：拖动旋转量角器量角、读内外圈刻度、按度数画角。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "3-4"
+  ],
+  "subjects": [
+    "数学"
+  ],
+  "tags": [
+    "量角器",
+    "角的度量",
+    "角度",
+    "拖拽交互",
+    "数学教具"
+  ],
+  "family": "geometry-toy",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

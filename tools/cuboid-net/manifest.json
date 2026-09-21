@@ -1,0 +1,31 @@
+{
+  "id": "cuboid-net",
+  "title": "长方体正方体展开图",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "正方体 11 种展开图折叠动画，长方体体积表面积容积演示与计算。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "5-6"
+  ],
+  "subjects": [
+    "数学"
+  ],
+  "tags": [
+    "展开图",
+    "正方体",
+    "折叠",
+    "相对面",
+    "空间想象"
+  ],
+  "family": "geometry-toy",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

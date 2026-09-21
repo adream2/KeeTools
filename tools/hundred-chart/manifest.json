@@ -1,0 +1,21 @@
+{
+  "id": "hundred-chart",
+  "title": "百数表探究器",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "百数表规律探究：随机挖空、遮罩、跳数高亮，可打印空白表与答案表。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["1-2"],
+  "subjects": ["数学"],
+  "tags": ["百数表", "数的规律", "相邻数", "挖空", "投影", "打印"],
+  "family": "number-sense",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-20",
+  "updated_at": "2026-09-20"
+}

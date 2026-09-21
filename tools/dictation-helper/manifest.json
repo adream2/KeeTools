@@ -1,16 +1,30 @@
 {
   "id": "dictation-helper",
   "title": "听写助手",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "shell",
   "description": "导入词表后按顺序报词，可隐藏文字、设置间隔与重复次数，适合课堂听写与默写。",
   "author": "KeeTools Team",
   "entry": "index.html",
   "single_file": true,
   "offline": true,
-  "grade_range": ["1-2", "3-4", "5-6", "7-9"],
-  "subjects": ["语文"],
-  "tags": ["听写", "默写", "词语", "朗读", "课堂互动", "大屏"],
+  "grade_range": [
+    "1-2",
+    "3-4",
+    "5-6",
+    "7-9"
+  ],
+  "subjects": [
+    "语文"
+  ],
+  "tags": [
+    "听写",
+    "默写",
+    "词语",
+    "朗读",
+    "课堂互动",
+    "大屏"
+  ],
   "family": "dictation-helper",
   "license": "free",
   "dependencies": [],

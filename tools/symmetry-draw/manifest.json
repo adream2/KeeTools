@@ -1,0 +1,21 @@
+{
+  "id": "symmetry-draw",
+  "title": "轴对称对称画",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "在网格画布上作画，实时生成轴对称镜像（竖直/水平/双轴），可打印作品。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["1-2", "3-4"],
+  "subjects": ["数学"],
+  "tags": ["轴对称", "镜像", "对称轴", "绘画", "方格纸", "创意"],
+  "family": "geometry-toy",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

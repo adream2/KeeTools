@@ -1,0 +1,21 @@
+{
+  "id": "sudoku",
+  "title": "数独",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "4×4 / 6×6 / 9×9 数独，算法实时生成唯一解，含提示、校验、计时与打印。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["1-6"],
+  "subjects": ["数学"],
+  "tags": ["数独", "逻辑推理", "算法出题", "候选数", "计时", "打印"],
+  "family": "logic-puzzle",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-20",
+  "updated_at": "2026-09-20"
+}

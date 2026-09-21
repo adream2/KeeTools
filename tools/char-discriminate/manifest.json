@@ -1,0 +1,21 @@
+{
+  "id": "char-discriminate",
+  "title": "多音字 · 形近字辨析卡",
+  "version": "1.1.0",
+  "type": "shell",
+  "description": "多音字、同音字、形近字辨析卡：投影讲解 + 打印练习，内容可自行导入。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["1-2", "3-4"],
+  "subjects": ["语文"],
+  "tags": ["多音字", "同音字", "形近字", "识字", "辨析卡", "打印"],
+  "family": "chinese-card",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

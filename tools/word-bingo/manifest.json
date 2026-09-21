@@ -1,0 +1,33 @@
+{
+  "id": "word-bingo",
+  "title": "单词宾果",
+  "version": "1.1.0",
+  "type": "shell",
+  "description": "导入词表随机生成 Bingo 卡可打印，教师端抽词报词学生划卡。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "1-2",
+    "3-4",
+    "5-6"
+  ],
+  "subjects": [
+    "英语"
+  ],
+  "tags": [
+    "宾果游戏",
+    "BINGO",
+    "单词游戏",
+    "报词器",
+    "课堂游戏"
+  ],
+  "family": "word-game",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

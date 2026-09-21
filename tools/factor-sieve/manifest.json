@@ -1,0 +1,31 @@
+{
+  "id": "factor-sieve",
+  "title": "因数与倍数 · 质数筛",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "找一个数的因数倍数，埃拉托色尼筛法逐步划掉倍数找质数。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": [
+    "5-6"
+  ],
+  "subjects": [
+    "数学"
+  ],
+  "tags": [
+    "因数",
+    "倍数",
+    "质数",
+    "埃氏筛",
+    "百数表"
+  ],
+  "family": "number-sense",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-21",
+  "updated_at": "2026-09-21"
+}

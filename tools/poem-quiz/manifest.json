@@ -1,0 +1,21 @@
+{
+  "id": "poem-quiz",
+  "title": "古诗默写 · 飞花令",
+  "version": "1.0.0",
+  "type": "fixed",
+  "description": "古诗填空默写、飞花令与接句抢答，内置教材常见必背篇目，课堂互动。",
+  "author": "KeeTools Team",
+  "entry": "index.html",
+  "single_file": true,
+  "offline": true,
+  "grade_range": ["1-6", "7-9", "10-12"],
+  "subjects": ["语文"],
+  "tags": ["古诗词", "默写", "填空", "飞花令", "接句", "课堂互动"],
+  "family": "poem",
+  "license": "free",
+  "dependencies": [],
+  "screen": "large",
+  "stats_enabled": true,
+  "created_at": "2026-09-20",
+  "updated_at": "2026-09-20"
+}

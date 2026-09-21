@@ -1090,7 +1090,13 @@ body.et-app {
             if (ev.target === backdrop) { close(); }
         });
 
-        if (typeof build === 'function') { build(body, { close: close }); }
+        if (typeof build === 'function') {
+            /* 兼容两种约定：build 自己往 body 里塞内容，或 return 一个元素节点 */
+            var ret = build(body, { close: close });
+            if (ret && ret.nodeType === 1 && ret.parentNode !== body) {
+                body.appendChild(ret);
+            }
+        }
         return { body: body, close: close };
     }
 
@@ -1280,7 +1286,7 @@ body.et-app {
         if (opt.settings && typeof opt.settings.build === 'function') {
             settingsBtn = makeBtn('i-sliders', opt.settings.title || '设置', function () {
                 openDrawer(opt.settings.title || '设置', function (body, drawerApi) {
-                    opt.settings.build(body, { api: api, close: drawerApi.close });
+                    return opt.settings.build(body, { api: api, close: drawerApi.close });
                 });
             });
             actions.appendChild(settingsBtn);
