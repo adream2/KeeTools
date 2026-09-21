@@ -27,7 +27,7 @@ final class AboutController
 
         if (App::hasDb()) {
             $repository = new ToolRepository();
-            $toolCount = count($repository->latest(1000));
+            $toolCount = $repository->publishedCount();
             $subjectCount = count($repository->subjectDistribution(100));
         }
 

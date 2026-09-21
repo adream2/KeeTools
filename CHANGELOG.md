@@ -10,6 +10,15 @@
 
 ## [未发布]
 
+### 构建脚本
+
+- **新增数据管线脚本 `scripts/gen_hanzi_pinyin.py`（2026-09-21）**：生成 `tools/pinyin-to-words` 的
+  内置拼音字表（GB2312 一级常用字 3755 字，源为 mozillazg/pinyin-data，MIT）。
+  字集由 Python 标准库 `gb2312` 编解码现场枚举得到，**不引入任何外部字表文件**（避开教材编排 / 版权问题）；
+  每字取第一读音、保留声调，压缩为 `一yī丁dīng…` 单字符串（约 26KB）注入工具 HTML 的 `PYW_DICT` 标记块，
+  支持 `--check`（供门禁校验工具内字表是否与生成结果一致）。产物随工具内联，**运行时不联网**。
+  与 `gen_china_map.py` / `gen_world_map.py` 同属「低频联网脚本，产物内联」模式，`scripts/README.md` 已登记。
+
 ### 定位与规划
 
 - **第三方素材登记自动化（2026-09-19）**：唯一真源迁移至 **`assets-src/third-party.json`**——
@@ -35,6 +44,14 @@
   故文档与文案一律写成**区间表述**，禁止写死"本地文件一定不可用"。
 
 ### 修复
+
+- **fix(frontend): 「全部工具」页只列 60 个工具，「找到 N 个工具」计数被硬上限截断（2026-09-21）**：
+  `ToolRepository::latest()` / `search()` 默认 `$limit = 60`，而 `SearchController`（`/tools` 与 `/search`）
+  调用时不传参，于是工具数超过 60 后列表和页头计数一起停在 60；`/about` 用 `count(latest(1000))`
+  计数也属于同类隐患（超 1000 即失准）。改为：`latest()` / `search()` 默认 `$limit = 0` **表示不限制**，
+  SQL 仅在 `$limit > 0` 时拼 `LIMIT`；新增 `ToolRepository::publishedCount()`（`COUNT(*)` 直查）
+  供 `/about` 使用，彻底摆脱硬编码上限。
+  注：分类页 `byCategorySlug()` 的列表仍有 `LIMIT 200`（其 `total` 走聚合计数、不受影响），阈值远超当前规模，暂不调整。
 
 - **fix(frontend): 详情页预览框高度被 16:9 锁死（2026-09-20）**：删掉 `site.css` 里遗留的旧 `.tool-preview`（带 `aspect-ratio: 16/9`，其 `.tool-preview iframe{height:100%}` 优先级压过新版 `.preview-frame` 高度），预览框恢复 `min(70vh, …)`。
 - **fix(tools): 外壳 body 默认外边距清零（2026-09-20）**：`tools/_shared/ui/et-chrome.css` 新增 `body.et-app { margin: 0 }`，`sync_shared.py` 同步 58 个工具。此前浏览器默认 8px 使 iframe 内文档高出 16px，预览框底部露白边且可微滚动。

@@ -45,9 +45,12 @@ final class ToolRepository
     /**
      * 最新 / 全部工具（按更新时间倒序）。
      *
+     * $limit <= 0 表示不限制（列表页 / 关于页计数默认取全量，避免工具增长后被
+     * 硬上限默默截断——2026-09-21 修复：/tools 页曾固定只列 60 条）。
+     *
      * @return list<array<string, mixed>>
      */
-    public function latest(int $limit = 60): array
+    public function latest(int $limit = 0): array
     {
         return $this->hydrateAll($this->queryAll(
             'WHERE is_published = 1
@@ -59,9 +62,11 @@ final class ToolRepository
     /**
      * 按关键词搜索（工具名 / 简介 / 标签 / 学科）。$q 为空 = 全部工具。
      *
+     * $limit <= 0 表示不限制（同时修正 $total 计数：结果数即真实命中数）。
+     *
      * @return list<array<string, mixed>>
      */
-    public function search(string $q, int $limit = 60): array
+    public function search(string $q, int $limit = 0): array
     {
         $q = trim($q);
         if ($q === '') {
@@ -71,17 +76,18 @@ final class ToolRepository
         // LIKE 通配符转义，防止用户输入 % _ 被当通配符
         $like = '%' . strtr($q, ['\\' => '\\\\', '%' => '\\%', '_' => '\\_']) . '%';
 
-        $rows = $this->db()->fetchAll(
-            "SELECT " . self::CARD_FIELDS . " FROM tools
+        $sql = "SELECT " . self::CARD_FIELDS . " FROM tools
              WHERE is_published = 1
                AND (title LIKE :like ESCAPE '\\'
                     OR description LIKE :like ESCAPE '\\'
                     OR tags LIKE :like ESCAPE '\\'
                     OR subjects LIKE :like ESCAPE '\\')
-             ORDER BY is_featured DESC, updated_at DESC
-             LIMIT " . (int) $limit,
-            [':like' => $like]
-        );
+             ORDER BY is_featured DESC, updated_at DESC";
+        if ($limit > 0) {
+            $sql .= ' LIMIT ' . $limit;
+        }
+
+        $rows = $this->db()->fetchAll($sql, [':like' => $like]);
 
         return $this->hydrateAll($rows);
     }
@@ -401,6 +407,16 @@ final class ToolRepository
     }
 
     /**
+     * 已上架工具总数（关于页 / 概览统计用）。
+     *
+     * 2026-09-21：改用 COUNT(*) 取代「count(latest(1000))」，不再受硬上限影响。
+     */
+    public function publishedCount(): int
+    {
+        return (int) $this->db()->fetchColumn('SELECT COUNT(*) FROM tools WHERE is_published = 1');
+    }
+
+    /**
      * 已上架工具 id → 标题（零使用工具判定用）。
      *
      * @return array<string, string>
@@ -449,9 +465,12 @@ final class ToolRepository
 
     private function queryAll(string $suffix, int $limit): array
     {
-        return $this->db()->fetchAll(
-            'SELECT ' . self::CARD_FIELDS . ' FROM tools ' . $suffix . ' LIMIT ' . (int) $limit
-        );
+        $sql = 'SELECT ' . self::CARD_FIELDS . ' FROM tools ' . $suffix;
+        if ($limit > 0) {
+            $sql .= ' LIMIT ' . $limit;
+        }
+
+        return $this->db()->fetchAll($sql);
     }
 
     private function db(): Database
