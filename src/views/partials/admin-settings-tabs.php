@@ -3,7 +3,7 @@
 /**
  * 设置页 Tab 导航（分区保存框架）
  *
- * @var string $activeTab '' | footer | links | ads | announce | sponsor
+ * @var string $activeTab '' | footer | links | ads | announce | sponsor | inject
  */
 $tabs = [
     ''         => ['基本', 'settings'],
@@ -12,6 +12,7 @@ $tabs = [
     'ads'      => ['广告位', 'image'],
     'announce' => ['公告', 'megaphone'],
     'sponsor'  => ['赞助', 'heart-handshake'],
+    'inject'   => ['代码注入', 'code-xml'],
 ];
 $layoutListIcon = 'list';
 ?><nav class="settings-tabs" aria-label="设置分区">

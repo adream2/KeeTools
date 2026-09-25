@@ -61,6 +61,7 @@ lucide:pencil
 lucide:trash-2
 lucide:check
 lucide:alert-triangle
+lucide:code-xml
 lucide:user
 
 # ── 状态 ───────────────────────────────────

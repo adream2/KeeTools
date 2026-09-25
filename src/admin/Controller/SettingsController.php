@@ -17,7 +17,8 @@ use App\Services\SiteOps;
  * 站点设置 + 系统信息（docs/站点运营模块设计.md §七）
  *
  * 设置页拆 Tab 分区保存：/admin/settings（基本，已有）、
- * /settings/footer、/settings/links、/settings/ads、/settings/announce、/settings/sponsor。
+ * /settings/footer、/settings/links、/settings/ads、/settings/announce、/settings/sponsor、
+ * /settings/inject。
  * 每 Tab 只读写自己的键 —— 验收标准：保存「页脚」后广告位一字不变，反之亦然。
  *
  * 配置优先级是 .env > site_config > 默认值（Config 类），
@@ -78,6 +79,18 @@ final class SettingsController extends AdminController
         'announce_enabled'  => '公告总开关',
         'announce_closable' => '通栏可关闭',
         'announce_center'   => '通栏文案居中',
+    ];
+
+    /** 代码注入 Tab 的原始 HTML 键（仅 admin 可写，前台原样输出） */
+    private const INJECT_KEYS = [
+        'inject_head_code' => '<head> 注入代码（统计 / meta / 字体等，输出在 </head> 前）',
+        'inject_foot_code' => '<body> 尾部注入代码（统计 / 浮窗等，输出在 </body> 前）',
+    ];
+
+    /** 代码注入 Tab 的开关键 */
+    private const INJECT_SWITCHES = [
+        'inject_head_enabled' => '启用 <head> 注入',
+        'inject_foot_enabled' => '启用 <body> 尾部注入',
     ];
 
     // ── 基本 Tab（P0 已有）─────────────────────────
@@ -381,6 +394,42 @@ final class SettingsController extends AdminController
         return $this->redirectWith('success', '广告位已保存（按槽增量更新）。', '/admin/settings/ads');
     }
 
+    // ── 代码注入 Tab ───────────────────────────────
+
+    public function inject(Request $request): Response
+    {
+        return $this->render('settings-inject', [
+            'pageTitle' => '代码注入 — ' . site_name(),
+            'textItems' => $this->collectTextItems(self::INJECT_KEYS),
+            'switches'  => $this->collectSwitches(self::INJECT_SWITCHES),
+        ], 'settings');
+    }
+
+    /** 注入代码单键字节上限：防误贴超大代码拖慢全站页面渲染 */
+    private const INJECT_CODE_MAX_BYTES = 65536;
+
+    public function saveInject(Request $request): Response
+    {
+        foreach (self::INJECT_KEYS as $key => $label) {
+            $value = $request->post($key);
+            if (is_string($value) && strlen($value) > self::INJECT_CODE_MAX_BYTES) {
+                $kb = (int) round(strlen($value) / 1024);
+                return $this->redirectWith(
+                    'error',
+                    '「' . $label . '」过长（' . $kb . 'KB），上限 64KB，请精简后重试。',
+                    '/admin/settings/inject'
+                );
+            }
+        }
+
+        $saved = $this->saveKeys(array_merge(
+            array_keys(self::INJECT_KEYS),
+            array_keys(self::INJECT_SWITCHES)
+        ), $request);
+
+        return $this->redirectWith('success', '代码注入设置已保存（' . $saved . ' 项）。', '/admin/settings/inject');
+    }
+
     // ── 公告 Tab ───────────────────────────────────
 
     public function announce(Request $request): Response
@@ -660,7 +709,7 @@ final class SettingsController extends AdminController
     private function saveKeys(array $keys, Request $request): int
     {
         $saved = 0;
-        $switches = array_merge(self::FOOTER_SWITCHES, self::SPONSOR_SWITCHES, self::ANNOUNCE_SWITCHES);
+        $switches = array_merge(self::FOOTER_SWITCHES, self::SPONSOR_SWITCHES, self::ANNOUNCE_SWITCHES, self::INJECT_SWITCHES);
         $hasSubmit = $request->post('_submit') !== null || $request->post('_submitting') !== null;
 
         foreach ($keys as $key) {

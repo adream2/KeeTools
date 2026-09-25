@@ -115,6 +115,8 @@ $router->group('/admin', ['auth', 'csrf'], function (App\Core\Router $r): void {
         $r->post('/settings/links/{id}/delete', [SettingsController::class, 'deleteLink']);
         $r->get('/settings/ads', [SettingsController::class, 'ads']);
         $r->post('/settings/ads', [SettingsController::class, 'saveAds']);
+        $r->get('/settings/inject', [SettingsController::class, 'inject']);
+        $r->post('/settings/inject', [SettingsController::class, 'saveInject']);
         $r->get('/settings/announce', [SettingsController::class, 'announce']);
         $r->post('/settings/announce/save-settings', [SettingsController::class, 'saveAnnounceSettings']);
         $r->post('/settings/announce/create', [SettingsController::class, 'createAnnounce']);

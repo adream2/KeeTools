@@ -31,6 +31,10 @@ $origin = site_url();
 $canonical = $pageCanonical ?? ($origin . $requestPath);
 $robots = $pageRobots ?? 'index,follow';
 $keywords = trim((string) ($pageKeywords ?? ''));
+
+// 后台「代码注入」（原始 HTML，仅 admin 可写）：开关关闭或代码为空 = 零痕迹
+$injectHead = \App\Core\Config::bool('inject_head_enabled') ? \App\Core\Config::string('inject_head_code') : '';
+$injectFoot = \App\Core\Config::bool('inject_foot_enabled') ? \App\Core\Config::string('inject_foot_code') : '';
 ?><!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -51,6 +55,9 @@ $keywords = trim((string) ($pageKeywords ?? ''));
 <meta property="og:url" content="<?= e($canonical) ?>">
 <meta name="twitter:card" content="summary">
 <link rel="stylesheet" href="<?= e(asset('css/site.bundle.css')) ?>">
+<?php if ($injectHead !== ''): ?>
+<?= $injectHead /* 原始 HTML：后台「代码注入」，仅 admin 可写 */ ?>
+<?php endif; ?>
 </head>
 <body>
 <div class="site">
@@ -75,5 +82,8 @@ $keywords = trim((string) ($pageKeywords ?? ''));
 </div>
 
 <script src="<?= e(asset('js/site.js')) ?>" defer></script>
+<?php if ($injectFoot !== ''): ?>
+<?= $injectFoot /* 原始 HTML：后台「代码注入」，仅 admin 可写 */ ?>
+<?php endif; ?>
 </body>
 </html>

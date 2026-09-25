@@ -189,6 +189,16 @@
   许可说明）、`AGENTS.md` §十一 当前阶段更新为「全量交付」
 
 ### 新增
+- **后台「代码注入」设置（2026-09-25）**：站点设置新增 Tab，可向全站页面 `<head>`（`</head>` 前）
+  与 `<body>` 尾部（`</body>` 前）注入自定义代码（统计脚本 / meta / 字体等）。键存 `site_config`
+  （`inject_head_code` / `inject_foot_code` + 对应 `*_enabled` 开关），开关关闭或代码为空时前台零痕迹；
+  原始 HTML 仅 admin 可写（与广告位同口径），工具在线使用页（独立自包含布局）不注入。
+  落地链路：`SettingsController` 新增 `INJECT_KEYS` / `INJECT_SWITCHES` 常量 + `inject` / `saveInject`
+  → `routes.php` 注册 `/admin/settings/inject`（挂 role 中间件）→ 新视图 `views/admin/settings-inject.php`
+  → `partials/admin-settings-tabs.php` 加 Tab（新图标 `lucide:code-xml`，已重建 sprite）→
+  `views/layout/site.php` 头尾两处按开关原样输出。
+  安全加固：单键 64KB 字节上限（超限拒绝保存并提示），防误贴超大代码拖慢全站页面渲染。
+
 - **共享层：`et-import` 支持自定义字段模式（2026-09-19）**
   - `tools/_shared/ui/et-import.js` **加法式扩展**：新增 `fields: [{key, label, keys}]` 选项，
     用于导入非「姓名 / 学号 / 权重」结构的表（如单词卡片的 单词 / 音标 / 释义）；
